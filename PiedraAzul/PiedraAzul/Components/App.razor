@@ -6,18 +6,40 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <base href="/" />
     <ResourcePreloader />
-    <link rel="stylesheet" href="@Assets["lib/bootstrap/dist/css/bootstrap.min.css"]" />
     <link rel="stylesheet" href="@Assets["app.css"]" />
     <link rel="stylesheet" href="@Assets["PiedraAzul.styles.css"]" />
-    <script src="https://cdn.jsdelivr.net/npm/@@tailwindcss/browser@4"></script>
-
+    <link rel="stylesheet" href="@Assets["output.css"]" />
     <ImportMap />
     <link rel="icon" type="image/png" href="favicon.png" />
     <HeadOutlet @rendermode="InteractiveWebAssembly" />
 </head>
 
 <body>
-    <Routes @rendermode="InteractiveWebAssembly" />
+    <!-- Landing mientras carga -->
+    <div id="landing">
+        <div class="flex flex-col items-center justify-center h-screen text-center">
+            <h1 class="text-4xl font-bold text-blue-600">Piedra Azul</h1>
+            <p class="mt-4 text-gray-600">Cargando aplicación...</p>
+
+            <div class="spinner mt-6"></div>
+        </div>
+    </div>
+
+    <div id="app">
+        <Routes @rendermode="InteractiveAuto" />
+    </div>
+
+    <script>
+        const observer = new MutationObserver(() => {
+        const app = document.querySelector("#app");
+        if (app && app.children.length > 0) {
+        document.getElementById("landing").style.display = "none";
+        observer.disconnect();
+        }
+        });
+
+        observer.observe(document.querySelector("#app"), { childList: true });
+    </script>
     <script src="@Assets["_framework/blazor.web.js"]"></script>
 </body>
 
