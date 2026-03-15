@@ -1,18 +1,43 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
-  <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net10.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\PiedraAzul.Client\PiedraAzul.Client.csproj" />
-    <ProjectReference Include="..\PiedraAzul.Shared\PiedraAzul.Shared.csproj" />
-    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="10.0.4" />
-	  <PackageReference Include="Grpc.AspNetCore" Version="2.76.0" />
-	  <PackageReference Include="Grpc.AspNetCore.Web" Version="2.76.0" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.1" />
+		<PackageReference Include="Riok.Mapperly" Version="4.3.1" />
+		<PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.16.0" />
+
+		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="10.0.4" />
+		<PackageReference Include="Grpc.AspNetCore" Version="2.76.0" />
+		<PackageReference Include="Grpc.AspNetCore.Web" Version="2.76.0" />
+
+		<PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.5" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.5" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.5">
+		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		  <PrivateAssets>all</PrivateAssets>
+		</PackageReference>
+
+		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.3" />
+
+		<PackageReference Include="Lucene.Net" Version="4.8.0-beta00017" />
+		<PackageReference Include="Lucene.Net.Analysis.Common" Version="4.8.0-beta00017" />
+		<PackageReference Include="Lucene.Net.QueryParser" Version="4.8.0-beta00017" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\PiedraAzul.Client\PiedraAzul.Client.csproj" />
+		<ProjectReference Include="..\PiedraAzul.Shared\PiedraAzul.Shared.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Folder Include="ApplicationServices\AutoCompleteServices\" />
+		<Folder Include="ApplicationServices\Mapping\" />
+	</ItemGroup>
 
 </Project>
