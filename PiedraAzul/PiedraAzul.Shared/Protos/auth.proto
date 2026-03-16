@@ -1,23 +1,70 @@
 syntax = "proto3";
-
+import "google/protobuf/timestamp.proto";
 option csharp_namespace = "Shared.Grpc";
 
 package auth;
 
-service AuthServiceProto {
-  rpc Login (LoginRequest) returns (AccessTokenReply);
-  rpc Refresh (RefreshRequest) returns (AccessTokenReply);
+service AuthService {
+
+  rpc Register (RegisterRequest) returns (AuthResponse);
+
+  rpc Login (LoginRequest) returns (AuthResponse);
+
+  rpc RefreshToken (RefreshTokenRequest) returns (AuthResponse);
+
+  rpc RevokeToken (RevokeTokenRequest) returns (Empty);
+
+  rpc GetCurrentUser (Empty) returns (UserResponse);
 }
 
+message RegisterRequest {
+  string email = 1;
+  string password = 2;
+
+  string identificationNumber = 3;
+  string firstName = 4;
+  string lastName = 5;
+  string phone = 6;
+
+  GenderType gender = 7;
+  google.protobuf.Timestamp birthDate = 8;
+}
+
+
+enum GenderType {
+  GENDER_UNSPECIFIED = 0;
+  MALE = 1;
+  FEMALE = 2;
+  OTHER = 3;
+}
 message LoginRequest {
   string email = 1;
   string password = 2;
 }
 
-message RefreshRequest {
+message RefreshTokenRequest {
+  string refreshToken = 1;
 }
 
-message AccessTokenReply {
-  string accessToken = 1;
-  string type = 2;
+message RevokeTokenRequest {
+  string refreshToken = 1;
 }
+
+message AuthResponse {
+  string accessToken = 1;
+  string refreshToken = 2;
+  UserResponse user = 3;
+}
+
+message UserResponse {
+  string id = 1;
+  string email = 2;
+  string identificationNumber = 3;
+
+  int32 gender = 4;
+  string birthDate = 5;
+
+  repeated string roles = 6;
+}
+
+message Empty {}
