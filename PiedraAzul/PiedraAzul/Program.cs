@@ -154,6 +154,8 @@ app.UseAuthorization();
 
 #region gRPCWeb
 app.UseGrpcWeb();
+#endregion
+#region gRPCServices
 
 #endregion
 
