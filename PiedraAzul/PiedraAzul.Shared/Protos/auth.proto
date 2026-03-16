@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+option csharp_namespace = "Shared.Grpc";
+
+package auth;
+
+service AuthServiceProto {
+  rpc Login (LoginRequest) returns (AccessTokenReply);
+  rpc Refresh (RefreshRequest) returns (AccessTokenReply);
+}
+
+message LoginRequest {
+  string email = 1;
+  string password = 2;
+}
+
+message RefreshRequest {
+}
+
+message AccessTokenReply {
+  string accessToken = 1;
+  string type = 2;
+}
