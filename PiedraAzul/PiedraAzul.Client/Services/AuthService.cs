@@ -3,12 +3,12 @@ using Shared.Grpc;
 
 namespace PiedraAzul.Client.Services;
 
-public class AuthService
+public class AuthenticationService
 {
-    private readonly AuthServiceProto.AuthServiceProtoClient authClient;
+    private readonly AuthService.AuthServiceClient authClient;
     private readonly IJSRuntime js;
 
-    public AuthService(AuthServiceProto.AuthServiceProtoClient authClient, IJSRuntime js)
+    public AuthenticationService(AuthService.AuthServiceClient authClient, IJSRuntime js)
     {
         this.authClient = authClient;
         this.js = js;
@@ -26,7 +26,6 @@ public class AuthService
             return false;
 
         await js.InvokeVoidAsync("localStorage.setItem", "authToken", response.AccessToken);
-        await js.InvokeVoidAsync("localStorage.setItem", "authType", response.Type);
 
         return true;
     }
@@ -34,7 +33,6 @@ public class AuthService
     public async Task Logout()
     {
         await js.InvokeVoidAsync("localStorage.removeItem", "authToken");
-        await js.InvokeVoidAsync("localStorage.removeItem", "authType");
     }
 
     public async Task<string?> GetToken()
