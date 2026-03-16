@@ -144,12 +144,11 @@ using (var scope = app.Services.CreateScope())
 #region Middleware
 app.UseHttpsRedirection();
 app.UseAntiforgery();
+app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
+app.MapStaticAssets();
 #endregion
 
 #region UI
-app.MapStaticAssets();
-app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
-
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode()
     .AddInteractiveWebAssemblyRenderMode()
