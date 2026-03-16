@@ -1,9 +1,36 @@
-﻿<Router AppAssembly="typeof(Program).Assembly" NotFoundPage="typeof(Pages.NotFound)">
-    <Navigating>
-        <p>Espere por favor...</p>
-    </Navigating>
-    <Found Context="routeData">
-        <RouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)" />
-        <FocusOnNavigate RouteData="routeData" Selector="h1" />
-    </Found>
-</Router>
+﻿@using Microsoft.AspNetCore.Components.Authorization
+
+<CascadingAuthenticationState>
+
+    <Router AppAssembly="typeof(Program).Assembly" NotFoundPage="typeof(Pages.NotFound)">
+
+        <Navigating>
+            <div class="flex justify-center items-center h-screen">
+                <div class="spinner"></div>
+            </div>
+        </Navigating>
+
+        <Found Context="routeData">
+            <AuthorizeRouteView RouteData="routeData"
+                                DefaultLayout="typeof(Layout.MainLayout)">
+
+                <Authorizing>
+                    <div class="flex justify-center items-center h-screen">
+                        <div class="spinner"></div>
+                    </div>
+                </Authorizing>
+
+                <NotAuthorized>
+                    <div class="text-center mt-10">
+                        <h3>No tienes permiso para ver esta página</h3>
+                    </div>
+                </NotAuthorized>
+
+            </AuthorizeRouteView>
+
+            <FocusOnNavigate RouteData="routeData" Selector="h1" />
+        </Found>
+
+    </Router>
+
+</CascadingAuthenticationState>

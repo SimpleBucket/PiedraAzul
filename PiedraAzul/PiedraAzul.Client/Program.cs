@@ -1,13 +1,24 @@
 using Grpc.Net.Client;
 using Grpc.Net.Client.Web;
-using PiedraAzul.Client.Services;
+using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+using PiedraAzul.Client.DelegatingHandlers;
+using PiedraAzul.Client.Services;
+using PiedraAzul.Client.States;
 using Shared.Grpc;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 
+#region Handlers
 
-// gRPC Channel
+builder.Services.AddTransient<CookieHandler>();
+builder.Services.AddScoped<HttpDelegatingHandler>();
+
+#endregion
+
+#region gRPC CHANNELS
+
+// 🔹 Canal para AUTH (sin handler para evitar loop)
 builder.Services.AddScoped(sp =>
 {
     var handler = new GrpcWebHandler(
@@ -22,12 +33,51 @@ builder.Services.AddScoped(sp =>
         });
 });
 
-// gRPC Services
+// 🔹 Canal para APIs protegidas
 builder.Services.AddScoped(sp =>
-    new Greeter.GreeterClient(sp.GetRequiredService<GrpcChannel>()));
+{
+    var cookieHandler = sp.GetRequiredService<CookieHandler>();
+    var authHandler = sp.GetRequiredService<HttpDelegatingHandler>();
 
+    cookieHandler.InnerHandler = authHandler;
+    authHandler.InnerHandler = new HttpClientHandler();
 
+    var grpcHandler = new GrpcWebHandler(
+        GrpcWebMode.GrpcWeb,
+        cookieHandler);
+
+    return GrpcChannel.ForAddress(
+        builder.HostEnvironment.BaseAddress,
+        new GrpcChannelOptions
+        {
+            HttpHandler = grpcHandler
+        });
+});
+
+#endregion
+
+#region gRPC CLIENTS
+
+builder.Services.AddScoped(sp =>
+    new Greeter.GreeterClient(
+        sp.GetRequiredService<GrpcChannel>()));
+
+builder.Services.AddScoped(sp =>
+    new AuthServiceProto.AuthServiceProtoClient(
+        sp.GetRequiredService<GrpcChannel>()));
+
+#endregion
+#region gRPC Services
 builder.Services.AddScoped<GreeterService>();
+#endregion
+#region Auth
 
+builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<JwtService>();
+builder.Services.AddScoped<AuthenticationStateProvider, JwtAuthStateProvider>();
+
+builder.Services.AddAuthorizationCore();
+
+#endregion
 
 await builder.Build().RunAsync();
