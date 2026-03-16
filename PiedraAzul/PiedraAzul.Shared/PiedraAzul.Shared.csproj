@@ -14,8 +14,14 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<Protobuf Include="Protos\greet.proto" GrpcServices="Both" />
+		<Protobuf Include="Protos\common.proto" GrpcServices="None" />
+
+
 		<Protobuf Include="Protos\auth.proto" GrpcServices="Both" />
+		<Protobuf Include="Protos\appointment.proto" GrpcServices="Both" />
+		<Protobuf Include="Protos\availability.proto" GrpcServices="Both" />
+		<Protobuf Include="Protos\doctor.proto" GrpcServices="Both" />
+		<Protobuf Include="Protos\system.proto" GrpcServices="Both" />
 
 	</ItemGroup>
 </Project>

@@ -16,6 +16,9 @@ builder.Services.AddScoped<HttpDelegatingHandler>();
 
 #endregion
 
+
+#endregion
+
 #region gRPC CHANNELS
 
 // 🔹 Canal para AUTH (sin handler para evitar loop)
@@ -58,21 +61,20 @@ builder.Services.AddScoped(sp =>
 
 #region gRPC CLIENTS
 
-builder.Services.AddScoped(sp =>
-    new Greeter.GreeterClient(
-        sp.GetRequiredService<GrpcChannel>()));
+
 
 builder.Services.AddScoped(sp =>
-    new AuthServiceProto.AuthServiceProtoClient(
+    new AuthService.AuthServiceClient(
         sp.GetRequiredService<GrpcChannel>()));
 
 #endregion
 #region gRPC Services
-builder.Services.AddScoped<GreeterService>();
+
+builder.Services.AddScoped<AuthenticationService>();
+
 #endregion
 #region Auth
 
-builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<JwtService>();
 builder.Services.AddScoped<AuthenticationStateProvider, JwtAuthStateProvider>();
 
