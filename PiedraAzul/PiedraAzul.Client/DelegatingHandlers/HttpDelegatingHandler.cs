@@ -1,5 +1,5 @@
 ﻿using Microsoft.JSInterop;
-using System.Net.Http;
+using System.Net;
 using System.Net.Http.Headers;
 using Shared.Grpc;
 
@@ -8,11 +8,11 @@ namespace PiedraAzul.Client.DelegatingHandlers;
 public class HttpDelegatingHandler : DelegatingHandler
 {
     private readonly IJSRuntime js;
-    private readonly AuthServiceProto.AuthServiceProtoClient authClient;
+    private readonly AuthService.AuthServiceClient authClient;
 
     public HttpDelegatingHandler(
         IJSRuntime js,
-        AuthServiceProto.AuthServiceProtoClient authClient)
+        AuthService.AuthServiceClient authClient)
     {
         this.js = js;
         this.authClient = authClient;
@@ -22,45 +22,55 @@ public class HttpDelegatingHandler : DelegatingHandler
         HttpRequestMessage request,
         CancellationToken cancellationToken)
     {
-        // 1️⃣ agregar token
-        var token = await js.InvokeAsync<string>("localStorage.getItem", "authToken");
+        var accessToken = await js.InvokeAsync<string>("localStorage.getItem", "accessToken");
 
-        if (!string.IsNullOrEmpty(token))
+        if (!string.IsNullOrWhiteSpace(accessToken))
         {
             request.Headers.Authorization =
-                new AuthenticationHeaderValue("Bearer", token);
+                new AuthenticationHeaderValue("Bearer", accessToken);
         }
 
-        // 2️⃣ enviar request
         var response = await base.SendAsync(request, cancellationToken);
 
-        // 3️⃣ si expiró, refrescar vía gRPC
-        if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
-        {
-            var newToken = await RefreshTokenAsync();
+        if (response.StatusCode != HttpStatusCode.Unauthorized)
+            return response;
 
-            if (!string.IsNullOrEmpty(newToken))
-            {
-                request.Headers.Authorization =
-                    new AuthenticationHeaderValue("Bearer", newToken);
+        // Intentar refrescar token
+        var newToken = await RefreshTokenAsync();
 
-                response = await base.SendAsync(request, cancellationToken);
-            }
-        }
+        if (string.IsNullOrWhiteSpace(newToken))
+            return response;
 
-        return response;
+        // Clonar request antes de reenviarlo
+        var newRequest = await CloneHttpRequestMessageAsync(request);
+
+        newRequest.Headers.Authorization =
+            new AuthenticationHeaderValue("Bearer", newToken);
+
+        return await base.SendAsync(newRequest, cancellationToken);
     }
 
     private async Task<string?> RefreshTokenAsync()
     {
         try
         {
-            var response = await authClient.RefreshAsync(new RefreshRequest());
+            var refreshToken =
+                await js.InvokeAsync<string>("localStorage.getItem", "refreshToken");
 
-            if (string.IsNullOrEmpty(response.AccessToken))
+            if (string.IsNullOrWhiteSpace(refreshToken))
                 return null;
 
-            await js.InvokeVoidAsync("localStorage.setItem", "authToken", response.AccessToken);
+            var response = await authClient.RefreshTokenAsync(
+                new RefreshTokenRequest
+                {
+                    RefreshToken = refreshToken
+                });
+
+            if (string.IsNullOrWhiteSpace(response.AccessToken))
+                return null;
+
+            await js.InvokeVoidAsync("localStorage.setItem", "accessToken", response.AccessToken);
+            await js.InvokeVoidAsync("localStorage.setItem", "refreshToken", response.RefreshToken);
 
             return response.AccessToken;
         }
@@ -68,5 +78,31 @@ public class HttpDelegatingHandler : DelegatingHandler
         {
             return null;
         }
+    }
+
+    private static async Task<HttpRequestMessage> CloneHttpRequestMessageAsync(HttpRequestMessage request)
+    {
+        var clone = new HttpRequestMessage(request.Method, request.RequestUri);
+
+        foreach (var header in request.Headers)
+        {
+            clone.Headers.TryAddWithoutValidation(header.Key, header.Value);
+        }
+
+        if (request.Content != null)
+        {
+            var ms = new MemoryStream();
+            await request.Content.CopyToAsync(ms);
+            ms.Position = 0;
+
+            clone.Content = new StreamContent(ms);
+
+            foreach (var header in request.Content.Headers)
+            {
+                clone.Content.Headers.Add(header.Key, header.Value);
+            }
+        }
+
+        return clone;
     }
 }
