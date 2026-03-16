@@ -6,12 +6,12 @@
 @using PiedraAzul.Client.Models
 
 
-<EditForm Model="@Model" class="flex justify-center">
+<EditForm  Model="@Model" class="flex justify-center">
 
     <DataAnnotationsValidator />
 
     <div class="flex flex-col shadow-2xl p-8 max-w-6xl mx-auto bg-white rounded-xl w-full my-6">
-        <Stepper TModel="BookingModel">
+        <Stepper TModel="BookingModel" FinishText="Solicitar cita" OnFinish="HandlerSubmit">
 
                 <!-- STEP 1 -->
                 <Step TModel="BookingModel"
@@ -114,8 +114,16 @@
 
                 </Step>
 
-
                 <!-- STEP 3 -->
+                <Step TModel="BookingModel"
+                      Title="Selecciona un doctor"
+                      Fields="@(new[] { nameof(Model.DoctorId)})">
+
+                <AppointmentScheduler DoctorId="@Model.DoctorId" />
+                    <ValidationMessage For="() => Model.DoctorId" />
+
+                </Step>
+                <!-- STEP 4 -->
                 <Step TModel="BookingModel" Title="Confirmación">
 
                     <h2 class="text-2xl font-bold mb-4">
@@ -143,5 +151,10 @@
     private void SelectedMedic(string args)
     {
         Model.DoctorId = args;
+    }
+    private void HandlerSubmit()
+    {
+
+        Console.WriteLine("meow");
     }
 }
