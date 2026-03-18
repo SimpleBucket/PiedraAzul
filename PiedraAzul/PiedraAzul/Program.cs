@@ -146,12 +146,6 @@ using (var scope = app.Services.CreateScope())
 }
 #endregion
 
-#region Middleware
-app.UseHttpsRedirection();
-app.UseAntiforgery();
-app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
-app.MapStaticAssets();
-#endregion
 
 #region UI
 app.MapRazorComponents<App>()
@@ -165,15 +159,24 @@ app.UseAuthentication();
 app.UseAuthorization();
 #endregion
 
+#region Middleware
+app.UseHttpsRedirection();
+app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
+app.MapStaticAssets();
+app.UseAntiforgery();
+#endregion
 #region gRPCWeb
 app.UseGrpcWeb();
 #endregion
 #region gRPCServices
 
 #endregion
-if (!isEf && writer != null)
+
+#region Dispose
+if (writer != null)
 {
     app.Lifetime.ApplicationStopping.Register(() => writer.Dispose());
 }
+#endregion
 
 app.Run();
