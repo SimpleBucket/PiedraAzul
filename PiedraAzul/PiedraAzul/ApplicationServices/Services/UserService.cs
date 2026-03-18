@@ -13,7 +13,7 @@ namespace PiedraAzul.ApplicationServices.Services
         Task<ApplicationUser?> GetById(string userId);
     }
     public class UserService(IDbContextFactory<AppDbContext> dbContext, 
-        UserManager<ApplicationUser> userManager, RoleManager<IdentityUser> roleManager) : IUserService
+        UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager) : IUserService
     {
         public async Task<ApplicationUser?> GetById(string userId)
         {

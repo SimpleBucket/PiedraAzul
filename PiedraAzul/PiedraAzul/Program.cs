@@ -11,6 +11,7 @@ using Microsoft.IdentityModel.Tokens;
 using PiedraAzul.ApplicationServices.Services;
 using PiedraAzul.Components;
 using PiedraAzul.Data;
+using PiedraAzul.GrcpServices;
 using System.Security.Claims;
 using System.Text;
 #endregion
@@ -50,6 +51,10 @@ builder.Services.AddDbContextFactory<AppDbContext>(options =>
 #region JWTAndRefreshToken
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 builder.Services.AddScoped<RefreshTokenService, RefreshTokenService>();
+#endregion
+
+#region Services
+builder.Services.AddScoped<IUserService, UserService>();
 #endregion
 
 #region AuthenticationAndAuthorization
@@ -165,11 +170,12 @@ app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages:
 app.MapStaticAssets();
 app.UseAntiforgery();
 #endregion
+
 #region gRPCWeb
 app.UseGrpcWeb();
 #endregion
 #region gRPCServices
-
+app.MapGrpcService<GrpcAuth>().EnableGrpcWeb();
 #endregion
 
 #region Dispose
