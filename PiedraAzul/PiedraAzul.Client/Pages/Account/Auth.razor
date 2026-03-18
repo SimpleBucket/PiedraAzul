@@ -1,0 +1,21 @@
+﻿@page "/account/auth"
+@using PiedraAzul.Client.Components.AccountTag
+@using PiedraAzul.Client.Components.StepTag
+<PageTitle>@(isLoginForm ? "Ingresar" : "Registrarse") | Piedra Azul</PageTitle>
+
+<div class="my-auto flex flex-col items-center">
+    @if (isLoginForm)
+    {
+        <LoginForm OnRegisterClick="() => isLoginForm = false" />
+    }
+    else
+    {
+        <RegisterForm OnLoginClick="() => isLoginForm = true" />
+    }
+</div>
+
+
+
+@code {
+    private bool isLoginForm { get; set; } = true;
+}
