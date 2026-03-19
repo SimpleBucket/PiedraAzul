@@ -5,13 +5,13 @@
 namespace PiedraAzul.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class AddFieldName : Migration
+    public partial class avatarurl : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AddColumn<string>(
-                name: "Name",
+                name: "AvatarUrl",
                 table: "AspNetUsers",
                 type: "text",
                 nullable: false,
@@ -22,7 +22,7 @@ namespace PiedraAzul.Data.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(
-                name: "Name",
+                name: "AvatarUrl",
                 table: "AspNetUsers");
         }
     }
