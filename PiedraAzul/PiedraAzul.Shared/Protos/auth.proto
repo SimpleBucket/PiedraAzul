@@ -1,4 +1,5 @@
 syntax = "proto3";
+
 import "google/protobuf/timestamp.proto";
 option csharp_namespace = "Shared.Grpc";
 import "Protos/common.proto";
@@ -29,9 +30,7 @@ message RegisterRequest {
   GenderType gender = 6;
   string role = 7;
   google.protobuf.Timestamp birthDate = 8;
-  
 }
-
 
 enum GenderType {
   GENDER_UNSPECIFIED = 0;
@@ -39,23 +38,19 @@ enum GenderType {
   FEMALE = 2;
   OTHER = 3;
 }
+
 message LoginRequest {
   string email = 1;
   string password = 2;
 }
 
-message RefreshTokenRequest {
-  string refreshToken = 1;
-}
+message RefreshTokenRequest {} 
 
-message RevokeTokenRequest {
-  string refreshToken = 1;
-}
+message RevokeTokenRequest {} 
 
 message AuthResponse {
   string accessToken = 1;
-  string refreshToken = 2;
-  UserResponse user = 3;
+  UserResponse user = 2;
 }
 
 message UserResponse {
@@ -68,4 +63,3 @@ message UserResponse {
 
   repeated string roles = 6;
 }
-
