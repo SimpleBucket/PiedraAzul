@@ -1,6 +1,17 @@
 ﻿@page "/account"
+@using PiedraAzul.Client.States
+@inherits LayoutComponentBase
+@inject NavigationManager Navigation
+@inject UserState UserState
+
 
 
 @code {
-
+    override protected void OnInitialized()
+    {
+        if (UserState.UserResponse==null)
+        {
+            Navigation.NavigateTo("/account/auth", forceLoad:false, replace:true);
+        }
+    }
 }

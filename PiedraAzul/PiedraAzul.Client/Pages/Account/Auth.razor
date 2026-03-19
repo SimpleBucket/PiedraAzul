@@ -6,11 +6,11 @@
 <div class="my-auto flex flex-col items-center">
     @if (isLoginForm)
     {
-        <LoginForm OnRegisterClick="() => isLoginForm = false" />
+        <LoginForm OnRegisterClick="() => { isLoginForm = false; }" ReturnUrl="/" />
     }
     else
     {
-        <RegisterForm OnLoginClick="() => isLoginForm = true" />
+        <RegisterForm OnLoginClick="() => {isLoginForm = true;  } " />
     }
 </div>
 
