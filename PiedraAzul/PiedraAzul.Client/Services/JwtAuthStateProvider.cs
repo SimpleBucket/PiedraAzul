@@ -9,7 +9,7 @@ namespace PiedraAzul.Client.States
     {
         public override async Task<AuthenticationState> GetAuthenticationStateAsync()
         {
-            var token = await JS.InvokeAsync<string>("localStorage.getItem", "authToken");
+            var token = await JS.InvokeAsync<string>("sessionStorage.getItem", "authToken");
 
             if (string.IsNullOrWhiteSpace(token))
                 return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));

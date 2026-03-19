@@ -15,7 +15,7 @@ namespace PiedraAzul.Client.Services
 
         public async Task<string?> GetTokenAsync()
         {
-            return await _js.InvokeAsync<string>("localStorage.getItem", "authToken");
+            return await _js.InvokeAsync<string>("session.getItem", "authToken");
         }
 
         public async Task<UserDto?> GetCurrentUserAsync()
