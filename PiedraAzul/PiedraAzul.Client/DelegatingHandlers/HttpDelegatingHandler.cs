@@ -10,27 +10,30 @@ public class HttpDelegatingHandler : DelegatingHandler
 {
     private readonly IJSRuntime js;
     private readonly RefreshAuthClient refreshClient;
+    private readonly ITokenService tokenService;
 
     private static SemaphoreSlim _refreshLock = new(1, 1);
 
     public HttpDelegatingHandler(
         IJSRuntime js,
-        RefreshAuthClient refreshClient)
+        RefreshAuthClient refreshClient,
+        ITokenService tokenService)
     {
         this.js = js;
         this.refreshClient = refreshClient;
+        this.tokenService = tokenService;
     }
 
     protected override async Task<HttpResponseMessage> SendAsync(
-        HttpRequestMessage request,
-        CancellationToken cancellationToken)
+           HttpRequestMessage request,
+           CancellationToken cancellationToken)
     {
-        var accessToken = await js.InvokeAsync<string>("sessionStorage.getItem", "accessToken");
+        var token = await tokenService.GetAccessTokenAsync();
 
-        if (!string.IsNullOrWhiteSpace(accessToken))
+        if (!string.IsNullOrWhiteSpace(token))
         {
             request.Headers.Authorization =
-                new AuthenticationHeaderValue("Bearer", accessToken);
+                new AuthenticationHeaderValue("Bearer", token);
         }
 
         var response = await base.SendAsync(request, cancellationToken);
@@ -38,58 +41,17 @@ public class HttpDelegatingHandler : DelegatingHandler
         if (response.StatusCode != HttpStatusCode.Unauthorized)
             return response;
 
-        await _refreshLock.WaitAsync(cancellationToken);
-        try
-        {
-            // Verificar si otro request ya refrescó el token
-            var currentToken = await js.InvokeAsync<string>("sessionStorage.getItem", "accessToken");
+        var newToken = await tokenService.RefreshTokenAsync();
 
-            if (currentToken != accessToken)
-            {
-                var retryRequest = await CloneHttpRequestMessageAsync(request);
+        if (string.IsNullOrWhiteSpace(newToken))
+            return response;
 
-                retryRequest.Headers.Authorization =
-                    new AuthenticationHeaderValue("Bearer", currentToken);
+        var newRequest = await CloneHttpRequestMessageAsync(request);
 
-                return await base.SendAsync(retryRequest, cancellationToken);
-            }
+        newRequest.Headers.Authorization =
+            new AuthenticationHeaderValue("Bearer", newToken);
 
-            var newToken = await RefreshTokenAsync();
-
-            if (string.IsNullOrWhiteSpace(newToken))
-                return response;
-
-            var newRequest = await CloneHttpRequestMessageAsync(request);
-
-            newRequest.Headers.Authorization =
-                new AuthenticationHeaderValue("Bearer", newToken);
-
-            return await base.SendAsync(newRequest, cancellationToken);
-        }
-        finally
-        {
-            _refreshLock.Release();
-        }
-    }
-
-    private async Task<string?> RefreshTokenAsync()
-    {
-        try
-        {
-            var response = await refreshClient.Client.RefreshTokenAsync(new RefreshTokenRequest());
-
-            if (string.IsNullOrWhiteSpace(response.AccessToken))
-                return null;
-
-            await js.InvokeVoidAsync("sessionStorage.setItem", "accessToken", response.AccessToken);
-
-            return response.AccessToken;
-        }
-        catch
-        {
-            await js.InvokeVoidAsync("sessionStorage.clear");
-            return null;
-        }
+        return await base.SendAsync(newRequest, cancellationToken);
     }
 
     private static async Task<HttpRequestMessage> CloneHttpRequestMessageAsync(HttpRequestMessage request)
