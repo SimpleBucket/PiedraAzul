@@ -3,11 +3,12 @@ using Lucene.Net.Index;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using PiedraAzul.ApplicationServices.Services;
+using PiedraAzul.Client.Extensions;
 using PiedraAzul.Components;
 using PiedraAzul.Data;
 using PiedraAzul.Extensions;
-using PiedraAzul.GrcpServices;
-using PiedraAzul.Client.Extensions;
+using PiedraAzul.GrpcServices;
+using PiedraAzul.Seeders;
 #endregion
 
 var builder = WebApplication.CreateBuilder(args);
@@ -16,7 +17,7 @@ var isEf = args.Any(a => a.Contains("ef", StringComparison.OrdinalIgnoreCase));
 IndexWriter? writer = null;
 if (!isEf)
 {
-    builder.Services.AddLucene(builder.Configuration["LuceneIndexPath"] ?? "lucene_index", writer);
+    //builder.Services.AddLucene(builder.Configuration["LuceneIndexPath"] ?? "lucene_index", writer);
 }
 
 #region Mapperly
@@ -35,7 +36,8 @@ builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
 
 #region Services
 builder.Services.AddScoped<IUserService, UserService>();
-
+builder.Services.AddScoped<IAppointmentService, AppointmentService>();
+builder.Services.AddScoped<IDoctorService, DoctorService>();
 #endregion
 #region ClientServices
 builder.Services.AddClientServer(builder.Configuration["GrpcUrl"] ?? "https://localhost:7128");
@@ -138,7 +140,10 @@ app.UseAntiforgery();
 app.UseGrpcWeb();
 #endregion
 #region gRPCServices
-app.MapGrpcService<GrpcAuth>().EnableGrpcWeb();
+app.MapGrpcService<PiedraAzul.GrpcServices.GrpcAuth>().EnableGrpcWeb();
+app.MapGrpcService<PiedraAzul.GrpcServices.GrpcAvailability>().EnableGrpcWeb();
+app.MapGrpcService<PiedraAzul.GrpcServices.GrpcAppointment>().EnableGrpcWeb();
+app.MapGrpcService<PiedraAzul.GrpcServices.GrpcDoctor>().EnableGrpcWeb();
 #endregion
 
 #region Dispose
@@ -147,5 +152,12 @@ if (writer != null)
     app.Lifetime.ApplicationStopping.Register(() => writer.Dispose());
 }
 #endregion
+
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<IDbContextFactory<AppDbContext>>();
+    var usermanager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+    await DbSeeder.SeedAsync(context, usermanager);
+}
 
 app.Run();
