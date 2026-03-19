@@ -1,29 +1,31 @@
 ﻿using Microsoft.JSInterop;
+using PiedraAzul.Client.Services;
 using Shared.Grpc;
 using System.Net;
 using System.Net.Http.Headers;
-
 
 namespace PiedraAzul.Client.DelegatingHandlers;
 
 public class HttpDelegatingHandler : DelegatingHandler
 {
     private readonly IJSRuntime js;
-    private readonly AuthService.AuthServiceClient authClient;
+    private readonly RefreshAuthClient refreshClient;
+
+    private static SemaphoreSlim _refreshLock = new(1, 1);
 
     public HttpDelegatingHandler(
         IJSRuntime js,
-        AuthService.AuthServiceClient authClient)
+        RefreshAuthClient refreshClient)
     {
         this.js = js;
-        this.authClient = authClient;
+        this.refreshClient = refreshClient;
     }
 
     protected override async Task<HttpResponseMessage> SendAsync(
         HttpRequestMessage request,
         CancellationToken cancellationToken)
     {
-        var accessToken = await js.InvokeAsync<string>("localStorage.getItem", "accessToken");
+        var accessToken = await js.InvokeAsync<string>("sessionStorage.getItem", "accessToken");
 
         if (!string.IsNullOrWhiteSpace(accessToken))
         {
@@ -36,47 +38,56 @@ public class HttpDelegatingHandler : DelegatingHandler
         if (response.StatusCode != HttpStatusCode.Unauthorized)
             return response;
 
-        // Intentar refrescar token
-        var newToken = await RefreshTokenAsync();
+        await _refreshLock.WaitAsync(cancellationToken);
+        try
+        {
+            // Verificar si otro request ya refrescó el token
+            var currentToken = await js.InvokeAsync<string>("sessionStorage.getItem", "accessToken");
 
-        if (string.IsNullOrWhiteSpace(newToken))
-            return response;
+            if (currentToken != accessToken)
+            {
+                var retryRequest = await CloneHttpRequestMessageAsync(request);
 
-        // Clonar request antes de reenviarlo
-        var newRequest = await CloneHttpRequestMessageAsync(request);
+                retryRequest.Headers.Authorization =
+                    new AuthenticationHeaderValue("Bearer", currentToken);
 
-        newRequest.Headers.Authorization =
-            new AuthenticationHeaderValue("Bearer", newToken);
+                return await base.SendAsync(retryRequest, cancellationToken);
+            }
 
-        return await base.SendAsync(newRequest, cancellationToken);
+            var newToken = await RefreshTokenAsync();
+
+            if (string.IsNullOrWhiteSpace(newToken))
+                return response;
+
+            var newRequest = await CloneHttpRequestMessageAsync(request);
+
+            newRequest.Headers.Authorization =
+                new AuthenticationHeaderValue("Bearer", newToken);
+
+            return await base.SendAsync(newRequest, cancellationToken);
+        }
+        finally
+        {
+            _refreshLock.Release();
+        }
     }
 
     private async Task<string?> RefreshTokenAsync()
     {
         try
         {
-            var refreshToken =
-                await js.InvokeAsync<string>("localStorage.getItem", "refreshToken");
-
-            if (string.IsNullOrWhiteSpace(refreshToken))
-                return null;
-
-            var response = await authClient.RefreshTokenAsync(
-                new RefreshTokenRequest
-                {
-                    RefreshToken = refreshToken
-                });
+            var response = await refreshClient.Client.RefreshTokenAsync(new RefreshTokenRequest());
 
             if (string.IsNullOrWhiteSpace(response.AccessToken))
                 return null;
 
-            await js.InvokeVoidAsync("localStorage.setItem", "accessToken", response.AccessToken);
-            await js.InvokeVoidAsync("localStorage.setItem", "refreshToken", response.RefreshToken);
+            await js.InvokeVoidAsync("sessionStorage.setItem", "accessToken", response.AccessToken);
 
             return response.AccessToken;
         }
         catch
         {
+            await js.InvokeVoidAsync("sessionStorage.clear");
             return null;
         }
     }
