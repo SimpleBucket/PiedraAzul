@@ -19,7 +19,6 @@ if (!isEf)
     builder.Services.AddLucene(builder.Configuration["LuceneIndexPath"] ?? "lucene_index", writer);
 }
 
-
 #region Mapperly
 
 #endregion
@@ -36,10 +35,10 @@ builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
 
 #region Services
 builder.Services.AddScoped<IUserService, UserService>();
+
 #endregion
 #region ClientServices
-builder.Services.AddClientServer(builder.Configuration["GrpcUrl"] ?? "https://piedraazul.dev.localhost:7128");
-
+builder.Services.AddClientServer(builder.Configuration["GrpcUrl"] ?? "https://localhost:7128");
 #endregion
 
 
