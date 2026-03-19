@@ -2,10 +2,10 @@
 
 <CascadingAuthenticationState>
 
-    <Router AppAssembly="typeof(Program).Assembly" NotFoundPage="typeof(Pages.NotFound)">
+    <Router AppAssembly="@typeof(Program).Assembly" NotFoundPage="typeof(Pages.NotFound)">
 
         <Navigating>
-            <div class="flex justify-center items-center h-screen">
+            <div class="flex h-screen items-center justify-center">
                 <div class="spinner"></div>
             </div>
         </Navigating>
@@ -15,13 +15,13 @@
                                 DefaultLayout="typeof(Layout.MainLayout)">
 
                 <Authorizing>
-                    <div class="flex justify-center items-center h-screen">
+                    <div class="flex h-screen items-center justify-center">
                         <div class="spinner"></div>
                     </div>
                 </Authorizing>
 
                 <NotAuthorized>
-                    <div class="text-center mt-10">
+                    <div class="mt-10 text-center">
                         <h3>No tienes permiso para ver esta página</h3>
                     </div>
                 </NotAuthorized>
