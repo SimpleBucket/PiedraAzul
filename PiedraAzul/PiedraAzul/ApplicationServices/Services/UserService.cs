@@ -44,6 +44,7 @@ namespace PiedraAzul.ApplicationServices.Services
 
         public async Task<ApplicationUser?> Register(ApplicationUser applicationUser, string password, List<string> roles)
         {
+            applicationUser.UserName = applicationUser.IdentificationNumber;
             foreach (var role in roles)
             {
                 var isRole = await roleManager.RoleExistsAsync(role);
