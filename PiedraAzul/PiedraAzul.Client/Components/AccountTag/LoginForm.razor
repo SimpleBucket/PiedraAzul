@@ -1,26 +1,100 @@
-﻿  <div class="w-full max-w-lg">
-    <h2 class="mb-2 text-left text-3xl font-bold">Ingresa a tu cuenta</h2>
-    <p class="text-left">Por favor llena tus datos debajo del recuadro para iniciar.</p>
-    <p class="text-left">Escriba en las cajas de texto</p>
-    <!--Login form-->
-    <form action="" class="mt-5 p-3 shadow">
-      <div class="flex flex-col">
-        <label for=""> Ingrese su numero de identificación, su telefono, o correo </label>
-        <input class="rounded-md border border-[#257D8D] px-3 py-4 outline-none focus:ring-2 focus:ring-teal-400" type="text" name="login" id="" placeholder="Ej: 10 123 4567" />
-      </div>
-      <div class="flex flex-col">
-        <label for=""> Ingrese su contraseña </label>
-        <input type="password" class="rounded-md border border-[#257D8D] px-3 py-4 outline-none focus:ring-2 focus:ring-teal-400" name="login" id="" placeholder="Ej: tu contraseña super secreta" />
-      </div>
-      <div class="mt-3 grid gap-3 md:grid-cols-2">
-        <button @onclick="async () => await OnRegisterClick.InvokeAsync()" type="submit" class="cursor-pointer text-balance rounded-md border border-[#CBD5E1] bg-[#E2E8F0] p-3 transition-colors duration-200 hover:bg-[#CBD5E1]">¿No tienes cuenta, presiona aqui para registrarte?</button>
+﻿@using Grpc.Core
+@using PiedraAzul.Client.Models
+@using PiedraAzul.Client.Services
+@using PiedraAzul.Client.States
+@inject NavigationManager NavigationManager
+@inject AuthenticationService AuthService
+@inject UserState UserState
 
-        <button type="submit" class="cursor-pointer text-balance rounded-md border border-[#CBD5E1] bg-[#257D8D] p-3 transition-colors duration-200 hover:bg-[#1E5F6F]">Presiona para ingresar sesión</button>
-      </div>
-    </form>
-  </div>
+<EditForm Model="@loginModel" OnValidSubmit="HandleLogin" class="mx-auto w-full max-w-lg">
+    <DataAnnotationsValidator />
+
+    <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-xl md:p-8">
+
+        <!-- Header -->
+        <h2 class="text-center text-2xl font-bold text-gray-800 md:text-left md:text-3xl">
+            Ingresa a tu cuenta
+        </h2>
+
+        <p class="mb-6 mt-2 text-center text-gray-500 md:text-left">
+            Accede a tus servicios médicos de forma segura.
+        </p>
+
+        <!-- Validation -->
+        <ValidationSummary class="mb-4 text-sm text-red-500" />
+
+        <!-- Usuario -->
+        <div class="mb-4">
+            <label class="mb-2 block text-sm font-semibold text-gray-700">
+                Identificación, teléfono o correo
+            </label>
+
+            <InputText @bind-Value="loginModel.Login"
+                       class="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-700
+            transition focus:border-teal-400 focus:outline-none focus:ring-2
+            focus:ring-teal-400"
+                       placeholder="Ej: 101234567 o correo@email.com" />
+        </div>
+
+        <!-- Contraseña -->
+        <div class="mb-4">
+            <label class="mb-2 block text-sm font-semibold text-gray-700">
+                Contraseña
+            </label>
+
+            <InputText @bind-Value="loginModel.Password"
+                       type="password"
+                       class="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-700
+            transition focus:border-teal-400 focus:outline-none focus:ring-2
+            focus:ring-teal-400"
+                       placeholder="Tu contraseña" />
+        </div>
+
+        <!-- Acciones -->
+        <div class="mt-6 space-y-3">
+
+            <button type="submit"
+                    class="w-full rounded-lg bg-[#257D8D] py-3 font-semibold text-white shadow-md
+                transition duration-200 hover:bg-[#1E5F6F]">
+                Iniciar sesión
+            </button>
+
+            <button type="button"
+                    @onclick="async () => await OnRegisterClick.InvokeAsync()"
+                    class="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 rounded-lg
+                transition duration-200">
+                ¿No tienes cuenta? Regístrate
+            </button>
+
+        </div>
+
+    </div>
+</EditForm>
 
 @code {
+    private LoginModel loginModel = new();
+
     [Parameter]
     public EventCallback OnRegisterClick { get; set; }
+    [Parameter]
+    public string ReturnUrl { get; set; } = "/";
+
+    private string _errorMessage;
+    private async Task HandleLogin()
+    {
+        Console.WriteLine($"Login: {loginModel.Login}");
+
+        var result = await AuthService.LoginAsync(loginModel);
+
+        if(!result.IsSuccess)
+        {
+            _errorMessage = result.Error!.Message;
+            return;
+        }
+        
+        var user = result.Value;
+
+        UserState.UserResponse = user;
+        NavigationManager.NavigateTo(ReturnUrl);
+    }
 }
