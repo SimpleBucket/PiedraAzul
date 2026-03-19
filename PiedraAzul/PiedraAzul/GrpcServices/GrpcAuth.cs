@@ -6,7 +6,7 @@ using PiedraAzul.GrpcServices;
 using PiedraAzul.Shared.Grpc;
 using Shared.Grpc;
 
-namespace PiedraAzul.GrcpServices
+namespace PiedraAzul.GrpcServices
 {
     public class GrpcAuth(
         IUserService userService,
