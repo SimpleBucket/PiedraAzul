@@ -22,7 +22,8 @@ namespace PiedraAzul.ApplicationServices.Services
         new(JwtRegisteredClaimNames.Sub, user.Id),
         new(JwtRegisteredClaimNames.Email, user.Email!),
         new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-        new(JwtRegisteredClaimNames.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64)
+        new(JwtRegisteredClaimNames.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64),
+        new(JwtRegisteredClaimNames.Name, user.Name),
     };
             var roles = await userManager.GetRolesAsync(user);
             foreach (var role in roles)
