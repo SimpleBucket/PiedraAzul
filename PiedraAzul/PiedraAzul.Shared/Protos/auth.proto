@@ -55,11 +55,12 @@ message AuthResponse {
 
 message UserResponse {
   string id = 1;
-  string email = 2;
-  string identificationNumber = 3;
+  string name =2;
+  string email = 3;
+  string identificationNumber = 4;
 
-  int32 gender = 4;
-  string birthDate = 5;
+  int32 gender = 5;
+  string birthDate = 6;
 
-  repeated string roles = 6;
+  repeated string roles = 7;
 }

@@ -35,9 +35,10 @@ message CreateAppointmentRequest {
   string patientId = 3;
 
   // para invitados
-  string patientName = 4;
-  string patientPhone = 5;
-  string patientAddress = 6;
+  string patientIdentification = 4;
+  string patientName = 5; 
+  string patientPhone = 6;
+  string patientExtraInfo = 7;
 }
 
 
