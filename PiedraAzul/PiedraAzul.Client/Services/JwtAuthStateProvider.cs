@@ -8,7 +8,6 @@ namespace PiedraAzul.Client.States
 {
     public class JwtAuthStateProvider(IJSRuntime JS, ITokenService tokenService) : AuthenticationStateProvider
     {
-        private static SemaphoreSlim _refreshLock = new(1, 1);
 
         public override async Task<AuthenticationState> GetAuthenticationStateAsync()
         {

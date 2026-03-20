@@ -60,6 +60,15 @@ public class AuthenticationService
 
         return result;
     }
+    public async Task<Result<UserResponse>> GetCurrentUserAsync()
+    {
+        var result = await GrpcExecutor.Execute(async () =>
+        {
+            var response = await authClient.GetCurrentUserAsync(new Shared.Grpc.Empty());
+            return response;
+        });
+        return result;
+    }
 
     public async Task Logout()
     {
