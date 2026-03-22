@@ -4,7 +4,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace PiedraAzul.Migrations
+namespace PiedraAzul.Data.Migrations
 {
     /// <inheritdoc />
     public partial class InitialCreate : Migration
@@ -36,6 +36,7 @@ namespace PiedraAzul.Migrations
                     Gender = table.Column<int>(type: "integer", nullable: false),
                     BirthDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     Name = table.Column<string>(type: "text", nullable: false),
+                    AvatarUrl = table.Column<string>(type: "text", nullable: false),
                     UserName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
                     Email = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
@@ -54,6 +55,20 @@ namespace PiedraAzul.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_AspNetUsers", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "PatientGuests",
+                columns: table => new
+                {
+                    PatientIdentification = table.Column<string>(type: "text", nullable: false),
+                    PatientName = table.Column<string>(type: "text", nullable: false),
+                    PatientPhone = table.Column<string>(type: "text", nullable: false),
+                    PatientExtraInfo = table.Column<string>(type: "text", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_PatientGuests", x => x.PatientIdentification);
                 });
 
             migrationBuilder.CreateTable(
@@ -261,44 +276,57 @@ namespace PiedraAzul.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    PatientId = table.Column<Guid>(type: "uuid", nullable: false),
+                    PatientId = table.Column<Guid>(type: "uuid", nullable: true),
+                    PatientGuestId = table.Column<string>(type: "text", nullable: false),
                     DoctorId = table.Column<Guid>(type: "uuid", nullable: false),
-                    DoctorAvailabilityBlockId = table.Column<Guid>(type: "uuid", nullable: false),
-                    DayOfYear = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    DoctorAvailabilitySlotId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Date = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Appointments", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Appointments_DoctorAvailabilitySlots_DoctorAvailabilityBloc~",
-                        column: x => x.DoctorAvailabilityBlockId,
+                        name: "FK_Appointments_DoctorAvailabilitySlots_DoctorAvailabilitySlot~",
+                        column: x => x.DoctorAvailabilitySlotId,
                         principalTable: "DoctorAvailabilitySlots",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_Appointments_DoctorProfiles_DoctorId",
                         column: x => x.DoctorId,
                         principalTable: "DoctorProfiles",
                         principalColumn: "DoctorId",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Appointments_PatientGuests_PatientGuestId",
+                        column: x => x.PatientGuestId,
+                        principalTable: "PatientGuests",
+                        principalColumn: "PatientIdentification",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_Appointments_PatientProfiles_PatientId",
                         column: x => x.PatientId,
                         principalTable: "PatientProfiles",
                         principalColumn: "PatientId",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_Appointments_DoctorAvailabilityBlockId",
+                name: "IX_Appointments_DoctorAvailabilitySlotId_Date",
                 table: "Appointments",
-                column: "DoctorAvailabilityBlockId");
+                columns: new[] { "DoctorAvailabilitySlotId", "Date" },
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Appointments_DoctorId",
                 table: "Appointments",
                 column: "DoctorId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Appointments_PatientGuestId",
+                table: "Appointments",
+                column: "PatientGuestId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Appointments_PatientId",
@@ -392,6 +420,9 @@ namespace PiedraAzul.Migrations
 
             migrationBuilder.DropTable(
                 name: "DoctorAvailabilitySlots");
+
+            migrationBuilder.DropTable(
+                name: "PatientGuests");
 
             migrationBuilder.DropTable(
                 name: "PatientProfiles");

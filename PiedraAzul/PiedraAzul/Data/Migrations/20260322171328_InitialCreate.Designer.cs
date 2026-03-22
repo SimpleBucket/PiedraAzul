@@ -12,8 +12,8 @@ using PiedraAzul.Data;
 namespace PiedraAzul.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260320032052_addmoreparameterstoappointment")]
-    partial class addmoreparameterstoappointment
+    [Migration("20260322171328_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -260,24 +260,18 @@ namespace PiedraAzul.Data.Migrations
                     b.Property<Guid>("DoctorId")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("PatientExtraInfo")
+                    b.Property<string>("PatientGuestId")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<Guid?>("PatientId")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("PatientIdentificationNumber")
-                        .HasColumnType("text");
-
-                    b.Property<string>("PatientName")
-                        .HasColumnType("text");
-
-                    b.Property<string>("PatientPhone")
-                        .HasColumnType("text");
-
                     b.HasKey("Id");
 
                     b.HasIndex("DoctorId");
+
+                    b.HasIndex("PatientGuestId");
 
                     b.HasIndex("PatientId");
 
@@ -338,6 +332,28 @@ namespace PiedraAzul.Data.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("DoctorProfiles");
+                });
+
+            modelBuilder.Entity("PiedraAzul.Data.Models.PatientGuest", b =>
+                {
+                    b.Property<string>("PatientIdentification")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PatientExtraInfo")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("PatientName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("PatientPhone")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("PatientIdentification");
+
+                    b.ToTable("PatientGuests");
                 });
 
             modelBuilder.Entity("PiedraAzul.Data.Models.PatientProfile", b =>
@@ -467,6 +483,12 @@ namespace PiedraAzul.Data.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("PiedraAzul.Data.Models.PatientGuest", "PatientGuest")
+                        .WithMany()
+                        .HasForeignKey("PatientGuestId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("PiedraAzul.Data.Models.PatientProfile", "Patient")
                         .WithMany()
                         .HasForeignKey("PatientId")
@@ -477,6 +499,8 @@ namespace PiedraAzul.Data.Migrations
                     b.Navigation("DoctorAvailabilitySlot");
 
                     b.Navigation("Patient");
+
+                    b.Navigation("PatientGuest");
                 });
 
             modelBuilder.Entity("PiedraAzul.Data.Models.DoctorAvailabilitySlot", b =>
