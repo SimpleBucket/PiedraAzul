@@ -183,6 +183,8 @@
 @code {
     [Parameter, EditorRequired]
     public EventCallback<DoctorModel> OnSelected { get; set; }
+    [Parameter]
+    public EventCallback OnChange { get; set; }
 
     PiedraAzul.Shared.Enums.DoctorType SelectedType = DoctorType.NaturalMedicine;
     Dictionary<DoctorType, List<DoctorModel>> MedicsByType = new();
@@ -194,7 +196,7 @@
     protected override async Task OnInitializedAsync()
     {
         await OnSelected.InvokeAsync(null);
-        //await LoadMedicsByDoctorType(DoctorType.NaturalMedicine);
+        await LoadMedicsByDoctorType(DoctorType.NaturalMedicine);
     }
 
     async Task SelectDoctor(DoctorModel doctorModel)
@@ -205,6 +207,7 @@
 
     private async Task LoadMedicsByDoctorType(DoctorType doctorType)
     {
+        await OnChange.InvokeAsync();
         SelectedType = doctorType;
         if (!MedicsByType.TryGetValue(doctorType, out var medics))
         {

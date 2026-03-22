@@ -12,7 +12,7 @@
 
     @foreach (var day in Days)
     {
-        <button @onclick="() => SelectDay(day)"
+        <button type="button" @onclick="() => SelectDay(day)"
                 class="@GetDayClass(day)">
 
             <span class="text-xs uppercase">@day.DayName</span>
@@ -42,7 +42,7 @@
 
     @foreach (var slot in MorningSlots)
     {
-        <button disabled="@(!slot.Available)"
+        <button type="button" disabled="@(!slot.Available)"
                 @onclick="() => SelectSlot(slot)"
                 class="@GetSlotClass(slot)">
 
@@ -74,7 +74,7 @@
 
     @foreach (var slot in AfternoonSlots)
     {
-        <button disabled="@(!slot.Available)"
+        <button type="button" disabled="@(!slot.Available)"
                 @onclick="() => SelectSlot(slot)"
                 class="@GetSlotClass(slot)">
 
