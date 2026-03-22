@@ -1,6 +1,7 @@
 ﻿using Grpc.Core;
 using Microsoft.JSInterop;
 using PiedraAzul.Client.Models;
+using PiedraAzul.Client.Models.UserProfiles;
 using PiedraAzul.Client.Services.Wrappers;
 using Shared.Grpc;
 using static System.Runtime.InteropServices.JavaScript.JSType;
