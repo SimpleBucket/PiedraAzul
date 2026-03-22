@@ -1,0 +1,265 @@
+﻿@using PiedraAzul.Client.Models.Booking
+@using PiedraAzul.Client.Services
+@using PiedraAzul.Client.Services.GrpcServices
+
+<!-- 1 Seleccionar día -->
+@inject GrpcAvailability AvailabilityClient
+<h2 class="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-700">
+    1. Seleccione el día
+</h2>
+
+<div class="mb-6 grid grid-cols-2 gap-3 pb-2 md:grid-cols-5">
+
+    @foreach (var day in Days)
+    {
+        <button type="button" @onclick="() => SelectDay(day)"
+                class="@GetDayClass(day)">
+
+            <span class="text-xs uppercase">@day.DayName</span>
+            <span class="text-xl font-bold">@day.DayNumber</span>
+            <span class="text-xs">@day.Month</span>
+
+        </button>
+    }
+
+</div>
+
+<hr class="my-6">
+
+<!-- seleccionar hora -->
+<h2 class="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-700">
+    2. Seleccione la hora
+</h2>
+
+<!-- mañana -->
+<div class="mb-3">
+    <span class="rounded-full bg-teal-100 px-3 py-1 text-xs font-semibold text-teal-700">
+        JORNADA MAÑANA
+    </span>
+</div>
+
+<div class="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+
+    @foreach (var slot in MorningSlots)
+    {
+        <button type="button" disabled="@(!slot.Available)"
+                @onclick="() => SelectSlot(slot)"
+                class="@GetSlotClass(slot)">
+
+            <span class="font-semibold">@slot.Time</span>
+
+            @if (!slot.Available)
+            {
+                <span class="text-xs">NO DISPONIBLE</span>
+            }
+
+            @if (SelectedSlot == slot)
+            {
+                <span>✓</span>
+            }
+
+        </button>
+    }
+
+</div>
+
+<!-- tarde -->
+<div class="mb-3">
+    <span class="rounded-full bg-teal-100 px-3 py-1 text-xs font-semibold text-teal-700">
+        JORNADA TARDE
+    </span>
+</div>
+
+<div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+
+    @foreach (var slot in AfternoonSlots)
+    {
+        <button type="button" disabled="@(!slot.Available)"
+                @onclick="() => SelectSlot(slot)"
+                class="@GetSlotClass(slot)">
+
+            <span class="font-semibold">@slot.Time</span>
+
+            @if (!slot.Available)
+            {
+                <span class="text-xs">NO DISPONIBLE</span>
+            }
+
+            @if (SelectedSlot == slot)
+            {
+                <span>✓</span>
+            }
+
+        </button>
+    }
+
+</div>
+
+@code {
+
+    [Parameter, EditorRequired]
+    public string DoctorId { get; set; }
+    [Parameter, EditorRequired]
+    public EventCallback<AppointmentSchedulerModel> OnSelected { get; set; }
+
+
+    private string? _errorMessage;
+
+    private Dictionary<DateTime, List<TimeSlot>> cache = new();
+    private DayItem? SelectedDay;
+    private TimeSlot? SelectedSlot;
+    private CancellationTokenSource? _cts;
+    private List<DayItem> Days = new();
+    private List<TimeSlot> MorningSlots = new();
+    private List<TimeSlot> AfternoonSlots = new();
+
+    protected override void OnInitialized()
+    {
+        var startDate = DateTime.Today.AddDays(0);
+
+        Days = Enumerable.Range(0, 14)
+            .Select(i =>
+            {
+                var date = startDate.AddDays(i);
+                return new DayItem
+                {
+                    Date = date,
+                    DayName = date.ToString("ddd").ToUpper(),
+                    DayNumber = date.ToString("dd"),
+                    Month = date.ToString("MMMM").ToUpper()
+                };
+            }).ToList();
+
+        SelectedDay = Days.First();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (SelectedDay != null)
+        {
+            await LoadSlots(SelectedDay.Date);
+        }
+    }
+
+    async Task LoadSlots(DateTime date)
+    {
+        _cts?.Cancel();
+        _cts = new CancellationTokenSource();
+        var token = _cts.Token;
+
+
+        if (cache.TryGetValue(date.Date, out var cachedSlots))
+        {
+            await SetSlots(cachedSlots);
+            return;
+        }
+
+        try
+        {
+            var availability = await AvailabilityClient
+                .GetDoctorSlotsByDate(DoctorId, date, token); 
+
+            if (token.IsCancellationRequested)
+                return;
+
+            if (!availability.IsSuccess)
+            {
+                MorningSlots.Clear();
+                AfternoonSlots.Clear();
+                _errorMessage = "No se pudieron cargar los horarios disponibles. Por favor, inténtelo de nuevo.";
+                return;
+            }
+
+            var slots = availability.Value!.Slots;
+            MorningSlots.Clear();
+            AfternoonSlots.Clear();
+            await InvokeAsync(StateHasChanged);
+            var mapped = slots
+                            .OrderBy(sl => sl.Start)
+                            .Select(s => new TimeSlot
+                            {
+                                Id = s.Id,
+                                Time = s.Start.ToDateTime().ToLocalTime().ToString("hh:mm tt"),
+                                Available = s.IsAvailable
+                            })
+                            .ToList();
+
+            cache[date.Date] = mapped;
+
+            await SetSlots(mapped);
+        }
+        catch (OperationCanceledException)
+        {
+
+        }
+    }
+    async Task SetSlots(List<TimeSlot> slots)
+    {
+        MorningSlots = slots
+            .Where(s => DateTime.Parse(s.Time).Hour < 12)
+            .ToList();
+
+        AfternoonSlots = slots
+            .Where(s => DateTime.Parse(s.Time).Hour >= 12)
+            .ToList();
+        await InvokeAsync(StateHasChanged);
+
+    }
+    async void SelectDay(DayItem day)
+    {
+        SelectedDay = day;
+        SelectedSlot = null;
+
+        await LoadSlots(day.Date);
+    }
+
+    void SelectSlot(TimeSlot slot)
+    {
+        if (!slot.Available)
+            return;
+        SelectedSlot = slot;
+        OnSelected.InvokeAsync(new AppointmentSchedulerModel
+        {
+            SlotId = slot.Id,
+            Date = SelectedDay!.Date,
+            Time = slot.Time
+        });
+    }
+
+    string BaseButton =>
+        "h-20 min-w-[100px] flex flex-col items-center justify-center gap-1 rounded-lg border text-center transition-all duration-150 flex-shrink-0";
+
+    string GetDayClass(DayItem day)
+    {
+        if (SelectedDay == day)
+            return $"{BaseButton} border-teal-600 bg-teal-600 text-white shadow-md";
+
+        return $"{BaseButton} border-gray-200 hover:border-teal-500";
+    }
+
+    string GetSlotClass(TimeSlot slot)
+    {
+        if (!slot.Available)
+            return $"{BaseButton} border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed";
+
+        if (SelectedSlot == slot)
+            return $"{BaseButton} border-teal-600 bg-teal-50 text-teal-700 font-semibold";
+
+        return $"{BaseButton} border-gray-200 hover:border-teal-500";
+    }
+
+    class DayItem
+    {
+        public DateTime Date { get; set; }
+        public string DayName { get; set; }
+        public string DayNumber { get; set; }
+        public string Month { get; set; }
+    }
+
+    class TimeSlot
+    {
+        public string Id { get; set; }
+        public string Time { get; set; }
+        public bool Available { get; set; }
+    }
+}

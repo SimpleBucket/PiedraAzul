@@ -11,6 +11,7 @@ namespace PiedraAzul.ApplicationServices.Services
     public interface IJwtTokenService
     {
         Task<string> CreateTokenAsync(ApplicationUser user);
+        Task<string?> GetUserIdByToken(string token); 
     }
     public class JwtTokenService(UserManager<ApplicationUser> userManager, IConfiguration config) : IJwtTokenService
     {
@@ -21,7 +22,8 @@ namespace PiedraAzul.ApplicationServices.Services
         new(JwtRegisteredClaimNames.Sub, user.Id),
         new(JwtRegisteredClaimNames.Email, user.Email!),
         new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-        new(JwtRegisteredClaimNames.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64)
+        new(JwtRegisteredClaimNames.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64),
+        new(JwtRegisteredClaimNames.Name, user.Name),
     };
             var roles = await userManager.GetRolesAsync(user);
             foreach (var role in roles)
@@ -41,5 +43,38 @@ namespace PiedraAzul.ApplicationServices.Services
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
+        public Task<string?> GetUserIdByToken(string token)
+        {
+            var tokenHandler = new JwtSecurityTokenHandler();
+
+            var key = Encoding.UTF8.GetBytes(config["Jwt:Key"]!);
+
+            var parameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+
+                ValidIssuer = config["Jwt:Issuer"],
+                ValidAudience = config["Jwt:Audience"],
+                IssuerSigningKey = new SymmetricSecurityKey(key),
+
+                ClockSkew = TimeSpan.Zero 
+            };
+
+            try
+            {
+                var principal = tokenHandler.ValidateToken(token, parameters, out _);
+
+                var userId = principal.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+
+                return Task.FromResult(userId);
+            }
+            catch
+            {
+                return Task.FromResult<string?>(null);
+            }
+        }
     }
 }

@@ -162,6 +162,10 @@ namespace PiedraAzul.Data.Migrations
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("integer");
 
+                    b.Property<string>("AvatarUrl")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<DateTime?>("BirthDate")
                         .HasColumnType("timestamp with time zone");
 
@@ -188,6 +192,10 @@ namespace PiedraAzul.Data.Migrations
 
                     b.Property<DateTimeOffset?>("LockoutEnd")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<string>("NormalizedEmail")
                         .HasMaxLength(256)
@@ -237,49 +245,39 @@ namespace PiedraAzul.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("AppointmentSlotId")
-                        .HasColumnType("uuid");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid>("PatientId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AppointmentSlotId");
-
-                    b.HasIndex("PatientId");
-
-                    b.ToTable("Appointments");
-                });
-
-            modelBuilder.Entity("PiedraAzul.Data.Models.AppointmentSlot", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("DayOfYear")
+                    b.Property<DateTime>("Date")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid>("DoctorAvailabilityBlockId")
+                    b.Property<Guid>("DoctorAvailabilitySlotId")
                         .HasColumnType("uuid");
 
                     b.Property<Guid>("DoctorId")
                         .HasColumnType("uuid");
 
-                    b.HasKey("Id");
+                    b.Property<string>("PatientGuestId")
+                        .HasColumnType("text");
 
-                    b.HasIndex("DoctorAvailabilityBlockId");
+                    b.Property<Guid?>("PatientId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
 
                     b.HasIndex("DoctorId");
 
-                    b.ToTable("AppointmentSlots");
+                    b.HasIndex("PatientGuestId");
+
+                    b.HasIndex("PatientId");
+
+                    b.HasIndex("DoctorAvailabilitySlotId", "Date")
+                        .IsUnique();
+
+                    b.ToTable("Appointments");
                 });
 
-            modelBuilder.Entity("PiedraAzul.Data.Models.DoctorAvailabilityBlock", b =>
+            modelBuilder.Entity("PiedraAzul.Data.Models.DoctorAvailabilitySlot", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -301,7 +299,7 @@ namespace PiedraAzul.Data.Migrations
 
                     b.HasIndex("DoctorId");
 
-                    b.ToTable("DoctorAvailabilityBlocks");
+                    b.ToTable("DoctorAvailabilitySlots");
                 });
 
             modelBuilder.Entity("PiedraAzul.Data.Models.DoctorProfile", b =>
@@ -330,6 +328,28 @@ namespace PiedraAzul.Data.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("DoctorProfiles");
+                });
+
+            modelBuilder.Entity("PiedraAzul.Data.Models.PatientGuest", b =>
+                {
+                    b.Property<string>("PatientIdentification")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PatientExtraInfo")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("PatientName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("PatientPhone")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("PatientIdentification");
+
+                    b.ToTable("PatientGuests");
                 });
 
             modelBuilder.Entity("PiedraAzul.Data.Models.PatientProfile", b =>
@@ -447,43 +467,37 @@ namespace PiedraAzul.Data.Migrations
 
             modelBuilder.Entity("PiedraAzul.Data.Models.Appointment", b =>
                 {
-                    b.HasOne("PiedraAzul.Data.Models.AppointmentSlot", "AppointmentSlot")
+                    b.HasOne("PiedraAzul.Data.Models.DoctorAvailabilitySlot", "DoctorAvailabilitySlot")
                         .WithMany()
-                        .HasForeignKey("AppointmentSlotId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("PiedraAzul.Data.Models.PatientProfile", "Patient")
-                        .WithMany()
-                        .HasForeignKey("PatientId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("AppointmentSlot");
-
-                    b.Navigation("Patient");
-                });
-
-            modelBuilder.Entity("PiedraAzul.Data.Models.AppointmentSlot", b =>
-                {
-                    b.HasOne("PiedraAzul.Data.Models.DoctorAvailabilityBlock", "DoctorAvailabilityBlock")
-                        .WithMany()
-                        .HasForeignKey("DoctorAvailabilityBlockId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasForeignKey("DoctorAvailabilitySlotId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("PiedraAzul.Data.Models.DoctorProfile", "Doctor")
                         .WithMany()
                         .HasForeignKey("DoctorId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("PiedraAzul.Data.Models.PatientGuest", "PatientGuest")
+                        .WithMany()
+                        .HasForeignKey("PatientGuestId");
+
+                    b.HasOne("PiedraAzul.Data.Models.PatientProfile", "Patient")
+                        .WithMany()
+                        .HasForeignKey("PatientId")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Doctor");
 
-                    b.Navigation("DoctorAvailabilityBlock");
+                    b.Navigation("DoctorAvailabilitySlot");
+
+                    b.Navigation("Patient");
+
+                    b.Navigation("PatientGuest");
                 });
 
-            modelBuilder.Entity("PiedraAzul.Data.Models.DoctorAvailabilityBlock", b =>
+            modelBuilder.Entity("PiedraAzul.Data.Models.DoctorAvailabilitySlot", b =>
                 {
                     b.HasOne("PiedraAzul.Data.Models.DoctorProfile", "Doctor")
                         .WithMany()
