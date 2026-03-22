@@ -1,5 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
-namespace PiedraAzul.Client.Models
+namespace PiedraAzul.Client.Models.UserProfiles
 {
 
     public class LoginModel
