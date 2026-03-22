@@ -1,15 +1,18 @@
 ﻿using Grpc.Core;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
+using PiedraAzul.ApplicationServices.AutoCompleteServices;
+using PiedraAzul.ApplicationServices.Mapping;
 using PiedraAzul.Data.Models;
 using Shared.Grpc;
 
 namespace PiedraAzul.GrpcServices
 {
-    public class GrpcAppointment(PiedraAzul.ApplicationServices.Services.IAppointmentService appointmentService) 
+    public class GrpcAppointment(PiedraAzul.ApplicationServices.Services.IAppointmentService appointmentService,
+        PiedraAzul.ApplicationServices.Services.IPatientService patientService, IPatientAutocompleteService patientAutocompleteService, PatientMapper mapper)
         : AppointmentService.AppointmentServiceBase
     {
-        public override  async Task<AppointmentResponse> CreateAppointment(CreateAppointmentRequest request, ServerCallContext context)
+        public override async Task<AppointmentResponse> CreateAppointment(CreateAppointmentRequest request, ServerCallContext context)
         {
             if (request == null) throw new RpcException(new Status(StatusCode.InvalidArgument, "Request cannot be null"));
 
@@ -33,13 +36,52 @@ namespace PiedraAzul.GrpcServices
             // if the patientid is not provided, we can create a new patient record using the provided patient information, but we need almost the patient identification
             string? patientId = null;
 
-            if (!string.IsNullOrEmpty(request.PatientId))
+            if (Guid.TryParse(request.PatientId, out _))
             {
                 patientId = request.PatientId;
             }
-            else if (string.IsNullOrWhiteSpace(request.PatientIdentification))
+            else if (!string.IsNullOrWhiteSpace(request.PatientIdentification))
             {
-                throw new RpcException(new Status(StatusCode.InvalidArgument, "Either patient ID or patient identification must be provided"));
+                try
+                {
+                    var patientGuest = await patientService
+                        .GetPatientGuestById(request.PatientIdentification);
+
+                    if (patientGuest == null)
+                    {
+                        if (string.IsNullOrWhiteSpace(request.PatientName) ||
+                            string.IsNullOrWhiteSpace(request.PatientPhone))
+                        {
+                            throw new RpcException(new Status(
+                                StatusCode.InvalidArgument,
+                                "Patient name and phone must be provided to create a new patient guest record"
+                            ));
+                        }
+                        var newPatientGuest = mapper.ToEntity(request);
+
+                        var result = await patientService.CreatePatientGuestAsync(newPatientGuest);
+
+                        if (result == null)
+                        {
+                            throw new RpcException(new Status(
+                                StatusCode.Internal,
+                                "Failed to create patient guest"
+                            ));
+                        }
+                        patientAutocompleteService.IndexPatient(result);
+                    }
+                }
+                catch (RpcException)
+                {
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    throw new RpcException(new Status(
+                        StatusCode.Internal,
+                        "Unexpected error while handling patient guest"
+                    ));
+                }
             }
 
 
@@ -52,16 +94,13 @@ namespace PiedraAzul.GrpcServices
                 DoctorId = doctorId,
                 DoctorAvailabilitySlotId = doctorAvailabilitySlotId,
                 Date = normalizedDate,
-                // if the patient id is not provided, we can use the patient identification to create a new patient record, but if the patient id is provided, we should ignore the patient identification and use the existing patient record
-                PatientIdentificationNumber = request.PatientIdentification,
-                PatientName = request.PatientName,
-                PatientPhone = request.PatientPhone,
-                PatientExtraInfo = request.PatientExtraInfo,
             };
 
             try
             {
-                var result  = await appointmentService.CreateAppointmentAsync(appointment, patientId);
+                var result = await appointmentService.CreateAppointmentAsync(appointment, patientId, request.PatientIdentification);
+
+
                 return new AppointmentResponse
                 {
                     Id = result.Id.ToString(),
@@ -76,10 +115,74 @@ namespace PiedraAzul.GrpcServices
                 throw new RpcException(new Status(StatusCode.AlreadyExists,
                     "This appointment slot is already taken"));
             }
-            catch { 
+            catch
+            {
                 throw new RpcException(new Status(StatusCode.Internal, "An error occurred while creating the appointment"));
             }
 
+        }
+        public override async Task<AppointmentListResponse> GetDoctorAppointments(DoctorAppointmentsRequest request, ServerCallContext context)
+        {
+            if (request == null) throw new RpcException(new Status(StatusCode.InvalidArgument, "Request cannot be null"));
+
+            DateTime normalizedDate = default;
+            if (request.Date != null)
+            {
+                var date = request.Date.ToDateTime().ToUniversalTime();
+                // Truncar a medianoche (00:00:00)
+                normalizedDate = new DateTime(
+                    date.Year,
+                    date.Month,
+                    date.Day,
+                    0, 0, 0,
+                    DateTimeKind.Utc
+                );
+            }
+
+            var appointments = await appointmentService.GetDoctorAppointmentsAsync(request.DoctorId, normalizedDate);
+            AppointmentListResponse response = new AppointmentListResponse();
+            response.Appointments.AddRange(appointments.Select(a => new AppointmentResponse
+            {
+                Id = a.Id.ToString(),
+                PatientId = a.PatientId?.ToString() ?? string.Empty,
+                PatientGuestId = a.PatientGuestId?.ToString() ?? string.Empty,
+                PatientType = a.PatientId != null ? "Registered" : "Guest",
+                AppointmentSlotId = a.DoctorAvailabilitySlotId.ToString(),
+                CreatedAt = Google.Protobuf.WellKnownTypes.Timestamp.FromDateTime(a.CreatedAt.ToUniversalTime())
+            }));
+
+            return response;
+        }
+        public override async Task<AppointmentListResponse> GetPatientAppointments(PatientAppointmentsRequest request, ServerCallContext context)
+        {
+            if (request == null) throw new RpcException(new Status(StatusCode.InvalidArgument, "Request cannot be null"));
+            if(string.IsNullOrWhiteSpace(request.PatientId))
+                throw new RpcException(new Status(StatusCode.InvalidArgument, "Patient ID must be provided"));
+
+            List<Appointment> appointments;
+            if (Guid.TryParse(request.PatientId, out var patientId))
+            {
+                appointments = await appointmentService.GetPatientAppointmentsAsync(request.PatientId, string.Empty);
+            }
+            else {
+                appointments = await appointmentService.GetPatientAppointmentsAsync(string.Empty, request.PatientId);
+            }
+
+            if (appointments == null) throw new RpcException(new Status(StatusCode.NotFound, "No appointments found for the given patient ID"));
+
+            AppointmentListResponse response = new AppointmentListResponse();
+
+            response.Appointments.AddRange(appointments.Select(a => new AppointmentResponse
+            {
+                Id = a.Id.ToString(),
+                PatientId = a.PatientId?.ToString() ?? string.Empty,
+                PatientGuestId = a.PatientGuestId?.ToString() ?? string.Empty,
+                PatientType = a.PatientId != null ? "Registered" : "Guest",
+                AppointmentSlotId = a.DoctorAvailabilitySlotId.ToString(),
+                CreatedAt = Google.Protobuf.WellKnownTypes.Timestamp.FromDateTime(a.CreatedAt.ToUniversalTime())
+            }));
+
+            return response;
         }
     }
 }
