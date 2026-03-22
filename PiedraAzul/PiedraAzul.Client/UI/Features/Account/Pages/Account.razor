@@ -1,0 +1,22 @@
+﻿@page "/account"
+@using PiedraAzul.Client.Services
+@using PiedraAzul.Client.Services.AuthServices
+@using PiedraAzul.Client.States
+@inject NavigationManager Navigation
+@inject UserState UserState
+@inject AuthenticationService AuthService
+
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        if (UserState.UserResponse != null) return;
+
+        var response = await AuthService.GetCurrentUserAsync();
+        if (!response.IsSuccess)
+            Navigation.NavigateTo("/account/auth", forceLoad: false, replace: true);
+
+        UserState.UserResponse = response.Value;
+    }
+}

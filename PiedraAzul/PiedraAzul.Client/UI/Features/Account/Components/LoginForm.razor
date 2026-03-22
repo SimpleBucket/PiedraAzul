@@ -1,0 +1,117 @@
+﻿@using Grpc.Core
+@using PiedraAzul.Client.Models
+@using PiedraAzul.Client.Models.UserProfiles
+@using PiedraAzul.Client.Services
+@using PiedraAzul.Client.Services.AuthServices
+@using PiedraAzul.Client.States
+@inject NavigationManager NavigationManager
+@inject AuthenticationService AuthService
+@inject UserState UserState
+
+<EditForm Model="@loginModel" OnValidSubmit="HandleLogin" class="mx-auto w-full max-w-lg">
+    <DataAnnotationsValidator />
+    <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-xl md:p-8">
+
+        <!-- Header -->
+        <h2 class="text-center text-2xl font-bold text-gray-800 md:text-left md:text-3xl">
+            Ingresa a tu cuenta
+        </h2>
+
+        <p class="mb-6 mt-2 text-center text-gray-500 md:text-left">
+            Accede a tus servicios médicos de forma segura.
+        </p>
+
+        <!-- Validation -->
+        <ValidationSummary class="mb-4 text-sm text-red-500" />
+
+        <!-- Usuario -->
+        <div class="mb-4">
+            <label class="mb-2 block text-sm font-semibold text-gray-700">
+                Identificación, teléfono o correo
+            </label>
+
+            <InputText @bind-Value="loginModel.Login"
+                       class="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-700
+            transition focus:border-teal-400 focus:outline-none focus:ring-2
+            focus:ring-teal-400"
+                       placeholder="Ej: 101234567 o correo@email.com" />
+        </div>
+
+        <!-- Contraseña -->
+        <div class="mb-4">
+            <label class="mb-2 block text-sm font-semibold text-gray-700">
+                Contraseña
+            </label>
+
+            <InputText @bind-Value="loginModel.Password"
+                       type="password"
+                       class="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-700
+            transition focus:border-teal-400 focus:outline-none focus:ring-2
+            focus:ring-teal-400"
+                       placeholder="Tu contraseña" />
+        </div>
+        <!-- Error Message -->
+        @if (!string.IsNullOrEmpty(_errorMessage))
+        {
+            <p class="text-sm text-red-500">@_errorMessage</p>
+        }
+        <!-- Acciones -->
+        <div class="mt-6 space-y-3">
+
+            <button type="submit"
+                    class="w-full rounded-lg bg-[#257D8D] py-3 font-semibold text-white shadow-md
+                transition duration-200 hover:bg-[#1E5F6F]">
+                Iniciar sesión
+            </button>
+
+            <button type="button"
+                    @onclick="async () => await OnRegisterClick.InvokeAsync()"
+                    class="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 rounded-lg
+                transition duration-200">
+                ¿No tienes cuenta? Regístrate
+            </button>
+
+        </div>
+
+    </div>
+</EditForm>
+
+@code {
+    private LoginModel loginModel = new();
+
+    [Parameter]
+    public EventCallback OnRegisterClick { get; set; }
+    [Parameter]
+    public string? ReturnUrl { get; set; } = string.Empty;
+
+    private string? _errorMessage;
+    private async Task HandleLogin()
+    {
+        Console.WriteLine($"Login: {loginModel.Login}");
+
+        var result = await AuthService.LoginAsync(loginModel);
+
+        if(!result.IsSuccess)
+        {
+            switch(result.Error!.Code)
+            {
+                case StatusCode.Unauthenticated:
+                    _errorMessage = "Credenciales inválidas. Por favor, verifica tu información.";
+                    break;
+                default:
+                    _errorMessage = "Ocurrió un error al intentar iniciar sesión. Por favor, intenta nuevamente.";
+                    break;
+            }
+            return;
+        }
+        
+        var user = result.Value;
+
+        UserState.UserResponse = user;
+        if(string.IsNullOrEmpty(ReturnUrl))
+            return;
+        
+
+        NavigationManager.NavigateTo(ReturnUrl);
+    }
+}

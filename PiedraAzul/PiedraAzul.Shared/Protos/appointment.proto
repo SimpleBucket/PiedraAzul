@@ -25,20 +25,33 @@ message PatientAppointmentsRequest {
   string patientId = 1;
 }
 
+
 message CreateAppointmentRequest {
+  // opcional (usuario registrado)
   string patientId = 1;
 
-  string appointmentSlotId = 2;
+  // para invitados
+  string patientIdentification = 2;
+  string patientName = 3; 
+  string patientPhone = 4;
+  string patientExtraInfo = 5;
+
+  //Doctor 
+  string doctorId = 6;
+  string doctorAvailabilitySlotId = 7;
+  google.protobuf.Timestamp date = 8;
 }
+
 
 message AppointmentResponse {
   string id = 1;
 
   string patientId = 2;
+  string patientGuestId = 3; // para pacientes invitados
+  string patientType = 4; // "registered" o "guest"
+  string appointmentSlotId = 5;
 
-  string appointmentSlotId = 3;
-
-  google.protobuf.Timestamp createdAt = 4;
+  google.protobuf.Timestamp createdAt = 6;
 }
 
 message AppointmentListResponse {

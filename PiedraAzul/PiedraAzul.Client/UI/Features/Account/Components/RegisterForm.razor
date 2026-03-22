@@ -1,0 +1,231 @@
+﻿@using PiedraAzul.Client.Models
+@using PiedraAzul.Client.Models.UserProfiles
+@using PiedraAzul.Client.Services.AuthServices
+@using PiedraAzul.Client.UI.Shared.Components.StepTag
+@using PiedraAzul.Shared.Enums
+@using PiedraAzul.Client.Services
+@inject AuthenticationService AuthService
+
+<EditForm Model="@registerModel"  class="flex justify-center">
+
+    <DataAnnotationsValidator />
+
+    <div class="mx-auto my-6 w-full max-w-4xl rounded-xl bg-white p-10 shadow-2xl">
+
+        <Stepper TModel="RegisterModel" FinishText="Crear cuenta" OnFinish="HandleRegister">
+
+            <!-- STEP 1 -->
+            <Step TModel="RegisterModel"
+                  Title="Datos personales"
+                  Fields="@(new[] { nameof(registerModel.Document), nameof(registerModel.FullName), nameof(registerModel.Phone), nameof(registerModel.Gender) })">
+
+                <h2 class="mb-2 text-2xl font-bold">Datos personales</h2>
+                <p class="mb-6 text-gray-600">
+                    Por favor ingrese su información básica para continuar.
+                </p>
+
+                <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+
+                    <!-- Documento -->
+                    <div>
+                        <label class="block text-lg font-semibold text-gray-800">
+                            Número de documento
+                        </label>
+                        <p class="mb-2 text-sm text-gray-500">
+                            Ejemplo: cédula de ciudadanía
+                        </p>
+
+                        <InputText @bind-Value="registerModel.Document"
+                                   class="w-full rounded-lg border border-gray-300 px-4 py-3 text-lg focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-400"
+                                   placeholder="Ingrese su documento" />
+
+                        <ValidationMessage For="@(() => registerModel.Document)" class="text-red-500 text-sm mt-1" />
+                    </div>
+
+                    <!-- Nombre -->
+                    <div>
+                        <label class="block text-lg font-semibold text-gray-800">
+                            Nombre completo
+                        </label>
+                        <p class="mb-2 text-sm text-gray-500">
+                            Tal como aparece en su documento
+                        </p>
+
+                        <InputText @bind-Value="registerModel.FullName"
+                                   class="w-full rounded-lg border border-gray-300 px-4 py-3 text-lg focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-400"
+                                   placeholder="Ej: Juan Pérez" />
+
+                        <ValidationMessage For="@(() => registerModel.FullName)" class="text-red-500 text-sm mt-1" />
+                    </div>
+
+                    <!-- Teléfono -->
+                    <div>
+                        <label class="block text-lg font-semibold text-gray-800">
+                            Número de teléfono
+                        </label>
+                        <p class="mb-2 text-sm text-gray-500">
+                            Para contactarlo sobre su cita
+                        </p>
+
+                        <InputText @bind-Value="registerModel.Phone"
+                                   class="w-full rounded-lg border border-gray-300 px-4 py-3 text-lg focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-400"
+                                   placeholder="Ej: 301 123 4567" />
+
+                        <ValidationMessage For="@(() => registerModel.Phone)" class="text-red-500 text-sm mt-1" />
+                    </div>
+
+                    <!-- Género -->
+                    <div>
+                        <label class="block text-lg font-semibold text-gray-800">
+                            Género
+                        </label>
+                        <p class="mb-2 text-sm text-gray-500">
+                            Seleccione una opción
+                        </p>
+
+                        <InputSelect @bind-Value="registerModel.Gender"
+                                     class="w-full rounded-lg border border-gray-300 px-4 py-3 text-lg focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-400">
+
+                            <option value="@GenderType.NonSpecified">Seleccione género</option>
+                            <option value="@GenderType.Male">Hombre</option>
+                            <option value="@GenderType.Female">Mujer</option>
+                            <option value="@GenderType.Other">Otro</option>
+
+                        </InputSelect>
+
+                        <ValidationMessage For="@(() => registerModel.Gender)" class="text-red-500 text-sm mt-1" />
+                    </div>
+
+                </div>
+
+            </Step>
+
+            <!-- STEP 2 -->
+            <Step TModel="RegisterModel"
+                  Title="Información adicional"
+                  Fields="@(new[] { nameof(registerModel.Email) })">
+
+                <h2 class="mb-2 text-2xl font-bold">Información adicional</h2>
+                <p class="mb-6 text-gray-600">
+                    Estos datos nos ayudan a brindarle un mejor servicio (opcional).
+                </p>
+
+                <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+
+                    <!-- Fecha -->
+                    <div>
+                        <label class="block text-lg font-semibold text-gray-800">
+                            Fecha de nacimiento
+                        </label>
+                        <p class="mb-2 text-sm text-gray-500">
+                            Nos ayuda a personalizar su atención
+                        </p>
+
+                        <InputDate @bind-Value="registerModel.BirthDate"
+                                   class="w-full rounded-lg border border-gray-300 px-4 py-3 text-lg focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-400" />
+                    </div>
+
+                    <!-- Email -->
+                    <div>
+                        <label class="block text-lg font-semibold text-gray-800">
+                            Correo electrónico
+                        </label>
+                        <p class="mb-2 text-sm text-gray-500">
+                            Para enviarle confirmaciones (opcional)
+                        </p>
+
+                        <InputText @bind-Value="registerModel.Email"
+                                   type="email"
+                                   class="w-full rounded-lg border border-gray-300 px-4 py-3 text-lg focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-400"
+                                   placeholder="ejemplo@gmail.com" />
+
+                        <ValidationMessage For="@(() => registerModel.Email)" class="text-red-500 text-sm mt-1" />
+                    </div>
+
+                </div>
+
+            </Step>
+
+            <!-- STEP 3 -->
+            <Step TModel="RegisterModel"
+                  Title="Seguridad"
+                  Fields="@(new[] { nameof(registerModel.Password), nameof(registerModel.ConfirmPassword) })">
+
+                <h2 class="mb-2 text-2xl font-bold">Crear contraseña</h2>
+                <p class="mb-6 text-gray-600">
+                    Esta contraseña le permitirá acceder a su cuenta.
+                </p>
+
+                <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+
+                    <!-- Password -->
+                    <div>
+                        <label class="block text-lg font-semibold text-gray-800">
+                            Contraseña
+                        </label>
+                        <p class="mb-2 text-sm text-gray-500">
+                            Mínimo 6 caracteres
+                        </p>
+
+                        <InputText @bind-Value="registerModel.Password"
+                                   type="password"
+                                   class="w-full rounded-lg border border-gray-300 px-4 py-3 text-lg focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-400"
+                                   placeholder="Ingrese su contraseña" />
+
+                        <ValidationMessage For="@(() => registerModel.Password)" class="text-red-500 text-sm mt-1" />
+                    </div>
+
+                    <!-- Confirm -->
+                    <div>
+                        <label class="block text-lg font-semibold text-gray-800">
+                            Confirmar contraseña
+                        </label>
+                        <p class="mb-2 text-sm text-gray-500">
+                            Repita la contraseña anterior
+                        </p>
+
+                        <InputText @bind-Value="registerModel.ConfirmPassword"
+                                   type="password"
+                                   class="w-full rounded-lg border border-gray-300 px-4 py-3 text-lg focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-400"
+                                   placeholder="Repita su contraseña" />
+
+                        <ValidationMessage For="@(() => registerModel.ConfirmPassword)" class="text-red-500 text-sm mt-1" />
+                    </div>
+
+                </div>
+
+            </Step>
+
+        </Stepper>
+
+        <!-- Login -->
+        <button type="button"
+                @onclick="async () => await OnLoginClick.InvokeAsync()"
+                class="mt-8 w-full rounded-lg bg-gray-100 py-4 text-lg font-semibold text-gray-700 hover:bg-gray-200">
+            ¿Ya tiene una cuenta? Inicie sesión
+        </button>
+
+    </div>
+</EditForm>
+
+@code {
+    private RegisterModel registerModel = new();
+
+    [Parameter]
+    public EventCallback OnLoginClick { get; set; }
+    private async Task HandleRegister()
+    {
+        var user = await AuthService.RegisterAsync(registerModel, "Patient");
+        if (user != null)
+        {
+            // Registro exitoso, redirigir o mostrar mensaje de éxito
+            Console.WriteLine("Registro exitoso");
+        }
+        else
+        {
+            // Error en el registro, mostrar mensaje de error
+            Console.WriteLine("Error en el registro");
+        }
+        Console.WriteLine(registerModel.Document);
+    }
+}
