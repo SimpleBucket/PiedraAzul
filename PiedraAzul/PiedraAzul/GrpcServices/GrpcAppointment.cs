@@ -31,14 +31,11 @@ namespace PiedraAzul.GrpcServices
                 throw new RpcException(new Status(StatusCode.InvalidArgument, "Invalid doctor availability slot ID format"));
 
             // if the patientid is not provided, we can create a new patient record using the provided patient information, but we need almost the patient identification
-            Guid? patientId = null;
+            string? patientId = null;
 
             if (!string.IsNullOrEmpty(request.PatientId))
             {
-                if (!Guid.TryParse(request.PatientId, out var parsedPatientId))
-                    throw new RpcException(new Status(StatusCode.InvalidArgument, "Invalid patient ID format"));
-
-                patientId = parsedPatientId;
+                patientId = request.PatientId;
             }
             else if (string.IsNullOrWhiteSpace(request.PatientIdentification))
             {
@@ -55,9 +52,8 @@ namespace PiedraAzul.GrpcServices
                 DoctorId = doctorId,
                 DoctorAvailabilitySlotId = doctorAvailabilitySlotId,
                 Date = normalizedDate,
-                PatientId = patientId,
                 // if the patient id is not provided, we can use the patient identification to create a new patient record, but if the patient id is provided, we should ignore the patient identification and use the existing patient record
-                PatientIdentificationNumber = patientId  == null ?  request.PatientIdentification : null,
+                PatientIdentificationNumber = request.PatientIdentification,
                 PatientName = request.PatientName,
                 PatientPhone = request.PatientPhone,
                 PatientExtraInfo = request.PatientExtraInfo,
@@ -65,7 +61,7 @@ namespace PiedraAzul.GrpcServices
 
             try
             {
-                var result  = await appointmentService.CreateAppointmentAsync(appointment);
+                var result  = await appointmentService.CreateAppointmentAsync(appointment, patientId);
                 return new AppointmentResponse
                 {
                     Id = result.Id.ToString(),
@@ -79,6 +75,9 @@ namespace PiedraAzul.GrpcServices
             {
                 throw new RpcException(new Status(StatusCode.AlreadyExists,
                     "This appointment slot is already taken"));
+            }
+            catch { 
+                throw new RpcException(new Status(StatusCode.Internal, "An error occurred while creating the appointment"));
             }
 
         }
