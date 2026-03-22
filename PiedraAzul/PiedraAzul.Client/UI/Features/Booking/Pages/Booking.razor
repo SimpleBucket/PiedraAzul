@@ -105,7 +105,9 @@ else
     }
     private void SelectedDoctor(DoctorModel args)
     {
+        if (args == null) return;
         Model.DoctorId = args.Id;
+        Model.Doctor = args;
     }
     private async Task HandlerSubmit()
     {
@@ -134,8 +136,10 @@ else
     }
     private void SelectSlot(AppointmentSchedulerModel args)
     {
+        if (args == null) return;
         Model.SlotId = args.SlotId;
         Model.DayOfYear = args.Date;
+        Model.AppointmentSchedulerModel = args;
     }
 }
 
