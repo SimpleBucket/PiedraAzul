@@ -15,7 +15,7 @@ namespace PiedraAzul.Data
         public DbSet<PatientProfile> PatientProfiles { get; set; }
         public DbSet<RefreshToken> RefreshTokens { get; set; }
         public DbSet<SystemConfig> SystemConfigs { get; set; }
-
+        public DbSet<PatientGuest> PatientGuests { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
