@@ -13,6 +13,18 @@ namespace PiedraAzul.GrpcServices
         {
             if (request == null) throw new RpcException(new Status(StatusCode.InvalidArgument, "Request cannot be null"));
 
+            var dateUtc = request.Date.ToDateTime().ToUniversalTime();
+
+            // Truncar a medianoche (00:00:00)
+            var normalizedDate = new DateTime(
+                dateUtc.Year,
+                dateUtc.Month,
+                dateUtc.Day,
+                0, 0, 0,
+                DateTimeKind.Utc
+            );
+
+
             if (!Guid.TryParse(request.DoctorId, out var doctorId))
                 throw new RpcException(new Status(StatusCode.InvalidArgument, "Invalid doctor ID format"));
             if (!Guid.TryParse(request.DoctorAvailabilitySlotId, out var doctorAvailabilitySlotId))
@@ -42,7 +54,7 @@ namespace PiedraAzul.GrpcServices
             {
                 DoctorId = doctorId,
                 DoctorAvailabilitySlotId = doctorAvailabilitySlotId,
-                Date = request.Date.ToDateTime(),
+                Date = normalizedDate,
                 PatientId = patientId,
                 // if the patient id is not provided, we can use the patient identification to create a new patient record, but if the patient id is provided, we should ignore the patient identification and use the existing patient record
                 PatientIdentificationNumber = patientId  == null ?  request.PatientIdentification : null,
