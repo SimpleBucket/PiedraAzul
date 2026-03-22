@@ -8,6 +8,8 @@ using Lucene.Net.Util.Fst;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.IdentityModel.Tokens;
+using PiedraAzul.ApplicationServices.AutoCompleteServices;
+using PiedraAzul.ApplicationServices.Mapping;
 using PiedraAzul.Client.Services;
 using PiedraAzul.Client.States;
 using Shared.Grpc;
@@ -31,6 +33,12 @@ namespace PiedraAzul.Extensions
             // Services
             services.AddSingleton<Analyzer>(analyzer);
             services.AddSingleton<IndexWriter>(writer);
+
+            services.AddSingleton<IPatientAutocompleteService, PatientAutocompleteService>(sp =>
+            {
+                return new PatientAutocompleteService(luceneIndexPath);
+            });
+
 
             return services;
         }
@@ -77,5 +85,12 @@ namespace PiedraAzul.Extensions
             return services;
         }
 
+        public static IServiceCollection AddMappers(this IServiceCollection services)
+        {
+            services.AddSingleton<PatientMapper>();
+
+
+            return services;
+        }
     }
 }
