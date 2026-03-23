@@ -28,7 +28,7 @@ message RegisterRequest {
   string phone = 5;
 
   GenderType gender = 6;
-  string role = 7;
+  repeated string roles = 7;
   google.protobuf.Timestamp birthDate = 8;
 }
 
