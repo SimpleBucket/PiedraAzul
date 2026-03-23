@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace PiedraAzul.Shared
+namespace PiedraAzul.Shared.DTOs
 {
     public class UserDto
     {
