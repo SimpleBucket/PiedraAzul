@@ -10,7 +10,7 @@ namespace PiedraAzul.GrpcServices
 
         public override async Task<SearchPatientsResponse> SearchAutoCompletePatients(SearchPatientsRequest request, ServerCallContext context)
         {
-            var patient = patientAutocompleteService.Search(request.Query, request.Limit);
+            var patient =  await patientAutocompleteService.SearchAsync(request.Query, request.Limit);
             var response = new SearchPatientsResponse();
 
             response.Patients.AddRange(patient.Select(p => new PatientSearchResult
