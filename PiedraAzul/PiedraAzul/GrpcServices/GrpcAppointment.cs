@@ -1,3 +1,4 @@
+using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
@@ -34,7 +35,6 @@ namespace PiedraAzul.GrpcServices
                 DateTimeKind.Utc
             );
 
-            // 🔥 AHORA ES STRING (UserId)
             if (string.IsNullOrWhiteSpace(request.DoctorId))
                 throw new RpcException(new Status(StatusCode.InvalidArgument, "DoctorUserId is required"));
 
@@ -103,13 +103,13 @@ namespace PiedraAzul.GrpcServices
                     patientUserId,
                     request.PatientIdentification
                 );
-
                 return new AppointmentResponse
                 {
                     Id = result.Id.ToString(),
                     PatientId = result.PatientUserId ?? string.Empty,
                     PatientGuestId = result.PatientGuestId ?? string.Empty,
                     AppointmentSlotId = result.DoctorAvailabilitySlotId.ToString(),
+                    Start = Timestamp.FromDateTime(result.Date.Add(result.DoctorAvailabilitySlot.StartTime).ToUniversalTime()),
                     CreatedAt = Google.Protobuf.WellKnownTypes.Timestamp
                         .FromDateTime(result.CreatedAt.ToUniversalTime())
                 };
@@ -127,7 +127,9 @@ namespace PiedraAzul.GrpcServices
             }
         }
 
-        public override async Task<AppointmentListResponse> GetDoctorAppointments(DoctorAppointmentsRequest request, ServerCallContext context)
+        public override async Task<AppointmentListResponse> GetDoctorAppointments(
+    DoctorAppointmentsRequest request,
+    ServerCallContext context)
         {
             if (request == null)
                 throw new RpcException(new Status(StatusCode.InvalidArgument, "Request cannot be null"));
@@ -136,8 +138,14 @@ namespace PiedraAzul.GrpcServices
 
             if (request.Date != null)
             {
-                var date = request.Date.ToDateTime().ToUniversalTime();
-                normalizedDate = new DateTime(date.Year, date.Month, date.Day, 0, 0, 0, DateTimeKind.Utc);
+                var date = request.Date.ToDateTime();
+
+                normalizedDate = new DateTime(
+                    date.Year,
+                    date.Month,
+                    date.Day,
+                    0, 0, 0,
+                    DateTimeKind.Utc);
             }
 
             var appointments = await appointmentService
@@ -145,18 +153,29 @@ namespace PiedraAzul.GrpcServices
 
             var response = new AppointmentListResponse();
 
-            response.Appointments.AddRange(appointments.Select(a => new AppointmentResponse
+            response.Appointments.AddRange(appointments.Select(a =>
             {
-                Id = a.Id.ToString(),
-                PatientId = a.PatientUserId ?? string.Empty,
-                PatientGuestId = a.PatientGuestId ?? string.Empty,
-                PatientType = a.PatientUserId != null ? "Registered" : "Guest",
-                PatientName = a.PatientUserId != null
-                    ? (a.Patient?.Name ?? a.Patient?.UserName ?? "Paciente registrado")
-                    : (a.PatientGuest?.PatientName ?? "Paciente invitado"),
-                AppointmentSlotId = a.DoctorAvailabilitySlotId.ToString(),
-                CreatedAt = Google.Protobuf.WellKnownTypes.Timestamp
-                    .FromDateTime(a.CreatedAt.ToUniversalTime())
+                var combined = a.Date.Add(a.DoctorAvailabilitySlot.StartTime);
+
+                var utcDateTime = DateTime.SpecifyKind(combined, DateTimeKind.Utc);
+
+                return new AppointmentResponse
+                {
+                    Id = a.Id.ToString(),
+                    PatientId = a.PatientUserId ?? string.Empty,
+                    PatientGuestId = a.PatientGuestId ?? string.Empty,
+                    PatientType = a.PatientUserId != null ? "Registered" : "Guest",
+                    PatientName = a.PatientUserId != null
+                        ? (a.Patient?.Name ?? a.Patient?.UserName ?? "Paciente registrado")
+                        : (a.PatientGuest?.PatientName ?? "Paciente invitado"),
+                    AppointmentSlotId = a.DoctorAvailabilitySlotId.ToString(),
+
+                    Start = Google.Protobuf.WellKnownTypes.Timestamp
+                        .FromDateTime(utcDateTime),
+
+                    CreatedAt = Google.Protobuf.WellKnownTypes.Timestamp
+                        .FromDateTime(a.CreatedAt.ToUniversalTime())
+                };
             }));
 
             return response;
@@ -172,9 +191,9 @@ namespace PiedraAzul.GrpcServices
 
             List<Appointment> appointments;
 
-            // 🔥 ya no usamos Guid.TryParse
-            if (request.PatientId.Length < 100)
+            if(Guid.TryParse(request.PatientId, out _))
             {
+                // asumimos que es UserId válido
                 appointments = await appointmentService
                     .GetPatientAppointmentsAsync(request.PatientId, null);
             }
