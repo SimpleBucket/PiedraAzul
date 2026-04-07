@@ -4,8 +4,8 @@ using PiedraAzul.Domain.Entities.Config;
 using PiedraAzul.Domain.Entities.Operations;
 using PiedraAzul.Domain.Entities.Profiles.Doctor;
 using PiedraAzul.Domain.Entities.Profiles.Patients;
+using PiedraAzul.Infrastructure.Auth;
 using PiedraAzul.Infrastructure.Identity;
-using PiedraAzul.Infrastructure.Persistence.Auth;
 
 namespace PiedraAzul.Infrastructure.Persistence
 {

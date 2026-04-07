@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using PiedraAzul.Infrastructure.Persistence.Auth;
+using PiedraAzul.Infrastructure.Auth;
 
 namespace PiedraAzul.Infrastructure.Persistence.Configurations
 {
