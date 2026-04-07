@@ -9,4 +9,11 @@ public interface IDoctorAvailabilitySlotRepository
     Task AddAsync(DoctorAvailabilitySlot slot, CancellationToken cancellationToken = default);
     Task UpdateAsync(DoctorAvailabilitySlot slot, CancellationToken cancellationToken = default);
     Task DeleteAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<List<DoctorAvailabilitySlot>> GetByIdsAsync(
+    List<Guid> ids,
+    CancellationToken cancellationToken);
+    Task<IReadOnlyList<DoctorAvailabilitySlot>> GetDoctorDaySlotsAsync(
+       string doctorId,
+       DateOnly date,
+       CancellationToken cancellationToken);
 }
