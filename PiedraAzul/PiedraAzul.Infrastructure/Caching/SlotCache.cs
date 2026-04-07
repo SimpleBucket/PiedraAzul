@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
-using PiedraAzul.Application.Interfaces;
-using PiedraAzul.Application.Models;
+using PiedraAzul.Application.Common.Interfaces;
+using PiedraAzul.Application.Common.Models.Cache;
 
 namespace PiedraAzul.Infrastructure.Caching
 {
