@@ -31,12 +31,11 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<ProjectReference Include="..\PiedraAzul.Application\PiedraAzul.Application.csproj" />
 		<ProjectReference Include="..\PiedraAzul.Client\PiedraAzul.Client.csproj" />
-		<ProjectReference Include="..\PiedraAzul.Shared\PiedraAzul.Contracts.csproj" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<Folder Include="ApplicationServices\Common\Mapping\" />
+		<ProjectReference Include="..\PiedraAzul.Contracts\PiedraAzul.Contracts.csproj" />
+		<ProjectReference Include="..\PiedraAzul.Domain\PiedraAzul.Domain.csproj" />
+		<ProjectReference Include="..\PiedraAzul.Infrastructure\PiedraAzul.Infrastructure.csproj" />
 	</ItemGroup>
 
 </Project>
