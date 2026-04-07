@@ -1,4 +1,4 @@
-﻿namespace PiedraAzul.Infrastructure.Persistence.Auth
+﻿namespace PiedraAzul.Infrastructure.Auth
 {
     public class RefreshToken
     {
