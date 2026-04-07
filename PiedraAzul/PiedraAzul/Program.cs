@@ -3,6 +3,7 @@ using PiedraAzul.Components;
 using PiedraAzul.Extensions;
 using PiedraAzul.Application;
 using PiedraAzul.Infrastructure;
+using PiedraAzul.Client.Extensions;
 #endregion
 
 var builder = WebApplication.CreateBuilder(args);
@@ -20,6 +21,10 @@ builder.Services.AddRazorComponents()
 // 🔹 API stuff
 builder.Services.AddSignalR();
 builder.Services.AddGrpc();
+
+//InteractivityAuto 
+builder.Services.AddClientServer(builder.Configuration["GrpcUrl"] ?? "https://localhost:7128", 
+                                builder.Configuration["hubUrl"] ?? "https://localhost:7128");
 
 // 🔹 Auth
 builder.Services.AddAuth(builder.Configuration);
