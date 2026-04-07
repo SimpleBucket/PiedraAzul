@@ -1,6 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using PiedraAzul.Application.Common.Interfaces;
+using PiedraAzul.Infrastructure.Caching;
 using PiedraAzul.Infrastructure.Persistence;
 
 namespace PiedraAzul.Infrastructure
@@ -32,6 +34,9 @@ namespace PiedraAzul.Infrastructure
             //services.AddSingleton<IAuthorizationHandler, PermissionHandler>();
             //services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
 
+
+            services.AddMemoryCache();
+            services.AddSingleton<ISlotCache, SlotCache>();
             return services;
         }
     }
