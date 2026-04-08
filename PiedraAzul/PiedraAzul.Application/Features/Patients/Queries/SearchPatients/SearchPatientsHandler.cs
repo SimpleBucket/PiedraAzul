@@ -22,7 +22,7 @@ public class SearchPatientsHandler
         SearchPatientsQuery request,
         CancellationToken ct)
     {
-        var registered = await _registered.SearchAsync(request.Text, ct);
+       var registered = await _registered.SearchAsync(request.Text, ct);
         var guests = await _guest.SearchAsync(request.Text, ct);
 
         return registered
