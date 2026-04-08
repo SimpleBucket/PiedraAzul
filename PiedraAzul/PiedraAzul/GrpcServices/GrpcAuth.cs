@@ -9,8 +9,7 @@ using PiedraAzul.Application.Features.Auth.Commands.Register;
 using PiedraAzul.Application.Features.Users.Commands.CreateProfileForRole;
 using PiedraAzul.Application.Features.Users.Queries.GetUserById;
 using PiedraAzul.Application.Features.Users.Queries.GetUserRoles;
-using PiedraAzul.Shared.Grpc;
-using Shared.Grpc;
+using PiedraAzul.Contracts.Grpc;
 using System.Security.Claims;
 
 namespace PiedraAzul.GrpcServices
@@ -115,7 +114,7 @@ namespace PiedraAzul.GrpcServices
         // =========================
         // REVOKE TOKEN
         // =========================
-        public override async Task<Shared.Grpc.Empty> RevokeToken(RevokeTokenRequest request, ServerCallContext context)
+        public override async Task<PiedraAzul.Contracts.Grpc.Empty> RevokeToken(RevokeTokenRequest request, ServerCallContext context)
         {
             var refreshToken = GrpcCookieHelper.GetRefreshTokenFromCookie(context);
 
@@ -126,13 +125,13 @@ namespace PiedraAzul.GrpcServices
 
             await GrpcCookieHelper.DeleteRefreshTokenCookie(context);
 
-            return new Shared.Grpc.Empty();
+            return new PiedraAzul.Contracts.Grpc.Empty();
         }
 
         // =========================
         // CURRENT USER
         // =========================
-        public override async Task<UserResponse> GetCurrentUser(Shared.Grpc.Empty request, ServerCallContext context)
+        public override async Task<UserResponse> GetCurrentUser(PiedraAzul.Contracts.Grpc.Empty request, ServerCallContext context)
         {
             var httpContext = context.GetHttpContext();
             var userClaims = httpContext.User;

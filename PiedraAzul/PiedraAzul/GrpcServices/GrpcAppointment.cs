@@ -2,10 +2,11 @@ using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using Mediator;
 using PiedraAzul.Application.Common.Models.Appointments;
+using PiedraAzul.Application.Common.Models.Patients;
 using PiedraAzul.Application.Features.Appointments.CreateAppointment;
 using PiedraAzul.Application.Features.Doctors.Queries.GetDoctorAppointments;
 using PiedraAzul.Application.Features.Patients.Queries.GetPatientAppointments;
-using Shared.Grpc;
+using PiedraAzul.Contracts.Grpc;
 
 namespace PiedraAzul.GrpcServices
 {
@@ -31,7 +32,7 @@ namespace PiedraAzul.GrpcServices
             var date = DateOnly.FromDateTime(request.Date.ToDateTime());
 
             string? patientUserId = null;
-            string? patientGuestId = null;
+            GuestPatientRequest? patientGuest = null;
 
             switch (request.PatientCase)
             {
@@ -41,11 +42,17 @@ namespace PiedraAzul.GrpcServices
 
                 case CreateAppointmentRequest.PatientOneofCase.Guest:
                     var g = request.Guest;
-
                     if (string.IsNullOrWhiteSpace(g.Identification))
                         throw new RpcException(new Status(StatusCode.InvalidArgument, "Guest identification required"));
 
-                    patientGuestId = g.Identification;
+                    patientGuest = new()
+                    {
+                        Identification = g.Identification,
+                        Name = g.Name,
+                        Phone = g.Phone,
+                        ExtraInfo = g.ExtraInfo,
+                    };
+
                     break;
 
                 default:
@@ -60,7 +67,7 @@ namespace PiedraAzul.GrpcServices
                         slotId,
                         date,
                         patientUserId,
-                        patientGuestId
+                        patientGuest
                     )
                 );
 

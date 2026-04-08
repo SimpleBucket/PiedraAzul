@@ -2,7 +2,7 @@
 using Grpc.Core;
 using Mediator;
 using PiedraAzul.Application.Features.Doctors.Queries.GetDoctorDaySlots;
-using Shared.Grpc;
+using PiedraAzul.Contracts.Grpc;
 
 namespace PiedraAzul.GrpcServices;
 
