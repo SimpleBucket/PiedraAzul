@@ -4,9 +4,7 @@ using PiedraAzul.Application.Common.Models.Doctor;
 using PiedraAzul.Application.Features.Doctors;
 using PiedraAzul.Application.Features.Doctors.Queries.GetDoctorByUserId;
 using PiedraAzul.Application.Features.Doctors.Queries.GetDoctorsBySpecialty;
-using PiedraAzul.Shared.Grpc;
-using Shared.Grpc;
-
+using PiedraAzul.Contracts.Grpc;
 namespace PiedraAzul.GrpcServices
 {
     public class GrpcDoctor(IMediator mediator)
