@@ -16,6 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\PiedraAzul.Contracts\PiedraAzul.Contracts.csproj" />
     <ProjectReference Include="..\PiedraAzul.Domain\PiedraAzul.Domain.csproj" />
   </ItemGroup>
 

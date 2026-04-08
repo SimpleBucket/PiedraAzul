@@ -8,10 +8,11 @@ namespace PiedraAzul.Application
         {
             services.AddMediator(opts =>
             {
-                opts.Assemblies = [typeof(DependencyInjection)];
+                opts.Assemblies = [typeof(DependencyInjection).Assembly];
 
                 opts.ServiceLifetime = ServiceLifetime.Scoped;
             });
+
             return services;
         }
     }
