@@ -1,8 +1,8 @@
-﻿@using PiedraAzul.Client.Models.Booking
+﻿﻿@using PiedraAzul.Client.Models.Booking
 @using PiedraAzul.Client.Services
 @using PiedraAzul.Client.Services.GrpcServices
 @using PiedraAzul.Client.Services.RealTimeServices
-@using PiedraAzul.Shared.DTOs
+@using PiedraAzul.Contracts.DTOs
 @using Google.Protobuf.WellKnownTypes
 @inject GrpcAvailability AvailabilityClient
 @inject IAppointmentHubService HubService
@@ -131,7 +131,7 @@ else
     private Dictionary<DateTime, List<TimeSlot>> _cache = new();
     private DayItem? _selectedDay;
     private TimeSlot? _selectedSlot;
-    private string? _myLockedSlotId; 
+    private string? _myLockedSlotId;
     private CancellationTokenSource? _cts;
     private List<DayItem> Days = new();
     private List<TimeSlot> MorningSlots = new();
@@ -142,7 +142,7 @@ else
         Logger.LogInformation("=== AppointmentScheduler OnInitializedAsync INICIO ===");
         Logger.LogInformation("DoctorId recibido: {DoctorId}", DoctorId);
         
-        var startDate = DateTime.Today.AddDays(0);
+        var startDate = DateTime.Today.AddDays(1);
         Days = Enumerable.Range(0, 14)
             .Select(i =>
             {

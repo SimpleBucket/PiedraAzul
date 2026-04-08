@@ -3,7 +3,7 @@ using Microsoft.JSInterop;
 using PiedraAzul.Client.Models;
 using PiedraAzul.Client.Models.UserProfiles;
 using PiedraAzul.Client.Services.Wrappers;
-using Shared.Grpc;
+using PiedraAzul.Contracts.Grpc;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace PiedraAzul.Client.Services.AuthServices;
@@ -65,7 +65,7 @@ public class AuthenticationService
     {
         var result = await GrpcExecutor.Execute(async () =>
         {
-            var response = await authClient.GetCurrentUserAsync(new Shared.Grpc.Empty());
+            var response = await authClient.GetCurrentUserAsync(new PiedraAzul.Contracts.Grpc.Empty());
             return response;
         });
         return result;

@@ -1,5 +1,5 @@
 ﻿@page "/admin/agenda"
-@using global::Shared.Grpc
+@using global::PiedraAzul.Contracts.Grpc
 @inject PiedraAzul.Client.Services.GrpcServices.GrpcAppointmentService AppointmentService
 @inject PiedraAzul.Client.Services.GrpcServices.GrpcDoctorService DoctorService
 
@@ -119,7 +119,7 @@
         // Ya que el método nativo retorna por grupo.
         for (int i = 0; i <= 3; i++)
         {
-            var result = await DoctorService.GetDoctorsByTypeAsync((global::PiedraAzul.Shared.Enums.DoctorType)i);
+            var result = await DoctorService.GetDoctorsByTypeAsync((global::PiedraAzul.Contracts.Enums.DoctorType)i);
             if (result != null && result.Any())
             {
                 doctores.AddRange(result);
