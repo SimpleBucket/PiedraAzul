@@ -1,4 +1,5 @@
 ﻿using Mediator;
+using PiedraAzul.Application.Common.Models.Patients;
 using PiedraAzul.Domain.Entities.Operations;
 using System;
 using System.Collections.Generic;
@@ -12,6 +13,6 @@ namespace PiedraAzul.Application.Features.Appointments.CreateAppointment
     DateOnly Date,
 
     string? PatientUserId,
-    string? PatientGuestId
+    GuestPatientRequest? PatientGuest
 ) : IRequest<Appointment>;
 }
