@@ -20,4 +20,8 @@
     <ProjectReference Include="..\PiedraAzul.Domain\PiedraAzul.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Features\Patients\Search\" />
+  </ItemGroup>
+
 </Project>

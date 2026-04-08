@@ -30,7 +30,10 @@
                 Identificación, teléfono o correo
             </label>
 
-            <InputText @bind-Value="loginModel.Login"
+            <InputText Value="@loginModel.Login"
+                       ValueChanged="@(v => loginModel.Login = v)"
+                       ValueExpression="() => loginModel.Login"
+                       @oninput="@(e => loginModel.Login = e.Value?.ToString())"
                        class="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-700
             transition focus:border-teal-400 focus:outline-none focus:ring-2
             focus:ring-teal-400"
@@ -42,8 +45,10 @@
             <label class="mb-2 block text-sm font-semibold text-gray-700">
                 Contraseña
             </label>
-
-            <InputText @bind-Value="loginModel.Password"
+            <InputText Value="@loginModel.Password"
+                       ValueChanged="@(v => loginModel.Password = v)"
+                       ValueExpression="() => loginModel.Password"
+                       @oninput="@(e => loginModel.Password = e.Value?.ToString())"
                        type="password"
                        class="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-700
             transition focus:border-teal-400 focus:outline-none focus:ring-2
