@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace PiedraAzul.Shared.Enums
+namespace PiedraAzul.Contracts.Enums
 {
     public enum GenderType
     {

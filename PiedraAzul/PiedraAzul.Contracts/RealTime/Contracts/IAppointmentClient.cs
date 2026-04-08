@@ -1,6 +1,6 @@
-﻿using PiedraAzul.Shared.DTOs;
+﻿using PiedraAzul.Contracts.DTOs;
 
-namespace PiedraAzul.Shared.RealTime.Contracts;
+namespace PiedraAzul.Contracts.RealTime.Contracts;
 
 public interface IAppointmentClient
 {

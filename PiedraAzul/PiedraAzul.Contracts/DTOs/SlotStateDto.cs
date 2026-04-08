@@ -1,4 +1,4 @@
-﻿namespace PiedraAzul.Shared.DTOs;
+﻿namespace PiedraAzul.Contracts.DTOs;
 
 public class SlotStateDto
 {

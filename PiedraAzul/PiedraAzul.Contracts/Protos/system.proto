@@ -1,7 +1,7 @@
 syntax = "proto3";
 import "Protos/common.proto";
 
-option csharp_namespace = "Shared.Grpc";
+option csharp_namespace = "PiedraAzul.Contracts.Grpc";
 
 package system;
 
