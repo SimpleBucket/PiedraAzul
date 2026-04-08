@@ -1,4 +1,4 @@
-﻿using Shared.Grpc;
+﻿using PiedraAzul.Contracts.Grpc;
 
 namespace PiedraAzul.Client.Models.UserProfiles
 {

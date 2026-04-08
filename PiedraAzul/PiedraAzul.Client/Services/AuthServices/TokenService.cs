@@ -1,5 +1,5 @@
 ﻿using Microsoft.JSInterop;
-using Shared.Grpc;
+using PiedraAzul.Contracts.Grpc;
 
 namespace PiedraAzul.Client.Services.AuthServices
 {

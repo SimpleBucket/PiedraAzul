@@ -1,7 +1,7 @@
 ﻿using Grpc.Net.Client;
 using Grpc.Net.Client.Web;
 using Microsoft.AspNetCore.Components;
-using Shared.Grpc;
+using PiedraAzul.Contracts.Grpc;
 
 namespace PiedraAzul.Client.Services.AuthServices;
 

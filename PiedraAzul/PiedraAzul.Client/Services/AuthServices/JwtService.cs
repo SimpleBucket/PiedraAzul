@@ -1,5 +1,5 @@
 ﻿using Microsoft.JSInterop;
-using PiedraAzul.Shared.DTOs;
+using PiedraAzul.Contracts.DTOs;
 using System.IdentityModel.Tokens.Jwt;
 
 namespace PiedraAzul.Client.Services.AuthServices

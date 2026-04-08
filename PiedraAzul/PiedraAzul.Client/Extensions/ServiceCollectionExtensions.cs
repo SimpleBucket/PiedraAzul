@@ -8,7 +8,7 @@ using PiedraAzul.Client.Services.GrpcServices;
 using PiedraAzul.Client.Services.Interceptors;
 using PiedraAzul.Client.Services.RealTimeServices; 
 using PiedraAzul.Client.States;
-using Shared.Grpc;
+using PiedraAzul.Contracts.Grpc;
 
 namespace PiedraAzul.Client.Extensions
 {

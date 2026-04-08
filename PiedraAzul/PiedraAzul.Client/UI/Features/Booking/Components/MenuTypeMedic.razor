@@ -1,8 +1,7 @@
 ﻿@using PiedraAzul.Client.Models.UserProfiles
 @using PiedraAzul.Client.Services
 @using PiedraAzul.Client.Services.GrpcServices
-@using PiedraAzul.Shared
-@using PiedraAzul.Shared.Enums
+@using PiedraAzul.Contracts.Enums
 @inject GrpcDoctorService DoctorService
 
 <div class="grid grid-cols-1 gap-8 lg:grid-cols-2">
@@ -186,7 +185,7 @@
     [Parameter]
     public EventCallback OnChange { get; set; }
 
-    PiedraAzul.Shared.Enums.DoctorType SelectedType = DoctorType.NaturalMedicine;
+    DoctorType SelectedType = DoctorType.NaturalMedicine;
     Dictionary<DoctorType, List<DoctorModel>> MedicsByType = new();
     List<DoctorModel> _currentDoctors = new();
 

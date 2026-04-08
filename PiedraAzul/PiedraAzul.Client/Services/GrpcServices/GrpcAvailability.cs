@@ -1,6 +1,6 @@
 ﻿using PiedraAzul.Client.Models;
 using PiedraAzul.Client.Services.Wrappers;
-using Shared.Grpc;
+using PiedraAzul.Contracts.Grpc;
 
 namespace PiedraAzul.Client.Services.GrpcServices
 {

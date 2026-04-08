@@ -1,4 +1,4 @@
-﻿using Shared.Grpc;
+﻿using PiedraAzul.Contracts.Grpc;
 using System.Reflection.Metadata;
 
 namespace PiedraAzul.Client.Services.Utils
