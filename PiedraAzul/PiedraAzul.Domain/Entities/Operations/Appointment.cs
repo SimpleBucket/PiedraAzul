@@ -1,8 +1,5 @@
 ﻿using PiedraAzul.Domain.Common.Exceptions;
 using PiedraAzul.Domain.Entities.Profiles.Doctor;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace PiedraAzul.Domain.Entities.Operations
 {
@@ -47,14 +44,20 @@ namespace PiedraAzul.Domain.Entities.Operations
     string? patientUserId,
     string? patientGuestId)
         {
-            if (date < DateOnly.FromDateTime(DateTime.UtcNow))
-                throw new DomainException("Invalid date");
-
-            if (!slot.Matches(date))
-                throw new DomainException("Invalid slot");
+            if ((patientUserId is null && patientGuestId is null) ||
+                (patientUserId is not null && patientGuestId is not null))
+            {
+                throw new DomainException("Appointment must have either a registered patient or a guest");
+            }
 
             if (slot.DoctorId != doctorId)
                 throw new DomainException("Invalid doctor");
+
+            if (slot.DayOfWeek != date.DayOfWeek)
+                throw new DomainException("Slot does not match selected date");
+
+            if (date < DateOnly.FromDateTime(DateTime.UtcNow))
+                throw new DomainException("Invalid date");
 
             return new Appointment(
                 doctorId,
