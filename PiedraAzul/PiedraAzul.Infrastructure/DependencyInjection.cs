@@ -21,17 +21,27 @@ public static class DependencyInjection
     {
         Console.WriteLine("INFRA OK");
 
-        // 🔹 DbContext
+        // DbContext
         services.AddDbContext<AppDbContext>(options =>
             options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
 
-        // 🔹 Identity (🔥 ESTO FALTABA)
+        // Identity 
         services.AddIdentityCore<ApplicationUser>()
             .AddRoles<IdentityRole>()
             .AddEntityFrameworkStores<AppDbContext>()
             .AddDefaultTokenProviders();
 
-        // 🔹 Repositories 
+        services.Configure<IdentityOptions>(options =>
+        {
+            options.Password.RequireDigit = false;
+            options.Password.RequireNonAlphanumeric = false;
+            options.Password.RequireUppercase = false;
+            options.Password.RequireLowercase = false;
+            options.Password.RequiredLength = 6;
+            options.Password.RequiredUniqueChars = 1;
+        });
+
+        // Repositories 
         services.Scan(scan => scan
             .FromAssembliesOf(typeof(AppointmentRepository))
             .AddClasses(classes => classes
@@ -39,7 +49,7 @@ public static class DependencyInjection
             .AsImplementedInterfaces()
             .WithScopedLifetime());
 
-        // 🔹 Services
+        // Services
         services.Scan(scan => scan
             .FromAssembliesOf(typeof(AppDbContext))
             .AddClasses(classes => classes
@@ -47,11 +57,11 @@ public static class DependencyInjection
             .AsImplementedInterfaces()
             .WithScopedLifetime());
 
-        // 🔹 Caching
+        // Caching
         services.AddMemoryCache();
         services.AddSingleton<ISlotCache, SlotCache>();
 
-        // 🔹 Unit of Work
+        // Unit of Work
         services.AddScoped<IUnitOfWork, UnitOfWork>();
 
         return services;
