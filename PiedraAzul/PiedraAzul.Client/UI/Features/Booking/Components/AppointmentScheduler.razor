@@ -1,10 +1,8 @@
-﻿﻿@using PiedraAzul.Client.Models.Booking
-@using PiedraAzul.Client.Services
-@using PiedraAzul.Client.Services.GrpcServices
+﻿@using PiedraAzul.Client.Models.Booking
+@using PiedraAzul.Client.Services.GraphQLServices
 @using PiedraAzul.Client.Services.RealTimeServices
 @using PiedraAzul.Contracts.DTOs
-@using Google.Protobuf.WellKnownTypes
-@inject GrpcAvailability AvailabilityClient
+@inject GraphQLAvailabilityService AvailabilityClient
 @inject IAppointmentHubService HubService
 @inject ILogger<AppointmentScheduler> Logger
 
@@ -252,7 +250,7 @@ else
             var availability = await AvailabilityClient.GetDoctorSlotsByDate(DoctorId, date, CancellationToken.None);
             if (availability.IsSuccess)
             {
-                var slots = availability.Value!.Slots;
+                var slots = availability.Value!;
                 var refreshedSlot = slots.FirstOrDefault(s => s.Id == slotId);
             
                 if (_cache.TryGetValue(date.Date, out var cachedSlots))
@@ -309,14 +307,14 @@ else
                 return;
             }
 
-            var slots = availability.Value!.Slots;
-        
+            var slots = availability.Value!;
+
             var slotStates = slots
-                .OrderBy(sl => sl.Start.ToDateTime())
+                .OrderBy(sl => sl.Start)
                 .Select(s => new SlotStateDto
                 {
                     SlotId = s.Id,
-                    Start = s.Start.ToDateTime(),
+                    Start = s.Start,
                     IsReserved = !s.IsAvailable,
                     LockedBy = null,
                     LockExpiresAt = null
