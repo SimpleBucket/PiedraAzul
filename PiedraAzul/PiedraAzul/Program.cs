@@ -1,4 +1,7 @@
 #region NameSpaces
+using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Components.Server;
+using PiedraAzul.Client.Services.GraphQLServices;
 using PiedraAzul.Components;
 using PiedraAzul.Extensions;
 using PiedraAzul.Application;
@@ -21,10 +24,23 @@ builder.Services.AddRazorComponents()
 // 🔹 API stuff
 builder.Services.AddSignalR();
 builder.Services.AddPiedraAzulGraphQL();
+builder.Services.AddHttpContextAccessor();
 
-// InteractivityAuto
-builder.Services.AddClientServer(builder.Configuration["GraphQLUrl"] ?? "https://localhost:7128",
-                                builder.Configuration["hubUrl"] ?? "https://localhost:7128");
+// InteractivityAuto – registers shared client services + PersistentAuthenticationStateProvider
+var graphqlUrl = builder.Configuration["GraphQLUrl"] ?? "https://localhost:7128";
+var hubUrl = builder.Configuration["hubUrl"] ?? "https://localhost:7128";
+builder.Services.AddClientServer(graphqlUrl, hubUrl);
+
+// Override auth state provider for server-side: reads from HttpContext, persists to WASM
+builder.Services.AddScoped<AuthenticationStateProvider, PersistingRevalidatingAuthenticationStateProvider>();
+
+// Override GraphQL client for SSR: forwards the incoming request cookie to the outgoing HTTP call
+builder.Services.AddScoped<GraphQLHttpClient>(sp =>
+{
+    var accessor = sp.GetRequiredService<IHttpContextAccessor>();
+    var handler = new CookieForwardingHandler(accessor);
+    return new GraphQLHttpClient(new HttpClient(handler) { BaseAddress = new Uri(graphqlUrl) });
+});
 
 // 🔹 Auth
 builder.Services.AddAuth(builder.Configuration);
@@ -44,6 +60,7 @@ app.UseAntiforgery();
 // endpoints
 app.MapGraphQLEndpoint();
 app.MapHubs();
+app.MapApiEndpoints();
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode()
