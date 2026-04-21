@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dotnet add *)",
+      "Bash(dotnet build *)",
+      "Bash(grep -v \"///\")",
+      "Bash(sed -i 's/net8.0/net10.0/' \"C:\\\\Users\\\\imbuc\\\\AppData\\\\Local\\\\Temp\\\\fido2inspect\\\\fido2inspect.csproj\")",
+      "Read(//c/Users/imbuc/AppData/Local/Temp/fido2inspect/**)",
+      "Bash(dotnet run *)",
+      "Bash(dotnet ef *)",
+      "Bash(xargs grep *)",
+      "Bash(find . -name \"*.razor\" -type f ! -path \"*/obj/*\" ! -path \"*/bin/*\" -exec grep -l \"UserState.User\" {} \\\\;)",
+      "Bash(grep -r \"AvatarUrl\" --include=\"*.cs\" --include=\"*.razor\" ! -path \"*/obj/*\" ! -path \"*/bin/*\")",
+      "Bash(grep -r \"schema {\" --include=\"*.cs\" ! -path \"*/obj/*\" ! -path \"*/bin/*\")",
+      "Bash(xargs head *)",
+      "Bash(xargs ls *)",
+      "Bash(dotnet clean *)",
+      "Bash(dotnet publish *)",
+      "Bash(Select-String -Pattern \"Build succeeded|Error|failed\")",
+      "Bash(rm -r PiedraAzul/bin/Release)",
+      "Bash(rm -r PiedraAzul/obj/Release)",
+      "Bash(web\")"
+    ]
+  }
+}
