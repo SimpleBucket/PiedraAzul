@@ -131,6 +131,32 @@
                 </div>
             </div>
         
+        <!-- Action Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mt-20">
+            <!-- Mirar la agenda -->
+            <a href="/doctor/agenda" class="bg-primary rounded-[2.5rem] p-10 flex items-center justify-between group overflow-hidden relative shadow-2xl shadow-primary/30 hover:-translate-y-1 transition-all">
+                <div class="relative z-10">
+                    <h3 class="text-3xl font-black text-white mb-2">Mirar la agenda</h3>
+                    <p class="text-white/70 text-lg">Maneja tu tiempo y vainas más</p>
+                </div>
+                <div class="relative z-10 text-white transform group-hover:translate-x-2 transition-transform">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                </div>
+                <!-- Subtle background flourish -->
+                <div class="absolute -right-8 -bottom-8 w-48 h-48 bg-white/10 rounded-full blur-3xl"></div>
+            </a>
+
+            <!-- Registros pacientes -->
+            <a href="/doctor/pacientes" class="bg-white border-2 border-primary/20 rounded-[2.5rem] p-10 flex items-center justify-between group hover:border-primary hover:shadow-xl transition-all">
+                <div>
+                    <h3 class="text-3xl font-black text-primary mb-2">Registros pacientes</h3>
+                    <p class="text-slate-400 text-lg">Accede a los registros</p>
+                </div>
+                <div class="text-primary opacity-50 group-hover:opacity-100 transition-opacity">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M8 13h2"/><path d="M8 17h2"/><path d="M14 13h2"/><path d="M14 17h2"/></svg>
+                </div>
+            </a>
+        </div>
 
         <footer class="mt-20 text-center text-slate-400 font-medium">
             © 2026 Clínica Piedra Azul.
