@@ -1,4 +1,4 @@
-﻿@using PiedraAzul.Client.Services.AuthServices
+@using PiedraAzul.Client.Services.AuthServices
 @using PiedraAzul.Client.States
 
 @inject AuthenticationService AuthService
@@ -29,6 +29,10 @@
                 @if (UserState?.User?.Roles.Contains("Admin") == true)
                 {
                     <a href="/admin" class="transition-colors hover:text-gray-900">Admin</a>
+                }
+                @if (UserState?.User?.Roles.Contains("Doctor") == true)
+                {
+                    <a href="/doctor" class="transition-colors hover:text-gray-900 font-semibold text-primary">Médico</a>
                 }
                 <a class="hover:text-gray-900">Ayuda</a>
 
