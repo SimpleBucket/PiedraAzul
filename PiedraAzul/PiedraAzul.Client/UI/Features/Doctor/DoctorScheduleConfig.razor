@@ -113,18 +113,36 @@
                 </div>
             </aside>
         </div>
-
+        <!-- Main Content -->
+        <div class="space-y-8">
+            <!-- Interval Selection Card -->
+            <div class="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-100 flex flex-col md:flex-row items-center justify-between gap-6">
+                <div>
+                    <h2 class="text-3xl font-black text-slate-900 mb-2">Configuración de intervalo de atención</h2>
+                    <p class="text-slate-500 font-medium">Ajusta la configuración detallada del cronograma para la semana seleccionada.</p>
+                </div>
+                <div class="bg-slate-50 p-4 rounded-3xl border border-slate-100 flex items-center gap-4 min-w-[280px]">
+                    <span class="text-sm font-bold text-slate-500 whitespace-nowrap pl-2">Intervalo de atención</span>
+                    <select @bind="Intervalo" class="flex-1 bg-white border border-slate-200 rounded-xl px-4 py-2 font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary/20">
+                        <option value="5">5 min</option>
+                        <option value="10">10 min</option>
+                        <option value="15">15 min</option>
+                        <option value="20">20 min</option>
+                    </select>
+                </div>
+            </div>
         
 
-        <!-- Footer Actions -->
-        <div class="flex items-center justify-end gap-4">
-            <button class="bg-white border-2 border-slate-100 px-10 py-4 rounded-2xl font-bold text-slate-600 hover:bg-slate-50 transition-all">
-                Exportar CSV
-            </button>
-            <button class="flex items-center gap-3 bg-primary text-white px-12 py-4 rounded-2xl font-bold hover:opacity-90 transition-all shadow-xl shadow-primary/30">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-                Guardar
-            </button>
+            <!-- Footer Actions -->
+            <div class="flex items-center justify-end gap-4">
+                <button class="bg-white border-2 border-slate-100 px-10 py-4 rounded-2xl font-bold text-slate-600 hover:bg-slate-50 transition-all">
+                    Exportar CSV
+                </button>
+                <button class="flex items-center gap-3 bg-primary text-white px-12 py-4 rounded-2xl font-bold hover:opacity-90 transition-all shadow-xl shadow-primary/30">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                    Guardar
+                </button>
+            </div>
         </div>
     </main>
 
