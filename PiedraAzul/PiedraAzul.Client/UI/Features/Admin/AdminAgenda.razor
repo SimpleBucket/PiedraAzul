@@ -1,4 +1,4 @@
-﻿@page "/admin/agenda"
+@page "/admin/agenda"
 @using PiedraAzul.Client.Models.GraphQL
 @using PiedraAzul.Contracts.Enums
 @inject PiedraAzul.Client.Services.GraphQLServices.GraphQLAppointmentService AppointmentService
@@ -10,16 +10,23 @@
         <!-- Header -->
         <div class="mb-8 flex items-center justify-between">
             <div>
-                <h1 class="text-3xl font-bold text-slate-900">Agenda Médica</h1>
-                <p class="mt-1 text-slate-500">Gestión y listado de citas de los especialistas</p>
+                <h1 class="text-4xl font-black text-slate-900">Agenda Médica</h1>
+                <p class="mt-1 text-slate-500 font-medium">Gestión y listado de citas de los especialistas</p>
             </div>
             
-            <a href="/booking/manual" class="flex items-center gap-2 rounded-lg bg-teal-800 px-6 py-2.5 font-medium text-white shadow-sm transition-colors hover:bg-teal-700">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
-                </svg>
-                Agendar Manualmente
-            </a>
+            <div class="flex items-center gap-4">
+                <a href="/admin/configurar-horario" class="flex items-center gap-2 rounded-xl border-2 border-primary/20 bg-white px-6 py-2.5 font-bold text-primary shadow-sm transition-all hover:border-primary">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z"/><path d="M12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+                    Configurar Horario
+                </a>
+
+                <a href="/booking/manual" class="flex items-center gap-2 rounded-xl bg-primary px-6 py-2.5 font-bold text-white shadow-lg shadow-primary/20 transition-all hover:opacity-90">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                    </svg>
+                    Agendar Manualmente
+                </a>
+            </div>
         </div>
 
         <!-- Filtros -->
