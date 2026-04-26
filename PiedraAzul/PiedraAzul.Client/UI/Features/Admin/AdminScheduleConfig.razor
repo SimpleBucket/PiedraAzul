@@ -104,6 +104,43 @@
                         <h2 class="text-4xl font-black text-slate-900 mb-3">Configuración de intervalo de atención</h2>
                         <p class="text-slate-500 font-medium">Ajusta la configuración detallada del cronograma para la semana seleccionada.</p>
                     </div>
+
+                    <div class="relative">
+                        <div class="flex items-center gap-3">
+                            <div class="bg-slate-50 p-4 rounded-3xl border border-slate-100 flex items-center gap-4 min-w-[200px]">
+                                <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2">Intervalo de atención</span>
+                                <select @bind="Intervalo" class="flex-1 bg-transparent border-none font-black text-slate-700 focus:outline-none">
+                                    <option value="5">5 min</option>
+                                    <option value="10">10 min</option>
+                                    <option value="15">15 min</option>
+                                    <option value="20">20 min</option>
+                                </select>
+                            </div>
+                            <button @onclick="() => showConfigPopover = !showConfigPopover" class="p-4 bg-slate-100 rounded-2xl text-slate-500 hover:bg-slate-200 transition-all">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+                            </button>
+                        </div>
+
+                        @if (showConfigPopover)
+                        {
+                            <div class="absolute right-0 mt-6 w-[350px] bg-white rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-slate-100 p-10 z-50 transition-all transform scale-100 origin-top-right">
+                                <h3 class="text-2xl font-black text-slate-900 mb-8">Configuración</h3>
+                                <div class="space-y-8">
+                                    <div>
+                                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 ml-1">Hora de Apertura</label>
+                                        <input type="text" value="08:00 AM" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 font-black text-slate-700 focus:outline-none focus:ring-4 focus:ring-primary/10 transition-all" />
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 ml-1">Hora de Cierre</label>
+                                        <input type="text" value="08:00 PM" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 font-black text-slate-700 focus:outline-none focus:ring-4 focus:ring-primary/10 transition-all" />
+                                    </div>
+                                    <button @onclick="() => showConfigPopover = false" class="w-full bg-primary text-white py-5 rounded-2xl font-black text-sm shadow-xl shadow-primary/20 hover:opacity-90 transition-all mt-4">
+                                        Guardar Cambios
+                                    </button>
+                                </div>
+                            </div>
+                        }
+                    </div>
                 </div>
             </div>
         </div>
@@ -112,6 +149,7 @@
 
 @code {
    private int Intervalo { get; set; } = 10;
+   private bool showConfigPopover = false;
 }
 
 <style>
