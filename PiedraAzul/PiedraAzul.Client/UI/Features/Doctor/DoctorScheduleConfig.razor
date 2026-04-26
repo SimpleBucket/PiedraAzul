@@ -157,6 +157,52 @@
                     }
                 </div>
             </div>
+            <!-- Grid Rows -->
+            <div class="divide-y divide-slate-100">
+                @foreach (var hour in Hours)
+                {
+                    <div class="grid grid-cols-[120px_1fr_1fr_1fr_1fr_1fr]">
+                        <div class="p-8 flex items-start justify-center font-black text-slate-900 text-lg bg-slate-50/20">@hour:00 AM</div>
+                        @foreach (var day in WeekDays)
+                        {
+                            <div class="p-4 border-l border-slate-100 @(day.IsBlocked ? "bg-slate-50/50 flex items-center justify-center italic text-slate-400 font-bold text-sm" : "")">
+                                @if (day.IsBlocked)
+                                {
+                                    <span>Bloqueado</span>
+                                }
+                                else
+                                {
+                                    <div class="grid grid-cols-1 gap-2">
+                                        @foreach (var slot in GetSlotsForHour(day, hour))
+                                        {
+                                            <button @onclick="() => slot.IsActive = !slot.IsActive"
+                                                    class="w-full py-2.5 px-4 rounded-xl text-xs font-bold transition-all border flex items-center justify-between group
+                                                            @(slot.IsActive ? "bg-primary text-white border-primary shadow-md shadow-primary/20" : "bg-white text-slate-300 border-slate-100 hover:border-slate-300")">
+                                                <span>@slot.StartTime.ToString("HH:mm")</span>
+                                                @if (!slot.IsActive)
+                                                {
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="opacity-50"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+                                                }
+                                            </button>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+                
+                <!-- Lunch Break / Bottom padding -->
+                <div class="grid grid-cols-[120px_1fr_1fr_1fr_1fr_1fr] bg-emerald-50/30">
+                        <div class="p-8 flex items-start justify-center font-black text-slate-900 text-lg">12:00 PM</div>
+                        @foreach (var day in WeekDays)
+                        {
+                            <div class="p-4 border-l border-slate-100 flex items-center justify-center">
+                                <div class="w-full h-12 bg-primary/20 rounded-2xl border border-primary/10"></div>
+                            </div>
+                        }
+                </div>
+            </div>
 
             <!-- Footer Actions -->
             <div class="flex items-center justify-end gap-4">
@@ -176,6 +222,12 @@
 @code {
     private int Intervalo { get; set; } = 10;
     private List<DaySchedule> WeekDays = new();
+    private List<int> Hours = new() { 9, 10, 11 };
+
+    private IEnumerable<TimeSlot> GetSlotsForHour(DaySchedule day, int hour)
+    {
+        return day.Slots.Where(s => s.StartTime.Hour == hour);
+    }
 
     private void ToggleDay(DaySchedule day)
     {
