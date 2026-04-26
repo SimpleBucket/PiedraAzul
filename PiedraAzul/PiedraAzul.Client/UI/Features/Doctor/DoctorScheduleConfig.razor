@@ -131,7 +131,32 @@
                     </select>
                 </div>
             </div>
-        
+
+            <!-- Schedule Grid -->
+            <div class="bg-white rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden">
+                <div class="grid grid-cols-[120px_1fr_1fr_1fr_1fr_1fr] border-b border-slate-100">
+                    <div class="p-6 flex items-center justify-center text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50/50">Horario</div>
+                    @foreach (var day in WeekDays)
+                    {
+                        <div class="p-6 border-l border-slate-100 text-center relative group @(day.IsBlocked ? "bg-slate-50/30" : "")">
+                            <button @onclick="() => ToggleDay(day)" class="block w-full text-center hover:opacity-70 transition-all">
+                                <div class="text-xs font-bold text-slate-400 uppercase tracking-tighter mb-1">@day.DayName</div>
+                                <div class="text-2xl font-black text-slate-900">@day.DayNumber</div>
+                            </button>
+                            <div class="mt-2 flex justify-center">
+                                <div class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" checked="@(!day.IsBlocked)" @onchange="() => ToggleDay(day)" class="sr-only peer">
+                                    <div class="w-10 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+                                </div>
+                            </div>
+                            @if (day.DayName == "Jue")
+                            {
+                                <div class="absolute inset-x-0 -bottom-0 h-1 bg-primary"></div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
 
             <!-- Footer Actions -->
             <div class="flex items-center justify-end gap-4">
@@ -150,6 +175,26 @@
 
 @code {
     private int Intervalo { get; set; } = 10;
+    private List<DaySchedule> WeekDays = new();
+
+    private void ToggleDay(DaySchedule day)
+    {
+        day.IsBlocked = !day.IsBlocked;
+    }
+
+    public class DaySchedule
+    {
+        public string DayName { get; set; } = "";
+        public int DayNumber { get; set; }
+        public bool IsBlocked { get; set; }
+        public List<TimeSlot> Slots { get; set; } = new();
+    }
+
+    public class TimeSlot
+    {
+        public DateTime StartTime { get; set; }
+        public bool IsActive { get; set; }
+    }
 }
 
 <style>
