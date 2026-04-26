@@ -55,6 +55,7 @@
                 </li>
             </ol>
         </nav>
+
         <div class="grid grid-cols-1 lg:grid-cols-[1fr_350px] gap-8">
             
             <!-- Left Column: Schedule Table -->
@@ -81,6 +82,83 @@
                         <button class="p-4 bg-white border border-slate-200 rounded-2xl text-primary hover:bg-slate-50 transition-all shadow-sm">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                         </button>
+                    </div>
+                </div>
+
+                <!-- Table Card -->
+                <div class="bg-white rounded-[2.5rem] shadow-xl shadow-slate-200/40 border border-slate-100 overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50/50 border-b border-slate-100">
+                                    <th class="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Hora</th>
+                                    <th class="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Detalles Pendientes</th>
+                                    <th class="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Tipo de Servicio</th>
+                                    <th class="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Estado</th>
+                                    <th class="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-50">
+                                @foreach (var app in Appointments)
+                                {
+                                    <tr class="group hover:bg-slate-50/50 transition-all">
+                                        <td class="px-8 py-6">
+                                            <div class="flex items-center gap-3">
+                                                <div class="text-primary opacity-40">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                                </div>
+                                                <span class="font-black text-slate-900">@app.Time</span>
+                                            </div>
+                                        </td>
+                                        <td class="px-8 py-6">
+                                            <div class="flex flex-col">
+                                                <div class="flex items-center gap-2">
+                                                    <span class="font-bold text-slate-900">@app.PatientName</span>
+                                                    @if (app.IsPriority)
+                                                    {
+                                                        <span class="text-rose-500 animate-pulse">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+                                                        </span>
+                                                    }
+                                                </div>
+                                                <span class="text-xs text-slate-400 font-medium">@app.IdNumber • @app.StatusNote</span>
+                                            </div>
+                                        </td>
+                                        <td class="px-8 py-6">
+                                            <span class="px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-tight @(app.ServiceType == "Terapia Neural" ? "bg-primary/10 text-primary" : "bg-slate-100 text-slate-500")">
+                                                @app.ServiceType
+                                            </span>
+                                        </td>
+                                        <td class="px-8 py-6 text-center">
+                                            <div class="inline-flex items-center gap-2">
+                                                <span class="w-2 h-2 rounded-full @(app.Status == "CONFIRMADO" ? "bg-amber-500" : app.Status == "COMPLETADO" ? "bg-emerald-500" : "bg-rose-500")"></span>
+                                                <span class="text-[10px] font-black uppercase tracking-widest @(app.Status == "CONFIRMADO" ? "text-amber-600" : app.Status == "COMPLETADO" ? "text-emerald-600" : "text-rose-600")">@app.Status</span>
+                                            </div>
+                                        </td>
+                                        <td class="px-8 py-6 text-right">
+                                            @if (app.Status == "CONFIRMADO")
+                                            {
+                                                <button class="bg-primary text-white px-6 py-2 rounded-xl text-xs font-bold shadow-lg shadow-primary/20 hover:opacity-90 transition-all">
+                                                    Empezar Consulta
+                                                </button>
+                                            }
+                                            else if (app.Status == "COMPLETADO")
+                                            {
+                                                <button class="bg-white border-2 border-primary text-primary px-6 py-2 rounded-xl text-xs font-bold hover:bg-primary hover:text-white transition-all">
+                                                    Ver Historial
+                                                </button>
+                                            }
+                                            else
+                                            {
+                                                <button class="bg-white border border-slate-200 text-slate-400 px-6 py-2 rounded-xl text-xs font-bold hover:bg-slate-50 transition-all">
+                                                    Reasignar
+                                                </button>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -136,6 +214,26 @@
             return $"En {diff} días";
         }
     }
+
+    private class AppointmentVM
+    {
+        public string Time { get; set; } = "";
+        public string PatientName { get; set; } = "";
+        public string IdNumber { get; set; } = "";
+        public string StatusNote { get; set; } = "";
+        public string ServiceType { get; set; } = "";
+        public string Status { get; set; } = "";
+        public bool IsPriority { get; set; }
+    }
+
+    private List<AppointmentVM> Appointments = new()
+    {
+        new() { Time = "09:00 AM", PatientName = "Carlos Mendoza", IdNumber = "100238821", StatusNote = "Nuevo paciente", ServiceType = "Terapia Neural", Status = "CONFIRMADO" },
+        new() { Time = "10:15 AM", PatientName = "Aviles Rodriguez", IdNumber = "10023234532", StatusNote = "Pendiente", ServiceType = "Fisioterapia", Status = "COMPLETADO" },
+        new() { Time = "11:30 AM", PatientName = "Elena Silva", IdNumber = "10023931109", StatusNote = "Pendiente", ServiceType = "Terapia Neural", Status = "CANCELADO" },
+        new() { Time = "11:40 AM", PatientName = "Marco Polo", IdNumber = "10023937762", StatusNote = "Alta Prioridad", ServiceType = "Fisioterapia", Status = "CONFIRMADO", IsPriority = true },
+        new() { Time = "11:50 AM", PatientName = "Marco Fidel", IdNumber = "10023937123", StatusNote = "Pendiente", ServiceType = "Terapia Natural", Status = "CONFIRMADO" }
+    };
 }
 
 <style>
