@@ -112,113 +112,113 @@
                     </div>
                 </div>
             </aside>
-        </div>
-        <!-- Main Content -->
-        <div class="space-y-8">
-            <!-- Interval Selection Card -->
-            <div class="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-100 flex flex-col md:flex-row items-center justify-between gap-6">
-                <div>
-                    <h2 class="text-3xl font-black text-slate-900 mb-2">Configuración de intervalo de atención</h2>
-                    <p class="text-slate-500 font-medium">Ajusta la configuración detallada del cronograma para la semana seleccionada.</p>
-                </div>
-                <div class="bg-slate-50 p-4 rounded-3xl border border-slate-100 flex items-center gap-4 min-w-[280px]">
-                    <span class="text-sm font-bold text-slate-500 whitespace-nowrap pl-2">Intervalo de atención</span>
-                    <select @bind="Intervalo" class="flex-1 bg-white border border-slate-200 rounded-xl px-4 py-2 font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary/20">
-                        <option value="5">5 min</option>
-                        <option value="10">10 min</option>
-                        <option value="15">15 min</option>
-                        <option value="20">20 min</option>
-                    </select>
-                </div>
-            </div>
 
-            <!-- Schedule Grid -->
-            <div class="bg-white rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden">
-                <div class="grid grid-cols-[120px_1fr_1fr_1fr_1fr_1fr] border-b border-slate-100">
-                    <div class="p-6 flex items-center justify-center text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50/50">Horario</div>
-                    @foreach (var day in WeekDays)
-                    {
-                        <div class="p-6 border-l border-slate-100 text-center relative group @(day.IsBlocked ? "bg-slate-50/30" : "")">
-                            <button @onclick="() => ToggleDay(day)" class="block w-full text-center hover:opacity-70 transition-all">
-                                <div class="text-xs font-bold text-slate-400 uppercase tracking-tighter mb-1">@day.DayName</div>
-                                <div class="text-2xl font-black text-slate-900">@day.DayNumber</div>
-                            </button>
-                            <div class="mt-2 flex justify-center">
-                                <div class="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" checked="@(!day.IsBlocked)" @onchange="() => ToggleDay(day)" class="sr-only peer">
-                                    <div class="w-10 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
-                                </div>
-                            </div>
-                            @if (day.DayName == "Jue")
-                            {
-                                <div class="absolute inset-x-0 -bottom-0 h-1 bg-primary"></div>
-                            }
-                        </div>
-                    }
+            <!-- Main Content -->
+            <div class="space-y-8">
+                <!-- Interval Selection Card -->
+                <div class="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-100 flex flex-col md:flex-row items-center justify-between gap-6">
+                    <div>
+                        <h2 class="text-3xl font-black text-slate-900 mb-2">Configuración de intervalo de atención</h2>
+                        <p class="text-slate-500 font-medium">Ajusta la configuración detallada del cronograma para la semana seleccionada.</p>
+                    </div>
+                    <div class="bg-slate-50 p-4 rounded-3xl border border-slate-100 flex items-center gap-4 min-w-[280px]">
+                        <span class="text-sm font-bold text-slate-500 whitespace-nowrap pl-2">Intervalo de atención</span>
+                        <select @bind="Intervalo" class="flex-1 bg-white border border-slate-200 rounded-xl px-4 py-2 font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary/20">
+                            <option value="5">5 min</option>
+                            <option value="10">10 min</option>
+                            <option value="15">15 min</option>
+                            <option value="20">20 min</option>
+                        </select>
+                    </div>
                 </div>
-            </div>
-            <!-- Grid Rows -->
-            <div class="divide-y divide-slate-100">
-                @foreach (var hour in Hours)
-                {
-                    <div class="grid grid-cols-[120px_1fr_1fr_1fr_1fr_1fr]">
-                        <div class="p-8 flex items-start justify-center font-black text-slate-900 text-lg bg-slate-50/20">@hour:00 AM</div>
+
+                <!-- Schedule Grid -->
+                <div class="bg-white rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden">
+                    <div class="grid grid-cols-[120px_1fr_1fr_1fr_1fr_1fr] border-b border-slate-100">
+                        <div class="p-6 flex items-center justify-center text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50/50">Horario</div>
                         @foreach (var day in WeekDays)
                         {
-                            <div class="p-4 border-l border-slate-100 @(day.IsBlocked ? "bg-slate-50/50 flex items-center justify-center italic text-slate-400 font-bold text-sm" : "")">
-                                @if (day.IsBlocked)
+                            <div class="p-6 border-l border-slate-100 text-center relative group @(day.IsBlocked ? "bg-slate-50/30" : "")">
+                                <button @onclick="() => ToggleDay(day)" class="block w-full text-center hover:opacity-70 transition-all">
+                                    <div class="text-xs font-bold text-slate-400 uppercase tracking-tighter mb-1">@day.DayName</div>
+                                    <div class="text-2xl font-black text-slate-900">@day.DayNumber</div>
+                                </button>
+                                <div class="mt-2 flex justify-center">
+                                    <div class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" checked="@(!day.IsBlocked)" @onchange="() => ToggleDay(day)" class="sr-only peer">
+                                        <div class="w-10 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+                                    </div>
+                                </div>
+                                @if (day.DayName == "Jue")
                                 {
-                                    <span>Bloqueado</span>
+                                    <div class="absolute inset-x-0 -bottom-0 h-1 bg-primary"></div>
                                 }
-                                else
+                            </div>
+                        }
+                    </div>
+
+                    <!-- Grid Rows -->
+                    <div class="divide-y divide-slate-100">
+                        @foreach (var hour in Hours)
+                        {
+                            <div class="grid grid-cols-[120px_1fr_1fr_1fr_1fr_1fr]">
+                                <div class="p-8 flex items-start justify-center font-black text-slate-900 text-lg bg-slate-50/20">@hour:00 AM</div>
+                                @foreach (var day in WeekDays)
                                 {
-                                    <div class="grid grid-cols-1 gap-2">
-                                        @foreach (var slot in GetSlotsForHour(day, hour))
+                                    <div class="p-4 border-l border-slate-100 @(day.IsBlocked ? "bg-slate-50/50 flex items-center justify-center italic text-slate-400 font-bold text-sm" : "")">
+                                        @if (day.IsBlocked)
                                         {
-                                            <button @onclick="() => slot.IsActive = !slot.IsActive"
-                                                    class="w-full py-2.5 px-4 rounded-xl text-xs font-bold transition-all border flex items-center justify-between group
-                                                            @(slot.IsActive ? "bg-primary text-white border-primary shadow-md shadow-primary/20" : "bg-white text-slate-300 border-slate-100 hover:border-slate-300")">
-                                                <span>@slot.StartTime.ToString("HH:mm")</span>
-                                                @if (!slot.IsActive)
+                                            <span>Bloqueado</span>
+                                        }
+                                        else
+                                        {
+                                            <div class="grid grid-cols-1 gap-2">
+                                                @foreach (var slot in GetSlotsForHour(day, hour))
                                                 {
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="opacity-50"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+                                                    <button @onclick="() => slot.IsActive = !slot.IsActive"
+                                                            class="w-full py-2.5 px-4 rounded-xl text-xs font-bold transition-all border flex items-center justify-between group
+                                                                   @(slot.IsActive ? "bg-primary text-white border-primary shadow-md shadow-primary/20" : "bg-white text-slate-300 border-slate-100 hover:border-slate-300")">
+                                                        <span>@slot.StartTime.ToString("HH:mm")</span>
+                                                        @if (!slot.IsActive)
+                                                        {
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="opacity-50"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+                                                        }
+                                                    </button>
                                                 }
-                                            </button>
+                                            </div>
                                         }
                                     </div>
                                 }
                             </div>
                         }
+                        
+                        <!-- Lunch Break / Bottom padding -->
+                        <div class="grid grid-cols-[120px_1fr_1fr_1fr_1fr_1fr] bg-emerald-50/30">
+                             <div class="p-8 flex items-start justify-center font-black text-slate-900 text-lg">12:00 PM</div>
+                             @foreach (var day in WeekDays)
+                             {
+                                 <div class="p-4 border-l border-slate-100 flex items-center justify-center">
+                                     <div class="w-full h-12 bg-primary/20 rounded-2xl border border-primary/10"></div>
+                                 </div>
+                             }
+                        </div>
                     </div>
-                }
-                
-                <!-- Lunch Break / Bottom padding -->
-                <div class="grid grid-cols-[120px_1fr_1fr_1fr_1fr_1fr] bg-emerald-50/30">
-                        <div class="p-8 flex items-start justify-center font-black text-slate-900 text-lg">12:00 PM</div>
-                        @foreach (var day in WeekDays)
-                        {
-                            <div class="p-4 border-l border-slate-100 flex items-center justify-center">
-                                <div class="w-full h-12 bg-primary/20 rounded-2xl border border-primary/10"></div>
-                            </div>
-                        }
                 </div>
-            </div>
 
-            <!-- Footer Actions -->
-            <div class="flex items-center justify-end gap-4">
-                <button class="bg-white border-2 border-slate-100 px-10 py-4 rounded-2xl font-bold text-slate-600 hover:bg-slate-50 transition-all">
-                    Exportar CSV
-                </button>
-                <button class="flex items-center gap-3 bg-primary text-white px-12 py-4 rounded-2xl font-bold hover:opacity-90 transition-all shadow-xl shadow-primary/30">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-                    Guardar
-                </button>
+                <!-- Footer Actions -->
+                <div class="flex items-center justify-end gap-4">
+                    <button class="bg-white border-2 border-slate-100 px-10 py-4 rounded-2xl font-bold text-slate-600 hover:bg-slate-50 transition-all">
+                        Exportar CSV
+                    </button>
+                    <button class="flex items-center gap-3 bg-primary text-white px-12 py-4 rounded-2xl font-bold hover:opacity-90 transition-all shadow-xl shadow-primary/30">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                        Guardar
+                    </button>
+                </div>
             </div>
         </div>
     </main>
-
 </div>
-
 @code {
     private int Intervalo { get; set; } = 10;
     private List<DaySchedule> WeekDays = new();
