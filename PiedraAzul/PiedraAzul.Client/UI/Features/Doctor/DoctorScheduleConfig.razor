@@ -219,10 +219,69 @@
         </div>
     </main>
 </div>
+
 @code {
     private int Intervalo { get; set; } = 10;
     private List<DaySchedule> WeekDays = new();
     private List<int> Hours = new() { 9, 10, 11 };
+
+    protected override void OnInitialized()
+    {
+        InitializeSchedule();
+    }
+
+    private void InitializeSchedule()
+    {
+        WeekDays = new List<DaySchedule>
+        {
+            new() { DayName = "Lun", DayNumber = 9 },
+            new() { DayName = "Mar", DayNumber = 10 },
+            new() { DayName = "Mier", DayNumber = 11, IsBlocked = true },
+            new() { DayName = "Jue", DayNumber = 12 },
+            new() { DayName = "Vie", DayNumber = 13 }
+        };
+
+        foreach (var day in WeekDays)
+        {
+            GenerateSlotsForDay(day);
+        }
+    }
+
+    private void GenerateSlotsForDay(DaySchedule day)
+    {
+        day.Slots.Clear();
+        foreach (var hour in Hours)
+        {
+            for (int min = 0; min < 60; min += Intervalo)
+            {
+                var time = DateTime.Today.AddHours(hour).AddMinutes(min);
+                day.Slots.Add(new TimeSlot { StartTime = time, IsActive = true });
+            }
+        }
+        
+        // Mock some inactive slots as in prototype
+        if (day.DayName == "Lun") {
+            day.Slots[2].IsActive = false;
+            day.Slots[3].IsActive = false;
+        }
+        if (day.DayName == "Jue") {
+            day.Slots[1].IsActive = false;
+            day.Slots[5].IsActive = false;
+            day.Slots[7].IsActive = false;
+            day.Slots[11].IsActive = false;
+            day.Slots[17].IsActive = false;
+        }
+        if (day.DayName == "Vie") {
+            day.Slots[3].IsActive = false;
+            day.Slots[4].IsActive = false;
+            day.Slots[5].IsActive = false;
+            day.Slots[10].IsActive = false;
+            day.Slots[11].IsActive = false;
+            day.Slots[15].IsActive = false;
+            day.Slots[16].IsActive = false;
+            day.Slots[17].IsActive = false;
+        }
+    }
 
     private IEnumerable<TimeSlot> GetSlotsForHour(DaySchedule day, int hour)
     {
