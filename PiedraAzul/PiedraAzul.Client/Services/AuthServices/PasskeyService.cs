@@ -9,7 +9,16 @@ namespace PiedraAzul.Client.Services.AuthServices;
 public class PasskeyService(GraphQLHttpClient graphQL, IJSRuntime js)
 {
     public async Task<bool> IsSupportedAsync()
-        => await js.InvokeAsync<bool>("passkeyInterop.isSupported");
+    {
+        try
+        {
+            return await js.InvokeAsync<bool>("passkeyInterop.isSupported");
+        }
+        catch
+        {
+            return false;
+        }
+    }
 
     public async Task<Result<bool>> RegisterAsync(string userId, string email, string displayName, string friendlyName)
     {

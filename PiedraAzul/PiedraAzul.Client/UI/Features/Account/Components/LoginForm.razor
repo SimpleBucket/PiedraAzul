@@ -6,6 +6,7 @@
 @inject AuthenticationService AuthService
 @inject PasskeyService PasskeyService
 @inject UserState UserState
+@inject IJSRuntime JS
 
 <EditForm Model="@loginModel" OnValidSubmit="HandleLogin" class="mx-auto w-full max-w-lg">
     <DataAnnotationsValidator />
@@ -112,6 +113,7 @@
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender) return;
+
         _passkeySupported = await PasskeyService.IsSupportedAsync();
         StateHasChanged();
     }
@@ -146,16 +148,21 @@
 
             if (!result.IsSuccess)
             {
-                _errorMessage = "No se pudo verificar la passkey. Intenta de nuevo.";
+                _errorMessage = result.Error?.Message ?? "No se pudo verificar la passkey. Intenta de nuevo.";
                 return;
             }
 
             var destination = string.IsNullOrEmpty(ReturnUrl) ? "/" : ReturnUrl;
             NavigationManager.NavigateTo(destination, forceLoad: true);
         }
-        catch
+        catch (Exception ex) when (ex.Message.Contains("cancel", StringComparison.OrdinalIgnoreCase)
+                                   || ex.Message.Contains("abort", StringComparison.OrdinalIgnoreCase))
         {
-            _errorMessage = "Autenticación con passkey cancelada o fallida.";
+            _errorMessage = "Cancelaste la autenticación.";
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Error: {ex.Message}";
         }
         finally
         {

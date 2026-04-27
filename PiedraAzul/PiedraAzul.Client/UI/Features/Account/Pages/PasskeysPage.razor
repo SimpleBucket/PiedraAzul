@@ -5,6 +5,7 @@
 @inject PasskeyService PasskeyService
 @inject UserState UserState
 @inject NavigationManager Nav
+@inject IJSRuntime JS
 <AuthorizeGuard RequiredRole="Patient">
 
 <PageTitle>Mis Passkeys | Piedra Azul</PageTitle>
@@ -97,25 +98,35 @@
 
         try
         {
+            await JS.InvokeVoidAsync("console.log", "1. Iniciando registro de passkey");
+
             var result = await PasskeyService.RegisterAsync(
                 UserState.User.Id,
                 UserState.User.Email,
                 UserState.User.Name,
                 string.IsNullOrWhiteSpace(_friendlyName) ? "Mi passkey" : _friendlyName);
 
+            await JS.InvokeVoidAsync("console.log", "2. Resultado:", result.IsSuccess, result.Error?.Message);
+
             if (result.IsSuccess)
+            {
                 _success = true;
+            }
             else
-                _error = "No se pudo registrar la passkey. Inténtalo de nuevo.";
+            {
+                _error = result.Error?.Message ?? "No se pudo registrar la passkey. Inténtalo de nuevo.";
+            }
         }
         catch (Exception ex) when (ex.Message.Contains("cancel", StringComparison.OrdinalIgnoreCase)
                                    || ex.Message.Contains("abort", StringComparison.OrdinalIgnoreCase))
         {
             _error = "Cancelaste el registro.";
+            await JS.InvokeVoidAsync("console.log", "Cancelado:", ex.Message);
         }
-        catch
+        catch (Exception ex)
         {
-            _error = "Ocurrió un error al registrar la passkey.";
+            _error = $"Error: {ex.Message}";
+            await JS.InvokeVoidAsync("console.error", "Exception:", ex.Message, ex.StackTrace);
         }
         finally
         {
