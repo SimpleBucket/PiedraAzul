@@ -20,3 +20,17 @@ public class DisableMFAInput
     [Required(ErrorMessage = "La confirmación es requerida")]
     public required bool Confirm { get; set; }
 }
+
+public class BeginTOTPSetupInput
+{
+    [Required(ErrorMessage = "El correo electrónico es requerido")]
+    [EmailAddress(ErrorMessage = "Correo electrónico inválido")]
+    public required string Email { get; set; }
+}
+
+public class ConfirmTOTPSetupInput
+{
+    [Required(ErrorMessage = "El código TOTP es requerido")]
+    [StringLength(6, MinimumLength = 6, ErrorMessage = "El código TOTP debe ser de 6 dígitos")]
+    public required string TOTP { get; set; }
+}

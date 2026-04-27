@@ -8,6 +8,7 @@ using PiedraAzul.Application.Common.Models.Auth;
 using PiedraAzul.Application.Common.Models.Patients;
 using PiedraAzul.Application.Features.Appointments.CreateAppointment;
 using PiedraAzul.Application.Features.Auth.Commands.Login;
+using PiedraAzul.Application.Features.Auth.Commands.MFA;
 using PiedraAzul.Application.Features.Auth.Commands.PasswordReset;
 using PiedraAzul.Application.Features.Auth.Commands.Register;
 using PiedraAzul.Application.Features.Users.Commands.CreateProfileForRole;
@@ -419,5 +420,102 @@ public class Mutation
             AvatarUrl = user.AvatarUrl,
             Roles = []
         };
+    }
+
+    [Authorize]
+    public async Task<string> BeginTOTPSetupAsync(
+        BeginTOTPSetupInput input,
+        [Service] IMediator mediator,
+        [Service] IHttpContextAccessor httpContextAccessor,
+        [Service] ILogger<Mutation> logger)
+    {
+        var userId = httpContextAccessor.HttpContext!.User.FindFirstValue(ClaimTypes.NameIdentifier)
+            ?? throw new GraphQLException("No autenticado");
+
+        var qrCode = await mediator.Send(new BeginTOTPSetupCommand(userId, input.Email));
+
+        logger.LogInformation("TOTP setup initiated for user: {UserId}", userId);
+        return qrCode;
+    }
+
+    [Authorize]
+    public async Task<bool> ConfirmTOTPSetupAsync(
+        ConfirmTOTPSetupInput input,
+        [Service] IMediator mediator,
+        [Service] IHttpContextAccessor httpContextAccessor,
+        [Service] ILogger<Mutation> logger)
+    {
+        var userId = httpContextAccessor.HttpContext!.User.FindFirstValue(ClaimTypes.NameIdentifier)
+            ?? throw new GraphQLException("No autenticado");
+
+        var result = await mediator.Send(new ConfirmTOTPSetupCommand(userId, input.TOTP));
+
+        if (!result)
+        {
+            logger.LogWarning("TOTP setup confirmation failed for user: {UserId}", userId);
+            throw new GraphQLException("Código TOTP inválido. Intenta nuevamente.");
+        }
+
+        logger.LogInformation("TOTP setup confirmed for user: {UserId}", userId);
+        return true;
+    }
+
+    [Authorize]
+    public async Task<List<string>> GenerateBackupCodesAsync(
+        [Service] IMediator mediator,
+        [Service] IHttpContextAccessor httpContextAccessor,
+        [Service] ILogger<Mutation> logger)
+    {
+        var userId = httpContextAccessor.HttpContext!.User.FindFirstValue(ClaimTypes.NameIdentifier)
+            ?? throw new GraphQLException("No autenticado");
+
+        var codes = await mediator.Send(new GenerateBackupCodesCommand(userId));
+
+        logger.LogInformation("Backup codes generated for user: {UserId}", userId);
+        return codes;
+    }
+
+    [Authorize]
+    public async Task<bool> VerifyBackupCodeAsync(
+        VerifyMFAInput input,
+        [Service] IMFAService mfaService,
+        [Service] IHttpContextAccessor httpContextAccessor,
+        [Service] ILogger<Mutation> logger)
+    {
+        var userId = httpContextAccessor.HttpContext!.User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId))
+            throw new GraphQLException("No autenticado");
+
+        var isValid = await mfaService.VerifyBackupCodeAsync(userId, input.OTP);
+        if (!isValid)
+        {
+            logger.LogWarning("Invalid backup code verification attempt for user: {UserId}", userId);
+            throw new GraphQLException("Código de recuperación inválido");
+        }
+
+        logger.LogInformation("Backup code verified for user: {UserId}", userId);
+        return true;
+    }
+
+    [Authorize]
+    public async Task<bool> VerifyTOTPAsync(
+        VerifyMFAInput input,
+        [Service] IMFAService mfaService,
+        [Service] IHttpContextAccessor httpContextAccessor,
+        [Service] ILogger<Mutation> logger)
+    {
+        var userId = httpContextAccessor.HttpContext!.User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId))
+            throw new GraphQLException("No autenticado");
+
+        var isValid = await mfaService.VerifyTOTPAsync(userId, input.OTP);
+        if (!isValid)
+        {
+            logger.LogWarning("Invalid TOTP verification attempt for user: {UserId}", userId);
+            throw new GraphQLException("Código TOTP inválido");
+        }
+
+        logger.LogInformation("TOTP verification successful for user: {UserId}", userId);
+        return true;
     }
 }
