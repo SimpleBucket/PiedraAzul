@@ -58,32 +58,43 @@ public class PasskeyService(
     public async Task<bool> CompleteRegistrationAsync(string userId, string attestationResponseJson, string friendlyName)
     {
         if (!cache.TryGetValue($"passkey:reg:{userId}", out CredentialCreateOptions? storedOptions) || storedOptions is null)
-            return false;
+            throw new InvalidOperationException("Sesión expirada. Por favor, inicia el registro nuevamente.");
 
         var attestationResponse = JsonSerializer.Deserialize<AuthenticatorAttestationRawResponse>(
             attestationResponseJson, JsonOpts)
-            ?? throw new InvalidOperationException("Respuesta de attestation inválida");
+            ?? throw new InvalidOperationException("Respuesta de autenticador inválida. Verifica tu dispositivo.");
 
-        var result = await fido2.MakeNewCredentialAsync(new MakeNewCredentialParams
+        try
         {
-            AttestationResponse = attestationResponse,
-            OriginalOptions = storedOptions,
-            IsCredentialIdUniqueToUserCallback = async (args, ct) =>
-                !await context.PasskeyCredentials
-                    .AnyAsync(c => c.CredentialId.SequenceEqual(args.CredentialId), ct)
-        });
+            var result = await fido2.MakeNewCredentialAsync(new MakeNewCredentialParams
+            {
+                AttestationResponse = attestationResponse,
+                OriginalOptions = storedOptions,
+                IsCredentialIdUniqueToUserCallback = async (args, ct) =>
+                    !await context.PasskeyCredentials
+                        .AnyAsync(c => c.CredentialId.SequenceEqual(args.CredentialId), ct)
+            });
 
-        cache.Remove($"passkey:reg:{userId}");
+            cache.Remove($"passkey:reg:{userId}");
 
-        context.PasskeyCredentials.Add(new PasskeyCredential(
-            userId,
-            result.Id,
-            result.PublicKey,
-            result.SignCount,
-            friendlyName));
+            context.PasskeyCredentials.Add(new PasskeyCredential(
+                userId,
+                result.Id,
+                result.PublicKey,
+                result.SignCount,
+                friendlyName));
 
-        await context.SaveChangesAsync();
-        return true;
+            await context.SaveChangesAsync();
+            return true;
+        }
+        catch (Fido2VerificationException ex)
+        {
+            throw new InvalidOperationException($"Verificación fallida: {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException($"Error al registrar passkey: {ex.Message}");
+        }
     }
 
     public Task<string> BeginAssertionAsync()
