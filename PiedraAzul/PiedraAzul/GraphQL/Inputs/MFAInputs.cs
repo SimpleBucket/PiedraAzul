@@ -34,3 +34,12 @@ public class ConfirmTOTPSetupInput
     [StringLength(6, MinimumLength = 6, ErrorMessage = "El código TOTP debe ser de 6 dígitos")]
     public required string TOTP { get; set; }
 }
+
+public class VerifyMFALoginInput
+{
+    [Required(ErrorMessage = "El token de MFA es requerido")]
+    public required string MFAToken { get; set; }
+
+    [Required(ErrorMessage = "El código es requerido")]
+    public required string OTP { get; set; }
+}

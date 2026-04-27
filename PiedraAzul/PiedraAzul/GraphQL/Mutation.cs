@@ -21,11 +21,13 @@ namespace PiedraAzul.GraphQL;
 
 public class Mutation
 {
-    public async Task<UserType> LoginAsync(
+    public async Task<LoginResultType> LoginAsync(
         LoginInput input,
         [Service] IMediator mediator,
         [Service] UserManager<ApplicationUser> userManager,
         [Service] SignInManager<ApplicationUser> signInManager,
+        [Service] IMFAService mfaService,
+        [Service] IMFATokenService mfaTokenService,
         [Service] ILogger<Mutation> logger)
     {
         // Check for account lockout before attempting login
@@ -49,17 +51,50 @@ public class Mutation
         var user = await userManager.FindByIdAsync(result.User.Id)
             ?? throw new GraphQLException("Usuario no encontrado");
 
+        // Check if MFA is enabled
+        var isMFAEnabled = await mfaService.IsEnabledAsync(result.User.Id);
+
+        if (isMFAEnabled)
+        {
+            var mfaMethod = await mfaService.GetMFAMethodAsync(result.User.Id);
+            var mfaToken = mfaTokenService.GenerateMFAToken(result.User.Id);
+            var hasEmail = !string.IsNullOrEmpty(user.Email);
+
+            // For Email MFA, generate and send OTP
+            if (mfaMethod == "Email" && hasEmail)
+            {
+                var otp = await mfaService.GenerateOTPAsync(result.User.Id);
+                await signInManager.SignOutAsync(); // Ensure no partial login
+                await mfaService.SendOTPEmailAsync(result.User.Id, user.Email!);
+            }
+
+            logger.LogInformation("MFA required for user: {UserId}", result.User.Id);
+
+            return new LoginResultType
+            {
+                MFARequired = new MFARequiredType
+                {
+                    MFAToken = mfaToken,
+                    MFAMethod = mfaMethod,
+                    HasEmail = hasEmail
+                }
+            };
+        }
+
         await signInManager.SignInAsync(user, isPersistent: true);
 
         logger.LogInformation("Successful login for user: {UserId} ({Email})", user.Id, user.Email);
 
-        return new UserType
+        return new LoginResultType
         {
-            Id = user.Id,
-            Name = user.Name,
-            Email = user.Email ?? "",
-            AvatarUrl = user.AvatarUrl,
-            Roles = result.Roles
+            User = new UserType
+            {
+                Id = user.Id,
+                Name = user.Name,
+                Email = user.Email ?? "",
+                AvatarUrl = user.AvatarUrl,
+                Roles = result.Roles
+            }
         };
     }
 
@@ -146,6 +181,38 @@ public class Mutation
 
         logger.LogInformation("Password successfully reset for email: {Email}", input.Email);
         return true;
+    }
+
+    public async Task<UserType> VerifyMFALoginAsync(
+        VerifyMFALoginInput input,
+        [Service] IMediator mediator,
+        [Service] UserManager<ApplicationUser> userManager,
+        [Service] SignInManager<ApplicationUser> signInManager,
+        [Service] ILogger<Mutation> logger)
+    {
+        var result = await mediator.Send(new VerifyMFALoginCommand(input.MFAToken, input.OTP));
+
+        if (result.User is null)
+        {
+            logger.LogWarning("MFA verification failed with invalid token or OTP");
+            throw new GraphQLException("Código de verificación inválido");
+        }
+
+        var user = await userManager.FindByIdAsync(result.User.Id)
+            ?? throw new GraphQLException("Usuario no encontrado");
+
+        await signInManager.SignInAsync(user, isPersistent: true);
+
+        logger.LogInformation("MFA verification successful for user: {UserId}", user.Id);
+
+        return new UserType
+        {
+            Id = user.Id,
+            Name = user.Name,
+            Email = user.Email ?? "",
+            AvatarUrl = user.AvatarUrl,
+            Roles = result.Roles
+        };
     }
 
     [Authorize]

@@ -18,4 +18,7 @@ public interface IMFAService
     // Backup Codes
     Task<List<string>> GenerateBackupCodesAsync(string userId);
     Task<bool> VerifyBackupCodeAsync(string userId, string code);
+
+    // Email sending
+    Task<bool> SendOTPEmailAsync(string userId, string email);
 }
