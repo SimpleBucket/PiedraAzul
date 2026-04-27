@@ -134,8 +134,15 @@ public class Mutation
         CompletePasskeyRegistrationInput input,
         [Service] IPasskeyService passkeys)
     {
-        return await passkeys.CompleteRegistrationAsync(
-            input.UserId, input.AttestationResponse, input.FriendlyName);
+        try
+        {
+            return await passkeys.CompleteRegistrationAsync(
+                input.UserId, input.AttestationResponse, input.FriendlyName);
+        }
+        catch (InvalidOperationException ex)
+        {
+            throw new GraphQLException(ex.Message);
+        }
     }
 
     public async Task<string> BeginPasskeyAssertionAsync(
@@ -150,21 +157,28 @@ public class Mutation
         [Service] UserManager<ApplicationUser> userManager,
         [Service] SignInManager<ApplicationUser> signInManager)
     {
-        var (userId, roles) = await passkeys.CompleteAssertionAsync(input.AssertionResponse);
-
-        var user = await userManager.FindByIdAsync(userId)
-            ?? throw new GraphQLException("Usuario no encontrado");
-
-        await signInManager.SignInAsync(user, isPersistent: true);
-
-        return new UserType
+        try
         {
-            Id = user.Id,
-            Name = user.Name,
-            Email = user.Email ?? "",
-            AvatarUrl = user.AvatarUrl,
-            Roles = roles
-        };
+            var (userId, roles) = await passkeys.CompleteAssertionAsync(input.AssertionResponse);
+
+            var user = await userManager.FindByIdAsync(userId)
+                ?? throw new GraphQLException("Usuario no encontrado");
+
+            await signInManager.SignInAsync(user, isPersistent: true);
+
+            return new UserType
+            {
+                Id = user.Id,
+                Name = user.Name,
+                Email = user.Email ?? "",
+                AvatarUrl = user.AvatarUrl,
+                Roles = roles
+            };
+        }
+        catch (InvalidOperationException ex)
+        {
+            throw new GraphQLException(ex.Message);
+        }
     }
 
     [Authorize]
