@@ -279,6 +279,15 @@ public class MFAService : IMFAService
         }
     }
 
+    public async Task<bool> SendOTPEmailAsync(string userId, string email)
+    {
+        var otp = _cache.Get<string>($"mfa_otp_{userId}");
+        if (string.IsNullOrEmpty(otp))
+            return false;
+
+        return await _emailService.SendMFAEmailAsync(email, email, otp, 10);
+    }
+
     private string DecryptBackupCodes(string encryptedCodes)
     {
         var key = _configuration["Security:EncryptionKey"] ?? "default-key-change-in-production";

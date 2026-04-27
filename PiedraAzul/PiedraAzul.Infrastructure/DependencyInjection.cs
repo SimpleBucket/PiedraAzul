@@ -94,6 +94,9 @@ public static class DependencyInjection
         // MFA Service
         services.AddScoped<IMFAService, MFAService>();
 
+        // MFA Token Service
+        services.AddScoped<IMFATokenService, MFATokenService>();
+
         return services;
     }
 }
