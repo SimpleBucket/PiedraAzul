@@ -11,5 +11,32 @@ namespace PiedraAzul.Infrastructure.Identity
         public DateTime? BirthDate { get; set; }
         public string Name { get; set; } = string.Empty;
         public string AvatarUrl { get; set; } = "default.png";
+        public string? PendingEmail { get; set; }
+        public string? EmailChangeCode { get; set; }
+        public DateTime? EmailChangeCodeExpiresAt { get; set; }
+
+        public void SetEmailChangeToken(string newEmail, string code)
+        {
+            PendingEmail = newEmail;
+            EmailChangeCode = code;
+            EmailChangeCodeExpiresAt = DateTime.UtcNow.AddMinutes(10);
+        }
+
+        public bool HasPendingEmailChange(string email)
+        {
+            return PendingEmail == email && EmailChangeCodeExpiresAt > DateTime.UtcNow;
+        }
+
+        public bool VerifyEmailChangeCode(string code)
+        {
+            return EmailChangeCode == code && EmailChangeCodeExpiresAt > DateTime.UtcNow;
+        }
+
+        public void ClearEmailChangeToken()
+        {
+            PendingEmail = null;
+            EmailChangeCode = null;
+            EmailChangeCodeExpiresAt = null;
+        }
     }
 }
