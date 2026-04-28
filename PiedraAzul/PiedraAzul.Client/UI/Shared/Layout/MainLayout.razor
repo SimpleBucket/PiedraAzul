@@ -29,6 +29,7 @@
                 @if (UserState?.User?.Roles.Contains("Admin") == true)
                 {
                     <a href="/admin" class="transition-colors hover:text-gray-900">Admin</a>
+                    <a href="/admin/configurar-horario" class="transition-colors hover:text-gray-900">Horario</a>
                 }
                 @if (UserState?.User?.Roles.Contains("Doctor") == true)
                 {
@@ -51,7 +52,7 @@
                 else if (_isAuthenticated)
                 {
                     <a href="/account" class="bg-primary rounded-md px-4 py-2 text-white hover:bg-teal-800">
-                        ¡Bienvenido de nuevo, @_userName!.Split(' ')[0]!  
+                        ¡Bienvenido de nuevo, @_userName!.Split(' ')[0]!
                     </a>
                 }
                 else

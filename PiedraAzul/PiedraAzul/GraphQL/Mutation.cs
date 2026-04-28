@@ -9,6 +9,7 @@ using PiedraAzul.Application.Common.Models.Patients;
 using PiedraAzul.Application.Features.Appointments.CreateAppointment;
 using PiedraAzul.Application.Features.Auth.Commands.Login;
 using PiedraAzul.Application.Features.Auth.Commands.Register;
+using PiedraAzul.Application.Features.ScheduleConfig.Commands.SaveScheduleConfig;
 using PiedraAzul.Application.Features.Users.Commands.CreateProfileForRole;
 using PiedraAzul.GraphQL.Inputs;
 using PiedraAzul.GraphQL.Types;
@@ -83,6 +84,29 @@ public class Mutation
     {
         await signInManager.SignOutAsync();
         return true;
+    }
+
+
+    public async Task<bool> SaveScheduleConfigAsync(
+        ScheduleConfigInput input,
+        [Service] IMediator mediator)
+    {
+        if (string.IsNullOrWhiteSpace(input.DoctorId))
+            throw new GraphQLException("DoctorId requerido");
+
+        var result = await mediator.Send(new SaveScheduleConfigCommand(
+            input.DoctorId,
+            input.BookingWindowWeeks,
+            input.IntervalMinutes,
+            input.Availability
+                .Select(day => new Application.Common.Models.Schedule.ScheduleDayDto(
+                    day.DayOfWeek,
+                    day.IsEnabled,
+                    day.StartTime,
+                    day.EndTime))
+                .ToList()));
+
+        return result;
     }
 
     public async Task<AppointmentType> CreateAppointmentAsync(
