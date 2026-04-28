@@ -63,11 +63,11 @@ public class MFAService : IMFAService
         );
     }
 
-    public async Task<bool> EnableMFAAsync(string userId, string method)
+    public async Task<List<string>> EnableMFAAsync(string userId, string method)
     {
         // Desactivar todos los otros métodos
         var otherMfas = await _context.UserMFAConfigurations
-            .Where(m => m.UserId == userId && m.MFAMethod != method)
+            .Where(m => m.UserId == userId && m.MFAMethod != method && m.MFAMethod != "BackupCodes")
             .ToListAsync();
 
         foreach (var config in otherMfas)
@@ -87,7 +87,10 @@ public class MFAService : IMFAService
         mfa.CreatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
-        return true;
+
+        // Generar backup codes SIEMPRE al activar cualquier método
+        var backupCodes = await GenerateBackupCodesAsync(userId);
+        return backupCodes;
     }
 
     public async Task<bool> DisableMFAAsync(string userId, string method = "")
@@ -231,7 +234,7 @@ public class MFAService : IMFAService
         }
 
         var mfa = await _context.UserMFAConfigurations
-            .FirstOrDefaultAsync(m => m.UserId == userId);
+            .FirstOrDefaultAsync(m => m.UserId == userId && m.MFAMethod == "BackupCodes");
 
         if (mfa is null)
         {

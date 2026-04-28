@@ -7,7 +7,7 @@ public interface IMFAService
     Task<MFAStatus> GetMFAStatusAsync(string userId);
     Task<bool> IsEnabledAsync(string userId);
     Task<string> GetMFAMethodAsync(string userId);
-    Task<bool> EnableMFAAsync(string userId, string method);
+    Task<List<string>> EnableMFAAsync(string userId, string method);
     Task<bool> DisableMFAAsync(string userId, string method = "");
     Task<bool> VerifyOTPAsync(string userId, string otp);
     Task<string> GenerateOTPAsync(string userId);

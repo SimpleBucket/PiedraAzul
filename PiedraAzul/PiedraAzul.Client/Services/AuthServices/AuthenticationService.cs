@@ -133,6 +133,28 @@ public class AuthenticationService(GraphQLHttpClient graphQL, NavigationManager 
         nav.NavigateTo("/", forceLoad: true);
     }
 
+    public async Task<Result<UserGQL>> VerifyBackupCodeLoginAsync(string mfaToken, string backupCode)
+    {
+        const string mutation = """
+            mutation VerifyBackupCodeLogin($input: VerifyBackupCodeLoginInput!) {
+                verifyBackupCodeLogin(input: $input) { id name email roles avatarUrl emailConfirmed }
+            }
+            """;
+
+        return await GraphQLExecutor.Execute(async () =>
+        {
+            var user = await graphQL.ExecuteAsync<UserGQL>(
+                mutation,
+                new { input = new { mfaToken, backupCode } },
+                "verifyBackupCodeLogin");
+
+            if (user is null)
+                throw new GraphQLClientException("Código de recuperación inválido o ya utilizado");
+
+            return user;
+        });
+    }
+
     public async Task<Result<bool>> ResendMFACodeAsync(string mfaToken)
     {
         const string mutation = """
