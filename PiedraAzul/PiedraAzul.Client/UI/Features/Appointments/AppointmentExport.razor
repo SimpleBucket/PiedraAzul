@@ -61,7 +61,7 @@
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
             </button>
             <div>
-                <h1 class="text-4xl font-black text-slate-900 mb-2">Exportación de Citas (CSV)</h1>
+                <h1 class="text-4xl font-black text-slate-900 mb-2">Exportación de Citas (xls)</h1>
                 <p class="text-slate-500 text-lg font-medium">Prepare su consulta offline descargando el listado del día</p>
             </div>
         </div>
@@ -161,9 +161,9 @@
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></svg>
                 Imprimir Listado
             </button>
-            <button @onclick="ExportToCsv" class="w-full sm:w-auto flex items-center justify-center gap-3 bg-primary text-white px-10 py-4 rounded-2xl font-bold hover:opacity-90 transition-all shadow-xl shadow-primary/30">
+            <button @onclick="ExportToExcel" class="w-full sm:w-auto flex items-center justify-center gap-3 bg-primary text-white px-10 py-4 rounded-2xl font-bold hover:opacity-90 transition-all shadow-xl shadow-primary/30">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                Exportar a CSV
+                Exportar datos
             </button>
         </div>
 
@@ -173,7 +173,7 @@
                 <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
             </div>
             <p class="text-blue-900/70 font-medium leading-relaxed">
-                El archivo CSV es compatible con Excel, Google Sheets y Numbers. Incluye datos de contacto del paciente para su uso en emergencias offline.
+                El archivo XLS es compatible con Excel, Google Sheets y Numbers. Incluye datos de contacto del paciente para su uso en emergencias offline.
             </p>
         </div>
 
@@ -321,32 +321,81 @@
         ");
     }
 
-    private async Task ExportToCsv()
+    private async Task ExportToExcel()
     {
         var doctorName = SelectedDoctor == "all" ? "Todos los profesionales" : allDoctors.FirstOrDefault(d => d.UserId == SelectedDoctor)?.Name ?? "Desconocido";
         var dateStr = SelectedDate.ToString("dd/MM/yyyy");
         
-        // Usamos CSV real con BOM para que Excel lo reconozca sin advertencias
-        var csv = $"\"Registro Piedra Azul {dateStr}\",,,,\n";
-        csv += $"\"Especialista: {doctorName}\",,,,\n\n";
-        csv += "Paciente,Horario,Especialidad,Estado,Asistencia\n";
-        
+        // Creamos una tabla HTML que Excel reconoce como un archivo .xls
+        // Ajustamos el diseño para que coincida exactamente con la imagen
+        var html = $@"
+            <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:x='urn:schemas-microsoft-com:office:excel' xmlns='http://www.w3.org/TR/REC-html40'>
+            <head>
+                <meta charset='utf-8'>
+                <style>
+                    table {{ border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; table-layout: fixed; }}
+                    td, th {{ border: 1px solid black; padding: 12px 8px; font-size: 10pt; word-wrap: break-word; vertical-align: middle; }}
+                    .title {{ font-weight: bold; text-align: center; font-size: 14pt; border: none; padding: 20px; }}
+                    .specialist {{ font-weight: bold; text-align: left; border: none; padding: 10px 0; }}
+                    .header-cell {{ font-weight: bold; text-align: center; background-color: #f8fafc; }}
+                    .center-cell {{ text-align: center; }}
+                    
+                    /* Anchos de columna fijos para impresión (Total ~700px para A4) */
+                    .col-paciente {{ width: 220px; }}
+                    .col-horario {{ width: 100px; }}
+                    .col-especialidad {{ width: 150px; }}
+                    .col-estado {{ width: 110px; }}
+                    .col-asistencia {{ width: 100px; }}
+                </style>
+            </head>
+            <body>
+                <table>
+                    <colgroup>
+                        <col class='col-paciente'>
+                        <col class='col-horario'>
+                        <col class='col-especialidad'>
+                        <col class='col-estado'>
+                        <col class='col-asistencia'>
+                    </colgroup>
+                    <tr>
+                        <td colspan='5' class='title'>Registro Piedra Azul {dateStr}</td>
+                    </tr>
+                    <tr>
+                        <td colspan='5' class='specialist'>Especialista: {doctorName}</td>
+                    </tr>
+                    <tr>
+                        <td class='header-cell'>Paciente</td>
+                        <td class='header-cell'>Horario</td>
+                        <td class='header-cell'>Especialidad</td>
+                        <td class='header-cell'>Estado</td>
+                        <td class='header-cell'>Asistencia</td>
+                    </tr>";
+
         foreach (var app in appointments)
         {
-            csv += $"\"{app.Patient}\",\"{app.Time}\",\"{app.Specialty}\",\"{app.Status}\",\"\"\n";
+            html += $@"
+                <tr>
+                    <td>{app.Patient}</td>
+                    <td class='center-cell'>{app.Time}</td>
+                    <td class='center-cell'>{app.Specialty}</td>
+                    <td class='center-cell'>{app.Status}</td>
+                    <td></td>
+                </tr>";
         }
 
-        var fileName = $"Listado_Citas_{SelectedDate:yyyyMMdd}.csv";
-        
-        // Añadimos el BOM (Byte Order Mark) para UTF-8 para que Excel detecte los caracteres especiales
-        var utf8WithBom = new System.Text.UTF8Encoding(true);
-        var bytes = utf8WithBom.GetBytes(csv);
+        html += @"
+                </table>
+            </body>
+            </html>";
+
+        var fileName = $"Listado_Citas_{SelectedDate:yyyyMMdd}.xls";
+        var bytes = System.Text.Encoding.UTF8.GetBytes(html);
         var base64 = Convert.ToBase64String(bytes);
         
         await JS.InvokeVoidAsync("eval", $@"
             var link = document.createElement('a');
             link.download = '{fileName}';
-            link.href = 'data:text/csv;base64,{base64}';
+            link.href = 'data:application/vnd.ms-excel;base64,{base64}';
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
