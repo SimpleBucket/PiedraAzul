@@ -33,22 +33,47 @@ public class MFAService : IMFAService
 
     public async Task<bool> IsEnabledAsync(string userId)
     {
-        var mfa = await _context.UserMFAConfigurations
-            .FirstOrDefaultAsync(m => m.UserId == userId);
-
-        return mfa?.IsEnabled ?? false;
+        return await _context.UserMFAConfigurations
+            .AnyAsync(m => m.UserId == userId && m.IsEnabled);
     }
 
     public async Task<string> GetMFAMethodAsync(string userId)
     {
         var mfa = await _context.UserMFAConfigurations
-            .FirstOrDefaultAsync(m => m.UserId == userId);
+            .Where(m => m.UserId == userId && m.IsEnabled)
+            .FirstOrDefaultAsync();
 
         return mfa?.MFAMethod ?? "Email";
     }
 
+    public async Task<MFAStatus> GetMFAStatusAsync(string userId)
+    {
+        var mfas = await _context.UserMFAConfigurations
+            .Where(m => m.UserId == userId)
+            .ToListAsync();
+
+        var emailOtpEnabled = mfas.Any(m => m.IsEnabled && m.MFAMethod == "Email");
+        var totpEnabled = mfas.Any(m => m.IsEnabled && m.MFAMethod == "TOTP");
+        var hasBackupCodes = mfas.Any(m => !string.IsNullOrEmpty(m.BackupCodesEncrypted));
+
+        return new MFAStatus(
+            EmailOTPEnabled: emailOtpEnabled,
+            TOTPEnabled: totpEnabled,
+            HasBackupCodes: hasBackupCodes
+        );
+    }
+
     public async Task<bool> EnableMFAAsync(string userId, string method)
     {
+        // Desactivar todos los otros métodos
+        var otherMfas = await _context.UserMFAConfigurations
+            .Where(m => m.UserId == userId && m.MFAMethod != method)
+            .ToListAsync();
+
+        foreach (var config in otherMfas)
+            config.IsEnabled = false;
+
+        // Activar el método solicitado
         var mfa = await _context.UserMFAConfigurations
             .FirstOrDefaultAsync(m => m.UserId == userId && m.MFAMethod == method);
 
@@ -65,15 +90,22 @@ public class MFAService : IMFAService
         return true;
     }
 
-    public async Task<bool> DisableMFAAsync(string userId)
+    public async Task<bool> DisableMFAAsync(string userId, string method = "")
     {
-        var mfa = await _context.UserMFAConfigurations
-            .FirstOrDefaultAsync(m => m.UserId == userId);
+        IQueryable<UserMFAConfiguration> query = _context.UserMFAConfigurations
+            .Where(m => m.UserId == userId);
 
-        if (mfa is null)
+        if (!string.IsNullOrEmpty(method))
+            query = query.Where(m => m.MFAMethod == method);
+
+        var mfas = await query.ToListAsync();
+
+        if (mfas.Count == 0)
             return false;
 
-        mfa.IsEnabled = false;
+        foreach (var mfa in mfas)
+            mfa.IsEnabled = false;
+
         await _context.SaveChangesAsync();
         return true;
     }
@@ -177,6 +209,7 @@ public class MFAService : IMFAService
         if (mfa is null)
             return false;
 
+        mfa.TOTPSecret = secret;
         mfa.IsEnabled = true;
         mfa.CreatedAt = DateTime.UtcNow;
 
@@ -253,7 +286,10 @@ public class MFAService : IMFAService
 
     private string EncryptBackupCodes(string codes)
     {
-        var key = _configuration["Security:EncryptionKey"] ?? "default-key-change-in-production";
+        var key = _configuration["Security:EncryptionKey"];
+        if (string.IsNullOrEmpty(key))
+            throw new InvalidOperationException("Security:EncryptionKey debe estar configurada en appsettings.json");
+
         var keyBytes = Encoding.UTF8.GetBytes(key.PadRight(32).Substring(0, 32));
         var codesBytes = Encoding.UTF8.GetBytes(codes);
 
@@ -290,7 +326,10 @@ public class MFAService : IMFAService
 
     private string DecryptBackupCodes(string encryptedCodes)
     {
-        var key = _configuration["Security:EncryptionKey"] ?? "default-key-change-in-production";
+        var key = _configuration["Security:EncryptionKey"];
+        if (string.IsNullOrEmpty(key))
+            throw new InvalidOperationException("Security:EncryptionKey debe estar configurada en appsettings.json");
+
         var keyBytes = Encoding.UTF8.GetBytes(key.PadRight(32).Substring(0, 32));
         var encryptedBytes = Convert.FromBase64String(encryptedCodes);
 

@@ -1,11 +1,14 @@
 namespace PiedraAzul.Application.Common.Interfaces;
 
+public record MFAStatus(bool EmailOTPEnabled, bool TOTPEnabled, bool HasBackupCodes);
+
 public interface IMFAService
 {
+    Task<MFAStatus> GetMFAStatusAsync(string userId);
     Task<bool> IsEnabledAsync(string userId);
     Task<string> GetMFAMethodAsync(string userId);
     Task<bool> EnableMFAAsync(string userId, string method);
-    Task<bool> DisableMFAAsync(string userId);
+    Task<bool> DisableMFAAsync(string userId, string method = "");
     Task<bool> VerifyOTPAsync(string userId, string otp);
     Task<string> GenerateOTPAsync(string userId);
 
