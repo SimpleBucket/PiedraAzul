@@ -24,21 +24,48 @@
         <!-- Validation -->
         <ValidationSummary class="mb-4 text-sm text-red-500" />
 
-        <!-- OTP Input -->
-        <div class="mb-4">
-            <label class="mb-2 block text-sm font-semibold text-gray-700">
-                @GetInputLabel()
-            </label>
+        <!-- Toggle: OTP / Backup Code -->
+        @if (MFARequired?.MFAMethod != "BackupCode")
+        {
+            <div class="mb-4 flex rounded-lg border border-gray-200 overflow-hidden text-sm font-semibold">
+                <button type="button"
+                        @onclick="() => _useBackupCode = false"
+                        class="flex-1 py-2 transition @(_useBackupCode ? "bg-white text-gray-500 hover:bg-gray-50" : "bg-[#257D8D] text-white")">
+                    @GetInputLabel()
+                </button>
+                <button type="button"
+                        @onclick="() => _useBackupCode = true"
+                        class="flex-1 py-2 transition @(_useBackupCode ? "bg-[#257D8D] text-white" : "bg-white text-gray-500 hover:bg-gray-50")">
+                    Código de recuperación
+                </button>
+            </div>
+        }
 
-            <input type="text"
-                   @bind="mfaModel.OTP"
-                   placeholder="000000"
-                   maxlength="8"
-                   class="w-full rounded-lg border border-gray-300 px-4 py-3 text-center text-2xl tracking-widest text-gray-700
-                   transition focus:border-teal-400 focus:outline-none focus:ring-2
-                   focus:ring-teal-400"
-                   autocomplete="off"
-                   disabled="@_loading" />
+        <!-- Input del código -->
+        <div class="mb-4">
+            @if (_useBackupCode)
+            {
+                <p class="mb-2 text-xs text-gray-500">Ingresa uno de tus códigos de recuperación de 8 caracteres</p>
+                <input type="text"
+                       @bind="mfaModel.OTP"
+                       placeholder="XXXXXXXX"
+                       maxlength="8"
+                       class="w-full rounded-lg border border-gray-300 px-4 py-3 text-center text-2xl tracking-widest text-gray-700
+                       transition focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-400"
+                       autocomplete="off"
+                       disabled="@_loading" />
+            }
+            else
+            {
+                <input type="text"
+                       @bind="mfaModel.OTP"
+                       placeholder="000000"
+                       maxlength="8"
+                       class="w-full rounded-lg border border-gray-300 px-4 py-3 text-center text-2xl tracking-widest text-gray-700
+                       transition focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-400"
+                       autocomplete="off"
+                       disabled="@_loading" />
+            }
         </div>
 
         <!-- Error/Success Message -->
@@ -103,6 +130,7 @@
     private bool _loading;
     private bool _resendLoading;
     private string? _errorMessage;
+    private bool _useBackupCode;
 
     // Rate limiting & Timer
     private int _resendAttempts;
@@ -146,11 +174,15 @@
 
         try
         {
-            var result = await AuthService.VerifyMFALoginAsync(MFARequired.MFAToken, mfaModel.OTP);
+            var result = _useBackupCode
+                ? await AuthService.VerifyBackupCodeLoginAsync(MFARequired.MFAToken, mfaModel.OTP)
+                : await AuthService.VerifyMFALoginAsync(MFARequired.MFAToken, mfaModel.OTP);
 
             if (!result.IsSuccess)
             {
-                _errorMessage = "❌ " + (result.Error?.Message ?? "Código inválido. Intenta de nuevo.");
+                _errorMessage = _useBackupCode
+                    ? "❌ Código de recuperación inválido o ya usado."
+                    : "❌ " + (result.Error?.Message ?? "Código inválido. Intenta de nuevo.");
                 return;
             }
 
