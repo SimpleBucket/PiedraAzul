@@ -282,6 +282,40 @@ namespace PiedraAzul.Infrastructure.Persistence.Migrations
                     b.UseTphMappingStrategy();
                 });
 
+            modelBuilder.Entity("PiedraAzul.Domain.Entities.UserMFAConfiguration", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("BackupCodesEncrypted")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("LastUsedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("MFAMethod")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("TOTPSecret")
+                        .HasColumnType("text");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("UserMFAConfigurations");
+                });
+
             modelBuilder.Entity("PiedraAzul.Infrastructure.Auth.PasskeyCredential", b =>
                 {
                     b.Property<Guid>("Id")
@@ -377,6 +411,12 @@ namespace PiedraAzul.Infrastructure.Persistence.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
+                    b.Property<string>("EmailChangeCode")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("EmailChangeCodeExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("boolean");
 
@@ -406,6 +446,9 @@ namespace PiedraAzul.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(256)");
 
                     b.Property<string>("PasswordHash")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PendingEmail")
                         .HasColumnType("text");
 
                     b.Property<string>("PhoneNumber")
