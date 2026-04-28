@@ -280,11 +280,7 @@
         StateHasChanged();
     }
 
-    private void GoBack()
-    {
-        if (IsDoctor) NavigationManager.NavigateTo("/doctor");
-        else NavigationManager.NavigateTo("/admin");
-    }
+    private async Task GoBack() => await JS.InvokeVoidAsync("history.back");
 
     private async Task PrintList()
     {
