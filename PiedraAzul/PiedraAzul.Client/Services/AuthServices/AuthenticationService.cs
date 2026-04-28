@@ -13,7 +13,7 @@ public class AuthenticationService(GraphQLHttpClient graphQL, NavigationManager 
     {
         const string mutation = """
             mutation Register($input: RegisterInput!) {
-                register(input: $input) { id name email roles avatarUrl }
+                register(input: $input) { id name email roles avatarUrl emailConfirmed }
             }
             """;
 
@@ -39,11 +39,36 @@ public class AuthenticationService(GraphQLHttpClient graphQL, NavigationManager 
         });
     }
 
-    public async Task<Result<UserGQL>> LoginAsync(LoginModel loginModel)
+    public async Task<Result<LoginResultModel>> LoginAsync(LoginModel loginModel)
     {
         const string mutation = """
             mutation Login($input: LoginInput!) {
-                login(input: $input) { id name email roles avatarUrl }
+                login(input: $input) {
+                    user { id name email roles avatarUrl emailConfirmed }
+                    mfaRequired { mfaToken mfaMethod hasEmail }
+                }
+            }
+            """;
+
+        return await GraphQLExecutor.Execute(async () =>
+        {
+            var result = await graphQL.ExecuteAsync<LoginResultModel>(
+                mutation,
+                new { input = new { email = loginModel.Login, password = loginModel.Password } },
+                "login");
+
+            if (result is null)
+                throw new GraphQLClientException("Credenciales inválidas");
+
+            return result;
+        });
+    }
+
+    public async Task<Result<UserGQL>> VerifyMFALoginAsync(string mfaToken, string otp)
+    {
+        const string mutation = """
+            mutation VerifyMFALogin($input: VerifyMFALoginInput!) {
+                verifyMFALogin(input: $input) { id name email roles avatarUrl emailConfirmed }
             }
             """;
 
@@ -51,11 +76,11 @@ public class AuthenticationService(GraphQLHttpClient graphQL, NavigationManager 
         {
             var user = await graphQL.ExecuteAsync<UserGQL>(
                 mutation,
-                new { input = new { email = loginModel.Login, password = loginModel.Password } },
-                "login");
+                new { input = new { mfaToken, otp } },
+                "verifyMFALogin");
 
             if (user is null)
-                throw new GraphQLClientException("Credenciales inválidas");
+                throw new GraphQLClientException("Verificación MFA inválida");
 
             return user;
         });
@@ -65,7 +90,7 @@ public class AuthenticationService(GraphQLHttpClient graphQL, NavigationManager 
     {
         const string query = """
             query CurrentUser {
-                currentUser { id name email roles avatarUrl }
+                currentUser { id name email roles avatarUrl emailConfirmed }
             }
             """;
 
@@ -80,7 +105,7 @@ public class AuthenticationService(GraphQLHttpClient graphQL, NavigationManager 
     {
         const string mutation = """
             mutation UpdateProfile($input: UpdateProfileInput!) {
-                updateProfile(input: $input) { id name email roles avatarUrl }
+                updateProfile(input: $input) { id name email roles avatarUrl emailConfirmed }
             }
             """;
 
