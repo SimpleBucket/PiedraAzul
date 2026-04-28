@@ -3,6 +3,7 @@
 @using PiedraAzul.Client.Models.GraphQL
 @using PiedraAzul.Client.States
 @using PiedraAzul.Client.Services.GraphQLServices
+@using PiedraAzul.Contracts.Enums
 @inject UserState UserState
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JS
@@ -83,7 +84,7 @@
                             <option value="all">Todos los profesionales</option>
                             @foreach (var doc in allDoctors)
                             {
-                                <option value="@doc.DoctorId">@doc.Name (@doc.Specialty)</option>
+                                <option value="@doc.UserId">@doc.Name (@doc.Specialty)</option>
                             }
                         </select>
                         <div class="absolute inset-y-0 right-6 flex items-center pointer-events-none text-slate-400">
@@ -198,17 +199,22 @@
     {
         isLoading = true;
         
-        // Cargar todos los doctores de todas las especialidades (formato GraphQL esperado)
-        var specialties = new[] { "NATURAL_MEDICINE", "CHIROPRACTIC", "OPTOMETRY", "PHYSIOTHERAPY" };
-        var tasks = specialties.Select(s => DoctorService.GetDoctorsByTypeAsync(s));
-        var results = await Task.WhenAll(tasks);
-        allDoctors = results.SelectMany(r => r).ToList();
+        // Cargar todos los doctores de todas las especialidades secuencialmente (como en AdminAgenda)
+        for (int i = 0; i <= 3; i++)
+        {
+            var type = (DoctorType)i;
+            var result = await DoctorService.GetDoctorsByTypeAsync(type.ToGraphQL());
+            if (result.Any())
+            {
+                allDoctors.AddRange(result);
+            }
+        }
 
         // Si es doctor, pre-seleccionar su ID si está en la lista
         if (IsDoctor && UserState.User != null)
         {
             var myDoctor = allDoctors.FirstOrDefault(d => d.UserId == UserState.User.Id);
-            if (myDoctor != null) SelectedDoctor = myDoctor.DoctorId;
+            if (myDoctor != null) SelectedDoctor = myDoctor.UserId;
         }
 
         await LoadAppointmentsAsync();
@@ -240,7 +246,7 @@
         {
             foreach (var doc in allDoctors)
             {
-                var res = await AppointmentService.GetDoctorAppointments(doc.DoctorId, SelectedDate);
+                var res = await AppointmentService.GetDoctorAppointments(doc.UserId, SelectedDate);
                 if (res.IsSuccess)
                 {
                     list.AddRange(res.Value.Select(a => new AppointmentVM 
@@ -255,7 +261,7 @@
         }
         else
         {
-            var doc = allDoctors.FirstOrDefault(d => d.DoctorId == SelectedDoctor);
+            var doc = allDoctors.FirstOrDefault(d => d.UserId == SelectedDoctor);
             var res = await AppointmentService.GetDoctorAppointments(SelectedDoctor, SelectedDate);
             if (res.IsSuccess)
             {
@@ -282,7 +288,7 @@
 
     private async Task PrintList()
     {
-        var doctorName = SelectedDoctor == "all" ? "Todos los profesionales" : allDoctors.FirstOrDefault(d => d.DoctorId == SelectedDoctor)?.Name ?? "Desconocido";
+        var doctorName = SelectedDoctor == "all" ? "Todos los profesionales" : allDoctors.FirstOrDefault(d => d.UserId == SelectedDoctor)?.Name ?? "Desconocido";
         var dateStr = SelectedDate.ToString("dd/MM/yyyy");
         
         var html = $@"
@@ -321,7 +327,7 @@
 
     private async Task ExportToCsv()
     {
-        var doctorName = SelectedDoctor == "all" ? "Todos los profesionales" : allDoctors.FirstOrDefault(d => d.DoctorId == SelectedDoctor)?.Name ?? "Desconocido";
+        var doctorName = SelectedDoctor == "all" ? "Todos los profesionales" : allDoctors.FirstOrDefault(d => d.UserId == SelectedDoctor)?.Name ?? "Desconocido";
         var dateStr = SelectedDate.ToString("dd/MM/yyyy");
         
         // Usamos CSV real con BOM para que Excel lo reconozca sin advertencias
