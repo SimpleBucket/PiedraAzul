@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using PiedraAzul.Application.Common.Interfaces;
 using PiedraAzul.Application.Common.Models.Auth;
 using PiedraAzul.Application.Common.Models.User;
@@ -12,7 +13,9 @@ namespace PiedraAzul.Infrastructure.Services;
 public class IdentityService(
     AppDbContext context,
     UserManager<ApplicationUser> userManager,
-    RoleManager<IdentityRole> roleManager
+    RoleManager<IdentityRole> roleManager,
+    IMemoryCache cache,
+    IEmailService emailService
 ) : IIdentityService
 {
     public async Task<LoginResult> Login(string field, string password)
@@ -49,7 +52,14 @@ public class IdentityService(
         foreach (var role in roles)
         {
             if (!await roleManager.RoleExistsAsync(role))
-                return new RegisterResult(null, []);
+                return new RegisterResult(null, [], "Rol inválido");
+        }
+
+        if (!string.IsNullOrEmpty(dto.Email))
+        {
+            var existingUser = await userManager.FindByEmailAsync(dto.Email);
+            if (existingUser != null)
+                return new RegisterResult(null, [], "Este correo ya está registrado");
         }
 
         var user = new ApplicationUser
@@ -64,13 +74,16 @@ public class IdentityService(
 
         var createResult = await userManager.CreateAsync(user, password);
         if (!createResult.Succeeded)
-            return new RegisterResult(null, []);
+        {
+            var errorMessage = createResult.Errors.FirstOrDefault()?.Description ?? "No se pudo crear la cuenta";
+            return new RegisterResult(null, [], errorMessage);
+        }
 
         var roleResult = await userManager.AddToRolesAsync(user, roles);
         if (!roleResult.Succeeded)
         {
             await userManager.DeleteAsync(user);
-            return new RegisterResult(null, []);
+            return new RegisterResult(null, [], "No se pudieron asignar los roles");
         }
 
         return new RegisterResult(ToDto(user), roles);
@@ -94,7 +107,8 @@ public class IdentityService(
                 u.Id,
                 u.Email ?? string.Empty,
                 u.Name,
-                u.AvatarUrl
+                u.AvatarUrl,
+                u.EmailConfirmed
             ))
             .FirstOrDefaultAsync();
     }
@@ -112,7 +126,8 @@ public class IdentityService(
                 u.Id,
                 u.Email ?? string.Empty,
                 u.Name,
-                u.AvatarUrl
+                u.AvatarUrl,
+                u.EmailConfirmed
             ))
             .ToListAsync();
     }
@@ -185,13 +200,115 @@ public class IdentityService(
         return result.Succeeded;
     }
 
+    public async Task<object?> GetUserByIdAsync(string userId)
+    {
+        return await userManager.FindByIdAsync(userId);
+    }
+
+    public async Task<object?> GetUserByEmailAsync(string email)
+    {
+        return await userManager.FindByEmailAsync(email);
+    }
+
+    public async Task<bool> UpdateUserAsync(object user)
+    {
+        if (user is not ApplicationUser appUser)
+            return false;
+
+        var result = await userManager.UpdateAsync(appUser);
+        return result.Succeeded;
+    }
+
+    public async Task<(bool Success, string? Error)> RequestEmailChangeAsync(string userId, string newEmail)
+    {
+        var user = await userManager.FindByIdAsync(userId);
+        if (user is null)
+            return (false, "Usuario no encontrado");
+
+        // Check if new email is the same as current (normalize for comparison)
+        if (!string.IsNullOrEmpty(user.Email) && user.Email.Equals(newEmail, StringComparison.OrdinalIgnoreCase))
+            return (false, "El nuevo correo es igual al actual");
+
+        // Check if email already exists
+        var existingUser = await userManager.FindByEmailAsync(newEmail);
+        if (existingUser is not null && existingUser.Id != userId)
+            return (false, "Este correo ya está en uso");
+
+        var code = Random.Shared.Next(100000, 999999).ToString();
+        user.SetEmailChangeToken(newEmail, code);
+        var result = await userManager.UpdateAsync(user);
+
+        return result.Succeeded ? (true, null) : (false, "Error al procesar la solicitud");
+    }
+
+    public async Task<bool> ConfirmEmailChangeAsync(string userId, string newEmail, string code)
+    {
+        var user = await userManager.FindByIdAsync(userId);
+        if (user is null)
+            return false;
+
+        if (!user.HasPendingEmailChange(newEmail))
+            return false;
+
+        if (!user.VerifyEmailChangeCode(code))
+            return false;
+
+        user.Email = newEmail;
+        user.NormalizedEmail = newEmail.ToUpper();
+        user.EmailConfirmed = false;
+        user.ClearEmailChangeToken();
+
+        var result = await userManager.UpdateAsync(user);
+        return result.Succeeded;
+    }
+
+    public async Task<bool> SendEmailVerificationCodeAsync(string userId, string email)
+    {
+        var user = await userManager.FindByIdAsync(userId);
+        if (user is null)
+            return false;
+
+        var code = Random.Shared.Next(100000, 999999).ToString();
+        cache.Set($"email_verify_{userId}", code, TimeSpan.FromMinutes(10));
+
+        var emailSent = await emailService.SendMFAEmailAsync(
+            email,
+            user.Name ?? email,
+            $"Tu código de verificación es: {code}",
+            10
+        );
+
+        return emailSent;
+    }
+
+    public async Task<bool> VerifyEmailCodeAsync(string userId, string code)
+    {
+        var user = await userManager.FindByIdAsync(userId);
+        if (user is null)
+            return false;
+
+        var cacheKey = $"email_verify_{userId}";
+        if (!cache.TryGetValue(cacheKey, out string? storedCode))
+            return false;
+
+        if (storedCode != code)
+            return false;
+
+        cache.Remove(cacheKey);
+        user.EmailConfirmed = true;
+        var result = await userManager.UpdateAsync(user);
+
+        return result.Succeeded;
+    }
+
     private static UserDto ToDto(ApplicationUser user)
     {
         return new UserDto(
             user.Id,
             user.Email ?? string.Empty,
             user.Name,
-            user.AvatarUrl
+            user.AvatarUrl,
+            user.EmailConfirmed
         );
     }
 }
