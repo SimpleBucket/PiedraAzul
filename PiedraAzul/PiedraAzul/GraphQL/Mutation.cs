@@ -31,6 +31,7 @@ public class Mutation
         [Service] SignInManager<ApplicationUser> signInManager,
         [Service] IMFAService mfaService,
         [Service] IMFATokenService mfaTokenService,
+        [Service] IMemoryCache cache,
         [Service] ILogger<Mutation> logger)
     {
         // Check for account lockout before attempting login
@@ -68,6 +69,12 @@ public class Mutation
             {
                 var otp = await mfaService.GenerateOTPAsync(result.User.Id);
                 await signInManager.SignOutAsync(); // Ensure no partial login
+
+                // Guardar en cache para que ResendMFACode pueda acceder
+                // mfaToken -> userId y mfaToken -> otp
+                cache.Set($"mfa:{mfaToken}", otp, TimeSpan.FromMinutes(10));
+                cache.Set($"mfa_user:{mfaToken}", result.User.Id, TimeSpan.FromMinutes(10));
+
                 await mfaService.SendOTPEmailAsync(result.User.Id, user.Email!);
             }
 
@@ -222,25 +229,24 @@ public class Mutation
     }
 
     [Authorize]
-    public async Task<bool> EnableMFAAsync(
+    public async Task<List<string>> EnableMFAAsync(
         EnableMFAInput input,
         [Service] IMFAService mfaService,
-        [Service] IEmailService emailService,
         [Service] IHttpContextAccessor httpContextAccessor,
         [Service] ILogger<Mutation> logger)
     {
         var userId = httpContextAccessor.HttpContext!.User.FindFirstValue(ClaimTypes.NameIdentifier)
             ?? throw new GraphQLException("No autenticado");
 
-        var result = await mfaService.EnableMFAAsync(userId, input.Method);
-        if (!result)
+        var backupCodes = await mfaService.EnableMFAAsync(userId, input.Method);
+        if (backupCodes.Count == 0)
         {
             logger.LogWarning("Failed to enable MFA for user: {UserId}", userId);
             throw new GraphQLException("No se pudo activar la autenticación de dos factores");
         }
 
         logger.LogInformation("MFA enabled for user: {UserId} with method: {Method}", userId, input.Method);
-        return true;
+        return backupCodes;
     }
 
     [Authorize]
@@ -690,6 +696,45 @@ public class Mutation
 
         logger.LogInformation("Email verified for user: {UserId}", userId);
         return true;
+    }
+
+    public async Task<UserType> VerifyBackupCodeLoginAsync(
+        VerifyBackupCodeLoginInput input,
+        [Service] UserManager<ApplicationUser> userManager,
+        [Service] SignInManager<ApplicationUser> signInManager,
+        [Service] IMFAService mfaService,
+        [Service] IMFATokenService mfaTokenService,
+        [Service] ILogger<Mutation> logger)
+    {
+        // Validar el mfaToken y obtener el userId
+        var userId = mfaTokenService.ValidateMFAToken(input.MFAToken)
+            ?? throw new GraphQLException("Token expirado. Inicia sesión nuevamente.");
+
+        var user = await userManager.FindByIdAsync(userId)
+            ?? throw new GraphQLException("Usuario no encontrado");
+
+        // Verificar el backup code
+        var isValid = await mfaService.VerifyBackupCodeAsync(userId, input.BackupCode);
+
+        if (!isValid)
+        {
+            logger.LogWarning("Backup code login failed for user: {UserId}", userId);
+            throw new GraphQLException("Código de recuperación inválido o ya utilizado");
+        }
+
+        await signInManager.SignInAsync(user, isPersistent: true);
+        logger.LogInformation("Backup code login successful for user: {UserId}", userId);
+
+        var roles = await userManager.GetRolesAsync(user);
+        return new UserType
+        {
+            Id = user.Id,
+            Name = user.Name,
+            Email = user.Email ?? "",
+            AvatarUrl = user.AvatarUrl,
+            Roles = roles.ToList(),
+            EmailConfirmed = user.EmailConfirmed
+        };
     }
 
     public async Task<bool> ResendMFACodeAsync(

@@ -46,3 +46,12 @@ public class VerifyMFALoginInput
     [Required(ErrorMessage = "El código es requerido")]
     public required string OTP { get; set; }
 }
+
+public class VerifyBackupCodeLoginInput
+{
+    [Required(ErrorMessage = "El token de MFA es requerido")]
+    public required string MFAToken { get; set; }
+
+    [Required(ErrorMessage = "El código de recuperación es requerido")]
+    public required string BackupCode { get; set; }
+}
