@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using PiedraAzul.RealTime.Hubs;
 using System.Security.Claims;
+using System.Text.Json;
 using IOPath = System.IO.Path;
 
 namespace PiedraAzul.Extensions;
@@ -110,6 +111,85 @@ public static class HubExtensions
                     new { error = $"Error guardando avatar: {ex.Message}" },
                     statusCode: 500);
             }
+        }).DisableAntiforgery();
+
+        return app;
+    }
+
+    public static WebApplication MapWhatsAppWebhook(this WebApplication app)
+    {
+        // ── Verificación del webhook (Meta llama a esto al registrar) ──────────
+        app.MapGet("/api/whatsapp/webhook", (
+            HttpContext ctx,
+            IConfiguration config) =>
+        {
+            var mode      = ctx.Request.Query["hub.mode"].ToString();
+            var token     = ctx.Request.Query["hub.verify_token"].ToString();
+            var challenge = ctx.Request.Query["hub.challenge"].ToString();
+
+            var expectedToken = config["WhatsApp:WebhookVerifyToken"] ?? "";
+
+            if (mode == "subscribe" && token == expectedToken)
+                return Results.Text(challenge); // Meta espera el challenge como texto plano (sin JSON)
+
+            return Results.Unauthorized();
+        });
+
+        // ── Recepción de eventos de Meta (entregas, lecturas, mensajes entrantes) ──
+        app.MapPost("/api/whatsapp/webhook", async (
+            HttpContext ctx,
+            ILogger<Program> logger) =>
+        {
+            using var reader = new StreamReader(ctx.Request.Body);
+            var body = await reader.ReadToEndAsync();
+
+            try
+            {
+                using var doc = JsonDocument.Parse(body);
+                var root = doc.RootElement;
+
+                // Recorre las entradas del webhook
+                if (root.TryGetProperty("entry", out var entries))
+                {
+                    foreach (var entry in entries.EnumerateArray())
+                    {
+                        if (!entry.TryGetProperty("changes", out var changes)) continue;
+                        foreach (var change in changes.EnumerateArray())
+                        {
+                            if (!change.TryGetProperty("value", out var value)) continue;
+
+                            // Mensajes entrantes
+                            if (value.TryGetProperty("messages", out var messages))
+                            {
+                                foreach (var msg in messages.EnumerateArray())
+                                {
+                                    var from = msg.TryGetProperty("from", out var f) ? f.GetString() : "?";
+                                    var type = msg.TryGetProperty("type", out var t) ? t.GetString() : "?";
+                                    logger.LogInformation("[WhatsApp] Mensaje de {From}, tipo: {Type}", from, type);
+                                }
+                            }
+
+                            // Actualizaciones de estado (sent, delivered, read, failed)
+                            if (value.TryGetProperty("statuses", out var statuses))
+                            {
+                                foreach (var status in statuses.EnumerateArray())
+                                {
+                                    var id     = status.TryGetProperty("id",     out var i) ? i.GetString() : "?";
+                                    var st     = status.TryGetProperty("status", out var s) ? s.GetString() : "?";
+                                    var recip  = status.TryGetProperty("recipient_id", out var r) ? r.GetString() : "?";
+                                    logger.LogInformation("[WhatsApp] Mensaje {Id} → {Status} ({Recipient})", id, st, recip);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "[WhatsApp] Error procesando webhook");
+            }
+
+            return Results.Ok(); // Siempre 200 a Meta
         }).DisableAntiforgery();
 
         return app;
