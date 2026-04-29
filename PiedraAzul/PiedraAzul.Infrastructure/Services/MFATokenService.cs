@@ -23,10 +23,14 @@ public class MFATokenService : IMFATokenService
     {
         if (_cache.TryGetValue(token, out string? userId))
         {
-            _cache.Remove(token);
             return userId;
         }
 
         return null;
+    }
+
+    public void ConsumeMFAToken(string token)
+    {
+        _cache.Remove(token);
     }
 }

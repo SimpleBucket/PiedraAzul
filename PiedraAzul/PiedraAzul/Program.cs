@@ -101,6 +101,7 @@ app.UseMiddleware<PiedraAzul.Middleware.AuthRateLimitMiddleware>();
 app.MapGraphQLEndpoint();
 app.MapHubs();
 app.MapApiEndpoints();
+app.MapWhatsAppWebhook();
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode()
