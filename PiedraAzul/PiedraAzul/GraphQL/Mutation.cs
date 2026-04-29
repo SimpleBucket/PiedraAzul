@@ -181,6 +181,7 @@ public class Mutation
                 .ToList()));
 
         return result;
+    }
     public async Task<bool> RequestPasswordResetAsync(
         RequestPasswordResetInput input,
         [Service] IMediator mediator,
