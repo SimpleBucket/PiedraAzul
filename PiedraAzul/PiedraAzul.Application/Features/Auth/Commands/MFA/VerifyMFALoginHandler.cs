@@ -43,6 +43,10 @@ public class VerifyMFALoginHandler : IRequestHandler<VerifyMFALoginCommand, Logi
             return new LoginResult(null, []);
 
         var roles = await _identityService.GetRolesByUser(userId);
+
+        // Consume MFA token only after successful verification
+        _mfaTokenService.ConsumeMFAToken(request.MFAToken);
+
         return new LoginResult(user, roles);
     }
 }

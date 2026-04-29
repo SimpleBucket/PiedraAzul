@@ -627,6 +627,9 @@
   .h-screen {
     height: 100vh;
   }
+  .min-h-96 {
+    min-height: calc(var(--spacing) * 96);
+  }
   .min-h-\[90px\] {
     min-height: 90px;
   }
@@ -1089,6 +1092,9 @@
   }
   .border-\[\#2A9D8F\] {
     border-color: #2A9D8F;
+  }
+  .border-\[\#2A9D8F\]\/30 {
+    border-color: color-mix(in oklab, #2A9D8F 30%, transparent);
   }
   .border-\[\#4CAF7D\] {
     border-color: #4CAF7D;

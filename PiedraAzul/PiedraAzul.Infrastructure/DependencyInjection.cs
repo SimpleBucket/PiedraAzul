@@ -4,12 +4,12 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using PiedraAzul.Application.Common.Interfaces;
+using PiedraAzul.Infrastructure.Services;
 using PiedraAzul.Domain.Repositories;
 using PiedraAzul.Infrastructure.Caching;
 using PiedraAzul.Infrastructure.Identity;
 using PiedraAzul.Infrastructure.Persistence;
 using PiedraAzul.Infrastructure.Persistence.Repositories;
-using PiedraAzul.Infrastructure.Services;
 
 namespace PiedraAzul.Infrastructure;
 
@@ -96,6 +96,13 @@ public static class DependencyInjection
 
         // MFA Token Service
         services.AddScoped<IMFATokenService, MFATokenService>();
+
+        // WhatsApp Service (Meta Cloud API)
+        services.AddHttpClient("WhatsApp");
+        services.AddScoped<IWhatsAppService, WhatsAppService>();
+
+        // Guest OTP Service
+        services.AddScoped<IGuestOtpService, GuestOtpService>();
 
         return services;
     }

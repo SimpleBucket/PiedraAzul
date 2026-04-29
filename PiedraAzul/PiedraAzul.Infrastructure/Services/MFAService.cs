@@ -67,7 +67,7 @@ public class MFAService : IMFAService
     {
         // Desactivar todos los otros métodos
         var otherMfas = await _context.UserMFAConfigurations
-            .Where(m => m.UserId == userId && m.MFAMethod != method && m.MFAMethod != "BackupCodes")
+            .Where(m => m.UserId == userId && m.MFAMethod != method)
             .ToListAsync();
 
         foreach (var config in otherMfas)
@@ -234,7 +234,7 @@ public class MFAService : IMFAService
         }
 
         var mfa = await _context.UserMFAConfigurations
-            .FirstOrDefaultAsync(m => m.UserId == userId && m.MFAMethod == "BackupCodes");
+            .FirstOrDefaultAsync(m => m.UserId == userId && m.IsEnabled);
 
         if (mfa is null)
         {
@@ -252,7 +252,7 @@ public class MFAService : IMFAService
     public async Task<bool> VerifyBackupCodeAsync(string userId, string code)
     {
         var mfa = await _context.UserMFAConfigurations
-            .FirstOrDefaultAsync(m => m.UserId == userId);
+            .FirstOrDefaultAsync(m => m.UserId == userId && m.IsEnabled);
 
         if (mfa?.BackupCodesEncrypted is null)
             return false;
