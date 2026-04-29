@@ -12,12 +12,41 @@ using PiedraAzul.Application.Features.Patients.Queries.SearchPatients;
 using PiedraAzul.Application.Features.Users.Queries.GetUserById;
 using PiedraAzul.Application.Features.Users.Queries.GetUserRoles;
 using PiedraAzul.GraphQL.Types;
+using PiedraAzul.Domain.Repositories;
 using System.Security.Claims;
 
 namespace PiedraAzul.GraphQL;
 
 public class Query
 {
+
+    public async Task<int> GetBookingWindowWeeksAsync(
+        [Service] ISystemConfigRepository systemConfigRepository)
+    {
+        var config = await systemConfigRepository.GetOrCreateAsync();
+        return config.BookingWindowWeeks;
+    }
+
+    public async Task<List<SlotType>> GetDoctorSlotsAsync(
+        string doctorId,
+        DateTime date,
+        [Service] IMediator mediator)
+    {
+        if (string.IsNullOrWhiteSpace(doctorId))
+            throw new GraphQLException("doctorId es requerido");
+
+        var day = DateOnly.FromDateTime(date);
+        var slots = await mediator.Send(new GetDoctorDaySlotsQuery(doctorId, day));
+
+        return slots.Select(s => new SlotType
+        {
+            Id = s.Id.ToString(),
+            Start = date.Date.Add(s.StartTime),
+            End = date.Date.Add(s.EndTime),
+            IsAvailable = s.IsAvailable
+        }).ToList();
+    }
+
     public async Task<DoctorType?> GetDoctorAsync(
         string doctorId,
         [Service] IMediator mediator)

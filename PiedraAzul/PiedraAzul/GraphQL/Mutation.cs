@@ -19,6 +19,7 @@ using PiedraAzul.Application.Features.Users.Commands.CreateProfileForRole;
 using PiedraAzul.GraphQL.Inputs;
 using PiedraAzul.GraphQL.Types;
 using PiedraAzul.Infrastructure.Identity;
+using PiedraAzul.Domain.Repositories;
 using System.Security.Claims;
 
 namespace PiedraAzul.GraphQL;
@@ -164,7 +165,42 @@ public class Mutation
         ScheduleConfigInput input,
         [Service] IMediator mediator)
     {
-      throw new NotImplementedException("SaveScheduleConfigAsync is not implemented yet.");
+        if (input is null)
+            throw new GraphQLException("La configuración es requerida");
+
+        if (string.IsNullOrWhiteSpace(input.DoctorId))
+            throw new GraphQLException("DoctorId es requerido");
+
+        if (input.BookingWindowWeeks < 1)
+            throw new GraphQLException("BookingWindowWeeks debe ser mayor a 0");
+
+        if (input.IntervalMinutes <= 0)
+            throw new GraphQLException("IntervalMinutes debe ser mayor a 0");
+
+        if (input.Availability is null || input.Availability.Count == 0)
+            throw new GraphQLException("Debe enviar al menos un día de disponibilidad");
+
+        foreach (var day in input.Availability.Where(x => x.IsEnabled))
+        {
+            if (day.StartTime >= day.EndTime)
+                throw new GraphQLException($"Rango inválido para {day.DayOfWeek}: StartTime debe ser menor que EndTime");
+        }
+
+        throw new GraphQLException("SaveScheduleConfigAsync pendiente de integración con capa Application/Repository");
+    }
+
+    public async Task<bool> UpdateBookingWindowWeeksAsync(
+        int bookingWindowWeeks,
+        [Service] ISystemConfigRepository systemConfigRepository)
+    {
+        if (bookingWindowWeeks < 1)
+            throw new GraphQLException("bookingWindowWeeks debe ser mayor o igual a 1");
+
+        var config = await systemConfigRepository.GetOrCreateAsync();
+        config.UpdateBookingWindowWeeks(bookingWindowWeeks);
+        await systemConfigRepository.SaveAsync(config);
+
+        return true;
     }
     public async Task<bool> RequestPasswordResetAsync(
         RequestPasswordResetInput input,
@@ -391,8 +427,8 @@ public class Mutation
         var otpChannel = channel.ToLowerInvariant() switch
         {
             "whatsapp" => OtpChannel.WhatsApp,
-            "email"    => OtpChannel.Email,
-            _          => throw new GraphQLException("Canal inválido. Usa 'whatsapp' o 'email'.")
+            "email" => OtpChannel.Email,
+            _ => throw new GraphQLException("Canal inválido. Usa 'whatsapp' o 'email'.")
         };
 
         if (otpChannel == OtpChannel.Email && string.IsNullOrWhiteSpace(email))
