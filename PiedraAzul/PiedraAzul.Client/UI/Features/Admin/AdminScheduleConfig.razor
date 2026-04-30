@@ -72,12 +72,7 @@
                 </div>
             </div>
 
-            @if (!string.IsNullOrWhiteSpace(FeedbackMessage))
-            {
-                <div class="mb-6 rounded-2xl px-5 py-4 font-bold text-sm @(IsErrorFeedback ? "bg-red-50 text-red-700 border border-red-100" : "bg-emerald-50 text-emerald-700 border border-emerald-100")">
-                    @FeedbackMessage
-                </div>
-            }
+            
 
             <div class="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-10">
                 <aside class="space-y-8">
@@ -237,6 +232,13 @@
                         </div>
                     </div>
 
+             @if (!string.IsNullOrWhiteSpace(FeedbackMessage))
+            {
+                <div class="mb-6 rounded-2xl px-5 py-4 font-bold text-sm @(IsErrorFeedback ? "bg-red-50 text-red-700 border border-red-100" : "bg-emerald-50 text-emerald-700 border border-emerald-100")">
+                    @FeedbackMessage
+                </div>
+            }
+
                     <div class="flex items-center justify-end gap-6 pt-10">
                         <button type="button" @onclick="CancelChanges" class="bg-white border-2 border-slate-100 px-12 py-5 rounded-[2rem] font-black text-slate-600 hover:bg-slate-50 transition-all uppercase tracking-widest text-xs">
                             Cancelar
@@ -341,7 +343,7 @@
             return;
         }
 
-        var doctorId = EditModel.SpecialistId;
+        var doctorId = EditModel.DoctorId;
         var loaded = await ScheduleConfigService.GetByDoctorIdAsync(doctorId);
         if (loaded is null)
         {
@@ -350,6 +352,7 @@
 
         EditModel = ToEditModel(loaded);
         FeedbackMessage = null;
+        SyncTimeRangeInputs();
         RebuildSlots();
     }
 
@@ -580,7 +583,7 @@
 
     private static ScheduleConfigModel ToScheduleConfigModel(ScheduleConfigEditModel model) => new()
     {
-        DoctorId = model.SpecialistId,
+        DoctorId = model.DoctorId,
         WeekWindowInWeeks = model.WeekWindowInWeeks,
         IntervalMinutes = model.IntervalMinutes,
         Availability = model.Availability
