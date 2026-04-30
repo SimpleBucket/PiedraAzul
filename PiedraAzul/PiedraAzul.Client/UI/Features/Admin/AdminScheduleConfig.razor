@@ -218,7 +218,7 @@
                                                 <div class="grid grid-cols-1 gap-3">
                                                     @foreach (var slot in GetSlotsForHour(day, hour))
                                                     {
-                                                        <button type="button" @onclick="() => slot.IsActive = !slot.IsActive"
+                                                        <button type="button" @onclick="() => ToggleSlot(day, slot)"
                                                                 class="w-full py-3.5 px-6 rounded-2xl text-[11px] font-black transition-all border flex items-center justify-between group
                                                                        @(slot.IsActive ? "bg-primary text-white border-primary shadow-xl shadow-primary/20" : "bg-white text-slate-300 border-slate-100 hover:border-slate-300")">
                                                             <span>@slot.StartTime</span>
@@ -474,6 +474,53 @@
         dayConfig.IsEnabled = !day.IsBlocked;
     }
 
+
+    private void ToggleSlot(DayScheduleModel day, TimeSlotModel slot)
+    {
+        slot.IsActive = !slot.IsActive;
+
+        var dayConfig = EditModel.Availability.First(x => x.DayOfWeek == day.DayOfWeek);
+        var activeSlots = day.Slots.Where(s => s.IsActive).OrderBy(s => s.StartTime).ToList();
+
+        if (activeSlots.Count == 0)
+        {
+            day.IsBlocked = true;
+            dayConfig.IsEnabled = false;
+            return;
+        }
+
+        day.IsBlocked = false;
+        dayConfig.IsEnabled = true;
+
+        if (TimeSpan.TryParse(activeSlots.First().StartTime, out var start))
+            dayConfig.StartTime = start;
+
+        if (TimeSpan.TryParse(activeSlots.Last().StartTime, out var lastStart))
+            dayConfig.EndTime = lastStart.Add(TimeSpan.FromMinutes(Math.Clamp(EditModel.IntervalMinutes, 5, 60)));
+    }
+
+    private void SyncAvailabilityFromGrid()
+    {
+        foreach (var day in WeekDays)
+        {
+            var dayConfig = EditModel.Availability.First(x => x.DayOfWeek == day.DayOfWeek);
+            var activeSlots = day.Slots.Where(s => s.IsActive).OrderBy(s => s.StartTime).ToList();
+
+            if (day.IsBlocked || activeSlots.Count == 0)
+            {
+                dayConfig.IsEnabled = false;
+                continue;
+            }
+
+            dayConfig.IsEnabled = true;
+
+            if (TimeSpan.TryParse(activeSlots.First().StartTime, out var start))
+                dayConfig.StartTime = start;
+
+            if (TimeSpan.TryParse(activeSlots.Last().StartTime, out var lastStart))
+                dayConfig.EndTime = lastStart.Add(TimeSpan.FromMinutes(Math.Clamp(EditModel.IntervalMinutes, 5, 60)));
+        }
+    }
     private async Task HandleValidSubmit()
     {
         if (string.IsNullOrWhiteSpace(EditModel.DoctorId))
@@ -485,6 +532,8 @@
 
         IsSaving = true;
         FeedbackMessage = null;
+
+        SyncAvailabilityFromGrid();
 
         var saveResult = await ScheduleConfigService.SaveAsync(ToScheduleConfigModel(EditModel));
         if (saveResult.IsSuccess && saveResult.Value)
@@ -517,28 +566,32 @@
     {
         SpecialistId = model.DoctorId,
         WeekWindowInWeeks = model.WeekWindowInWeeks,
-        StartTime = model.StartTime,
-        EndTime = model.EndTime,
         IntervalMinutes = model.IntervalMinutes,
-        MondayEnabled = model.MondayEnabled,
-        TuesdayEnabled = model.TuesdayEnabled,
-        WednesdayEnabled = model.WednesdayEnabled,
-        ThursdayEnabled = model.ThursdayEnabled,
-        FridayEnabled = model.FridayEnabled
+        Availability = model.Availability
+            .Select(day => new AvailabilityDayModel
+            {
+                DayOfWeek = day.DayOfWeek,
+                IsEnabled = day.IsEnabled,
+                StartTime = day.StartTime,
+                EndTime = day.EndTime
+            })
+            .ToList()
     };
 
     private static ScheduleConfigModel ToScheduleConfigModel(ScheduleConfigEditModel model) => new()
     {
         DoctorId = model.SpecialistId,
         WeekWindowInWeeks = model.WeekWindowInWeeks,
-        StartTime = model.StartTime,
-        EndTime = model.EndTime,
         IntervalMinutes = model.IntervalMinutes,
-        MondayEnabled = model.MondayEnabled,
-        TuesdayEnabled = model.TuesdayEnabled,
-        WednesdayEnabled = model.WednesdayEnabled,
-        ThursdayEnabled = model.ThursdayEnabled,
-        FridayEnabled = model.FridayEnabled
+        Availability = model.Availability
+            .Select(day => new AvailabilityDayModel
+            {
+                DayOfWeek = day.DayOfWeek,
+                IsEnabled = day.IsEnabled,
+                StartTime = day.StartTime,
+                EndTime = day.EndTime
+            })
+            .ToList()
     };
 
     public class DaySchedule
