@@ -3,6 +3,7 @@ using HotChocolate.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using PiedraAzul.Application.Common.Interfaces;
 using static PiedraAzul.Application.Common.Interfaces.OtpChannel;
@@ -19,6 +20,7 @@ using PiedraAzul.Application.Features.Users.Commands.CreateProfileForRole;
 using PiedraAzul.GraphQL.Inputs;
 using PiedraAzul.GraphQL.Types;
 using PiedraAzul.Infrastructure.Identity;
+using PiedraAzul.Infrastructure.Persistence;
 using PiedraAzul.Domain.Repositories;
 using System.Security.Claims;
 
@@ -165,6 +167,7 @@ public class Mutation
         ScheduleConfigInput input,
         [Service] ISystemConfigRepository systemConfigRepository,
         [Service] IDoctorAvailabilitySlotRepository slotRepository,
+        [Service] AppDbContext dbContext,
         [Service] IUnitOfWork unitOfWork)
     {
         if (input is null)
@@ -193,10 +196,7 @@ public class Mutation
             config.UpdateBookingWindowWeeks(input.BookingWindowWeeks);
             await systemConfigRepository.SaveAsync(config, ct);
 
-            var existing = await slotRepository.ListByDoctorAsync(input.DoctorId, ct);
-            foreach (var slot in existing)
-                await slotRepository.DeleteAsync(slot.Id, ct);
-
+            var desired = new HashSet<(DayOfWeek Day, TimeSpan Start, TimeSpan End)>();
             foreach (var day in availability.Where(x => x.IsEnabled))
             {
                 var start = day.StartTime;
@@ -206,14 +206,39 @@ public class Mutation
                     if (end > day.EndTime)
                         break;
 
-                    await slotRepository.AddAsync(new Domain.Entities.Profiles.Doctor.DoctorAvailabilitySlot(
-                        input.DoctorId,
-                        day.DayOfWeek,
-                        start,
-                        end), ct);
-
+                    desired.Add((day.DayOfWeek, start, end));
                     start = end;
                 }
+            }
+
+            var existing = await slotRepository.ListByDoctorAsync(input.DoctorId, ct);
+            var existingSet = existing
+                .Select(s => (s.DayOfWeek, s.StartTime, s.EndTime))
+                .ToHashSet();
+
+            foreach (var slot in existing)
+            {
+                var keep = desired.Contains((slot.DayOfWeek, slot.StartTime, slot.EndTime));
+                if (keep)
+                    continue;
+
+                var hasAppointments = await dbContext.Appointments
+                    .AnyAsync(a => a.DoctorAvailabilitySlotId == slot.Id, ct);
+
+                if (!hasAppointments)
+                    await slotRepository.DeleteAsync(slot.Id, ct);
+            }
+
+            foreach (var item in desired)
+            {
+                if (existingSet.Contains(item))
+                    continue;
+
+                await slotRepository.AddAsync(new Domain.Entities.Profiles.Doctor.DoctorAvailabilitySlot(
+                    input.DoctorId,
+                    item.Day,
+                    item.Start,
+                    item.End), ct);
             }
 
             return true;
