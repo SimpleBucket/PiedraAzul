@@ -19,6 +19,7 @@ using PiedraAzul.Application.Features.Users.Commands.CreateProfileForRole;
 using PiedraAzul.GraphQL.Inputs;
 using PiedraAzul.GraphQL.Types;
 using PiedraAzul.Infrastructure.Identity;
+using PiedraAzul.Domain.Repositories;
 using System.Security.Claims;
 
 namespace PiedraAzul.GraphQL;
@@ -162,9 +163,77 @@ public class Mutation
 
     public async Task<bool> SaveScheduleConfigAsync(
         ScheduleConfigInput input,
-        [Service] IMediator mediator)
+        [Service] ISystemConfigRepository systemConfigRepository,
+        [Service] IDoctorAvailabilitySlotRepository slotRepository,
+        [Service] IUnitOfWork unitOfWork)
     {
-      throw new NotImplementedException("SaveScheduleConfigAsync is not implemented yet.");
+        if (input is null)
+            throw new GraphQLException("La configuración es requerida");
+
+        if (string.IsNullOrWhiteSpace(input.DoctorId))
+            throw new GraphQLException("DoctorId es requerido");
+
+        if (input.BookingWindowWeeks < 1)
+            throw new GraphQLException("BookingWindowWeeks debe ser mayor a 0");
+
+        if (input.IntervalMinutes <= 0)
+            throw new GraphQLException("IntervalMinutes debe ser mayor a 0");
+
+        var availability = input.Availability ?? [];
+
+        foreach (var day in availability.Where(x => x.IsEnabled))
+        {
+            if (day.StartTime >= day.EndTime)
+                throw new GraphQLException($"Rango inválido para {day.DayOfWeek}: StartTime debe ser menor que EndTime");
+        }
+
+        await unitOfWork.ExecuteAsync(async ct =>
+        {
+            var config = await systemConfigRepository.GetOrCreateAsync(ct);
+            config.UpdateBookingWindowWeeks(input.BookingWindowWeeks);
+            await systemConfigRepository.SaveAsync(config, ct);
+
+            var existing = await slotRepository.ListByDoctorAsync(input.DoctorId, ct);
+            foreach (var slot in existing)
+                await slotRepository.DeleteAsync(slot.Id, ct);
+
+            foreach (var day in availability.Where(x => x.IsEnabled))
+            {
+                var start = day.StartTime;
+                while (start < day.EndTime)
+                {
+                    var end = start.Add(TimeSpan.FromMinutes(input.IntervalMinutes));
+                    if (end > day.EndTime)
+                        break;
+
+                    await slotRepository.AddAsync(new Domain.Entities.Profiles.Doctor.DoctorAvailabilitySlot(
+                        input.DoctorId,
+                        day.DayOfWeek,
+                        start,
+                        end), ct);
+
+                    start = end;
+                }
+            }
+
+            return true;
+        });
+
+        return true;
+    }
+
+    public async Task<bool> UpdateBookingWindowWeeksAsync(
+        int bookingWindowWeeks,
+        [Service] ISystemConfigRepository systemConfigRepository)
+    {
+        if (bookingWindowWeeks < 1)
+            throw new GraphQLException("bookingWindowWeeks debe ser mayor o igual a 1");
+
+        var config = await systemConfigRepository.GetOrCreateAsync();
+        config.UpdateBookingWindowWeeks(bookingWindowWeeks);
+        await systemConfigRepository.SaveAsync(config);
+
+        return true;
     }
     public async Task<bool> RequestPasswordResetAsync(
         RequestPasswordResetInput input,
@@ -391,8 +460,8 @@ public class Mutation
         var otpChannel = channel.ToLowerInvariant() switch
         {
             "whatsapp" => OtpChannel.WhatsApp,
-            "email"    => OtpChannel.Email,
-            _          => throw new GraphQLException("Canal inválido. Usa 'whatsapp' o 'email'.")
+            "email" => OtpChannel.Email,
+            _ => throw new GraphQLException("Canal inválido. Usa 'whatsapp' o 'email'.")
         };
 
         if (otpChannel == OtpChannel.Email && string.IsNullOrWhiteSpace(email))
