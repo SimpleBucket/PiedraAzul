@@ -1,13 +1,11 @@
-﻿namespace PiedraAzul.GraphQL.Inputs;
+namespace PiedraAzul.GraphQL.Inputs;
 
-public record ScheduleDayInput(
+public record SlotInput(
     DayOfWeek DayOfWeek,
-    bool IsEnabled,
-    TimeSpan StartTime,
-    TimeSpan EndTime);
+    string StartTime,
+    string EndTime);
 
 public record ScheduleConfigInput(
     string DoctorId,
     int BookingWindowWeeks,
-    int IntervalMinutes,
-    IReadOnlyList<ScheduleDayInput> Availability);
+    IReadOnlyList<SlotInput> ActiveSlots);

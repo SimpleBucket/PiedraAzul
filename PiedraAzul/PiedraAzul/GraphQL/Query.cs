@@ -83,38 +83,59 @@ public class Query
 
 
     public async Task<ScheduleConfigType> GetScheduleConfigByDoctorIdAsync(
-        string doctorId,
-        [Service] ISystemConfigRepository systemConfigRepository,
-        [Service] IDoctorAvailabilitySlotRepository slotRepository)
+    string doctorId,
+    [Service] ISystemConfigRepository systemConfigRepository,
+    [Service] IDoctorAvailabilitySlotRepository slotRepository)
     {
         if (string.IsNullOrWhiteSpace(doctorId))
             throw new GraphQLException("doctorId es requerido");
 
         var config = await systemConfigRepository.GetOrCreateAsync();
-        var slots = await slotRepository.ListByDoctorAsync(doctorId);
+        var allSlots = await slotRepository.ListByDoctorAsync(doctorId, includeDeleted: true);
+        var activeSlots = allSlots
+            .Where(s => !s.IsDeleted)
+            .OrderBy(s => s.StartTime)
+            .ToList();
 
         var availability = Enum.GetValues<DayOfWeek>()
             .Select(day =>
             {
-                var daySlots = slots.Where(s => s.DayOfWeek == day).OrderBy(s => s.StartTime).ToList();
+                var dayActive = activeSlots
+                    .Where(s => s.DayOfWeek == day)
+                    .ToList();
+
+                var startTs = dayActive.Count > 0 ? dayActive.First().StartTime : TimeSpan.Zero;
+                var endTs = dayActive.Count > 0 ? dayActive.Last().EndTime : TimeSpan.Zero;
+
                 return new ScheduleDayType
                 {
-                    DayOfWeek = day,
-                    IsEnabled = daySlots.Count > 0,
-                    StartTime = daySlots.Count > 0 ? daySlots.First().StartTime : TimeSpan.Zero,
-                    EndTime = daySlots.Count > 0 ? daySlots.Last().EndTime : TimeSpan.Zero
+                    DayOfWeek = day.ToString(), // 🔥 FIX
+                    IsEnabled = dayActive.Count > 0,
+                    StartTime = startTs.ToString(@"hh\:mm\:ss"), // 🔥 FIX
+                    EndTime = endTs.ToString(@"hh\:mm\:ss")      // 🔥 FIX
                 };
             })
             .ToList();
+
+        var intervalMinutes = activeSlots.Count > 1
+            ? (int)Math.Max(1,
+                (activeSlots.Skip(1).First().StartTime - activeSlots.First().StartTime).TotalMinutes)
+            : 15;
 
         return new ScheduleConfigType
         {
             DoctorId = doctorId,
             BookingWindowWeeks = config.BookingWindowWeeks,
-            IntervalMinutes = slots.Count > 1
-                ? (int)Math.Max(1, (slots.OrderBy(s => s.StartTime).Skip(1).First().StartTime - slots.OrderBy(s => s.StartTime).First().StartTime).TotalMinutes)
-                : 15,
-            Availability = availability
+            IntervalMinutes = intervalMinutes,
+            Availability = availability,
+            Slots = allSlots.Select(s => new RawSlotType
+            {
+                Id = s.Id.ToString(),
+                DayOfWeek = s.DayOfWeek.ToString(), // 🔥 FIX
+                StartTime = s.StartTime.ToString(@"hh\:mm\:ss"), // 🔥 FIX
+                EndTime = s.EndTime.ToString(@"hh\:mm\:ss"),     // 🔥 FIX
+                IsDeleted = s.IsDeleted
+            }).ToList()
         };
     }
 

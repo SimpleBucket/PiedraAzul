@@ -32,7 +32,7 @@ public sealed class GetDoctorDaySlotsHandler
 
         // 1. Traer slots (entidades)
         var slots = await _slotRepository
-            .ListByDoctorAsync(request.DoctorId, cancellationToken);
+            .ListByDoctorAsync(request.DoctorId, includeDeleted: false, cancellationToken);
 
         var daySlots = slots
             .Where(s => s.Matches(request.Date))

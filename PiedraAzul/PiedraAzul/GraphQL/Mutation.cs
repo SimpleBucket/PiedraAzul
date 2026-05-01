@@ -3,7 +3,6 @@ using HotChocolate.Authorization;
 using Mediator;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using PiedraAzul.Application.Common.Interfaces;
 using static PiedraAzul.Application.Common.Interfaces.OtpChannel;
@@ -20,7 +19,6 @@ using PiedraAzul.Application.Features.Users.Commands.CreateProfileForRole;
 using PiedraAzul.GraphQL.Inputs;
 using PiedraAzul.GraphQL.Types;
 using PiedraAzul.Infrastructure.Identity;
-using PiedraAzul.Infrastructure.Persistence;
 using PiedraAzul.Domain.Repositories;
 using System.Security.Claims;
 
@@ -167,7 +165,6 @@ public class Mutation
         ScheduleConfigInput input,
         [Service] ISystemConfigRepository systemConfigRepository,
         [Service] IDoctorAvailabilitySlotRepository slotRepository,
-        [Service] AppDbContext dbContext,
         [Service] IUnitOfWork unitOfWork)
     {
         if (input is null)
@@ -179,15 +176,15 @@ public class Mutation
         if (input.BookingWindowWeeks < 1)
             throw new GraphQLException("BookingWindowWeeks debe ser mayor a 0");
 
-        if (input.IntervalMinutes <= 0)
-            throw new GraphQLException("IntervalMinutes debe ser mayor a 0");
+        var activeSlots = input.ActiveSlots ?? [];
 
-        var availability = input.Availability ?? [];
-
-        foreach (var day in availability.Where(x => x.IsEnabled))
+        foreach (var slot in activeSlots)
         {
-            if (day.StartTime >= day.EndTime)
-                throw new GraphQLException($"Rango inválido para {day.DayOfWeek}: StartTime debe ser menor que EndTime");
+            if (!TimeSpan.TryParse(slot.StartTime, out var start) || !TimeSpan.TryParse(slot.EndTime, out var end))
+                throw new GraphQLException($"Formato de tiempo inválido para {slot.DayOfWeek}");
+
+            if (start >= end)
+                throw new GraphQLException($"Rango inválido para {slot.DayOfWeek}: StartTime debe ser menor que EndTime");
         }
 
         await unitOfWork.ExecuteAsync(async ct =>
@@ -196,49 +193,40 @@ public class Mutation
             config.UpdateBookingWindowWeeks(input.BookingWindowWeeks);
             await systemConfigRepository.SaveAsync(config, ct);
 
-            var desired = new HashSet<(DayOfWeek Day, TimeSpan Start, TimeSpan End)>();
-            foreach (var day in availability.Where(x => x.IsEnabled))
-            {
-                var start = day.StartTime;
-                while (start < day.EndTime)
-                {
-                    var end = start.Add(TimeSpan.FromMinutes(input.IntervalMinutes));
-                    if (end > day.EndTime)
-                        break;
-
-                    desired.Add((day.DayOfWeek, start, end));
-                    start = end;
-                }
-            }
-
-            var existing = await slotRepository.ListByDoctorAsync(input.DoctorId, ct);
-            var existingSet = existing
-                .Select(s => (s.DayOfWeek, s.StartTime, s.EndTime))
+            var desired = activeSlots
+                .Select(s => {
+                    TimeSpan.TryParse(s.StartTime, out var start);
+                    TimeSpan.TryParse(s.EndTime, out var end);
+                    return (s.DayOfWeek, start, end);
+                })
                 .ToHashSet();
+
+            var existing = await slotRepository.ListByDoctorAsync(input.DoctorId, includeDeleted: true, ct);
+            var handled = new HashSet<(DayOfWeek, TimeSpan, TimeSpan)>();
 
             foreach (var slot in existing)
             {
-                var keep = desired.Contains((slot.DayOfWeek, slot.StartTime, slot.EndTime));
-                if (keep)
-                    continue;
-
-                var hasAppointments = await dbContext.Appointments
-                    .AnyAsync(a => a.DoctorAvailabilitySlotId == slot.Id, ct);
-
-                if (!hasAppointments)
-                    await slotRepository.DeleteAsync(slot.Id, ct);
+                var key = (slot.DayOfWeek, slot.StartTime, slot.EndTime);
+                if (desired.Contains(key))
+                {
+                    handled.Add(key);
+                    if (slot.IsDeleted)
+                    {
+                        slot.Restore();
+                        await slotRepository.UpdateAsync(slot, ct);
+                    }
+                }
+                else if (!slot.IsDeleted)
+                {
+                    slot.SoftDelete();
+                    await slotRepository.UpdateAsync(slot, ct);
+                }
             }
 
-            foreach (var item in desired)
+            foreach (var (day, start, end) in desired.Except(handled))
             {
-                if (existingSet.Contains(item))
-                    continue;
-
                 await slotRepository.AddAsync(new Domain.Entities.Profiles.Doctor.DoctorAvailabilitySlot(
-                    input.DoctorId,
-                    item.Day,
-                    item.Start,
-                    item.End), ct);
+                    input.DoctorId, day, start, end), ct);
             }
 
             return true;
