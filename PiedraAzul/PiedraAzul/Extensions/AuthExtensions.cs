@@ -9,7 +9,7 @@ public static class AuthExtensions
         services.AddAuthentication(IdentityConstants.ApplicationScheme)
             .AddCookie(IdentityConstants.ApplicationScheme, options =>
             {
-                options.LoginPath = "/account/login";
+                options.LoginPath = "/account/auth";
                 options.AccessDeniedPath = "/account/denied";
                 options.SlidingExpiration = true;
                 options.ExpireTimeSpan = TimeSpan.FromDays(14);
