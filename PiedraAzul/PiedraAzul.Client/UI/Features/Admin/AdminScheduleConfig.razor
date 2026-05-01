@@ -83,14 +83,20 @@
                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                             </div>
                         </div>
-                        <div class="grid grid-cols-5 text-center text-[10px] font-black text-slate-400 uppercase tracking-tighter mb-6">
-                            <span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span>
-                        </div>
-                        <div class="grid grid-cols-5 text-center gap-y-3">
-                            @foreach (var day in WeekDays)
+                        <div class="space-y-3">
+                            @foreach (var day in new[] { DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday })
                             {
-                                <div class="py-1 text-sm font-black bg-primary text-white rounded-full w-8 h-8 flex items-center justify-center mx-auto shadow-lg shadow-primary/30">
-                                    @day.DayNumber
+                                var label = day switch
+                                {
+                                    DayOfWeek.Monday => "Lunes",
+                                    DayOfWeek.Tuesday => "Martes",
+                                    DayOfWeek.Wednesday => "Miércoles",
+                                    DayOfWeek.Thursday => "Jueves",
+                                    DayOfWeek.Friday => "Viernes",
+                                    _ => ""
+                                };
+                                <div class="px-4 py-3 bg-primary text-white rounded-lg font-bold text-sm text-center">
+                                    @label
                                 </div>
                             }
                         </div>
@@ -107,6 +113,10 @@
                                 <div class="w-5 h-5 rounded-lg bg-slate-200"></div>
                                 <span class="text-sm font-bold text-slate-600">Bloqueado</span>
                             </div>
+                            <div class="flex items-center gap-3">
+                                <div class="w-5 h-5 rounded-lg bg-amber-100 border border-amber-200"></div>
+                                <span class="text-sm font-bold text-slate-600">Eliminado (reactivable)</span>
+                            </div>
                         </div>
                         <div class="mt-8 pt-8 border-t border-slate-50">
                             <div class="flex gap-4 text-slate-400">
@@ -118,7 +128,24 @@
                 </aside>
 
                 <div class="space-y-8">
-                    <div class="bg-white rounded-[2.5rem] p-10 shadow-sm border border-slate-100 flex flex-col md:flex-row items-center justify-between gap-8">
+                    @if (string.IsNullOrWhiteSpace(EditModel.DoctorId))
+                    {
+                        <div class="bg-white rounded-[2.5rem] p-16 shadow-sm border border-slate-100 flex flex-col items-center justify-center min-h-[400px]">
+                            <div class="text-center">
+                                <div class="text-slate-400 mb-4">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mx-auto"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                </div>
+                                <h3 class="text-3xl font-black text-slate-900 mb-3">Selecciona un especialista</h3>
+                                <p class="text-slate-500 font-medium text-lg mb-8 max-w-md">Para mostrar y modificar la franja horaria de disponibilidad, primero debes seleccionar un especialista en el selector de arriba.</p>
+                                <button type="button" @onclick="ScrollToTop" class="bg-primary text-white px-12 py-4 rounded-2xl font-bold hover:opacity-90 transition-all">
+                                    Ir a selector
+                                </button>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="bg-white rounded-[2.5rem] p-10 shadow-sm border border-slate-100 flex flex-col md:flex-row items-center justify-between gap-8">
                         <div>
                             <h2 class="text-4xl font-black text-slate-900 mb-3">Configuración de intervalo de atención</h2>
                             <p class="text-slate-500 font-medium">Ajusta la configuración detallada del cronograma para la semana seleccionada.</p>
@@ -180,7 +207,6 @@
                                 <div class="p-8 border-r border-slate-100 last:border-0 text-center relative group @(day.IsBlocked ? "bg-slate-50/50" : "")">
                                     <button type="button" @onclick="() => ToggleDay(day.DayName)" class="block w-full text-center hover:opacity-70 transition-all">
                                         <div class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">@day.DayName</div>
-                                        <div class="text-3xl font-black text-slate-900 mb-4">@day.DayNumber</div>
                                     </button>
                                     <div class="flex justify-center">
                                         <label class="relative inline-flex items-center cursor-pointer group">
@@ -215,9 +241,13 @@
                                                     {
                                                         <button type="button" @onclick="() => ToggleSlot(day, slot)"
                                                                 class="w-full py-3.5 px-6 rounded-2xl text-[11px] font-black transition-all border flex items-center justify-between group
-                                                                       @(slot.IsActive ? "bg-primary text-white border-primary shadow-xl shadow-primary/20" : "bg-white text-slate-300 border-slate-100 hover:border-slate-300")">
+                                                                       @(slot.IsActive ? "bg-primary text-white border-primary shadow-xl shadow-primary/20" : slot.IsDeletedInDb ? "bg-amber-50 text-amber-400 border-amber-200 line-through hover:border-amber-400" : "bg-white text-slate-300 border-slate-100 hover:border-slate-300")">
                                                             <span>@slot.StartTime</span>
-                                                            @if (!slot.IsActive)
+                                                            @if (!slot.IsActive && slot.IsDeletedInDb)
+                                                            {
+                                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="opacity-60"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                                                            }
+                                                            else if (!slot.IsActive)
                                                             {
                                                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="opacity-50"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
                                                             }
@@ -248,6 +278,7 @@
                             @(IsSaving ? "GUARDANDO..." : "GUARDAR")
                         </button>
                     </div>
+                    }
                 </div>
             </div>
         </EditForm>
@@ -266,9 +297,11 @@
     private string StartTimeText { get; set; } = "08:00";
     private string EndTimeText { get; set; } = "17:00";
 
-    private string SelectedMonthLabel => DateTime.Today.ToString("MMMM yyyy");
+    private const string SelectedMonthLabel = "Semana";
 
     private async Task GoBack() => await JS.InvokeVoidAsync("history.back");
+
+    private async Task ScrollToTop() => await JS.InvokeVoidAsync("window.scrollTo", 0, 0);
 
     protected override async Task OnInitializedAsync()
     {
@@ -363,16 +396,32 @@
         {
             if (EditModel.Availability.All(x => x.DayOfWeek != day))
             {
-                EditModel.Availability.Add(new AvailabilityDayModel { DayOfWeek = day, IsEnabled = true, StartTime = new(8, 0, 0), EndTime = new(17, 0, 0) });
+                EditModel.Availability.Add(new AvailabilityDayModel { DayOfWeek = day, IsEnabled = true, StartTime = "08:00:00", EndTime = "17:00:00" });
             }
         }
     }
 
     private void SyncTimeRangeInputs()
     {
-        var sample = EditModel.Availability.FirstOrDefault(x => x.IsEnabled) ?? EditModel.Availability.First();
-        StartTimeText = $"{sample.StartTime.Hours:00}:{sample.StartTime.Minutes:00}";
-        EndTimeText = $"{sample.EndTime.Hours:00}:{sample.EndTime.Minutes:00}";
+        if (EditModel.Availability?.Count == 0)
+        {
+            StartTimeText = "08:00";
+            EndTimeText = "17:00";
+            return;
+        }
+
+        var sample = EditModel.Availability!.FirstOrDefault(x => x.IsEnabled) ?? EditModel.Availability.FirstOrDefault();
+        if (sample is null)
+        {
+            StartTimeText = "08:00";
+            EndTimeText = "17:00";
+            return;
+        }
+
+        var start = sample.StartTimeSpan;
+        var end = sample.EndTimeSpan;
+        StartTimeText = $"{start.Hours:00}:{start.Minutes:00}";
+        EndTimeText = $"{end.Hours:00}:{end.Minutes:00}";
     }
 
     private void ApplyTimeRangeToAvailability()
@@ -384,8 +433,8 @@
 
         foreach (var day in EditModel.Availability)
         {
-            day.StartTime = start;
-            day.EndTime = end;
+            day.StartTimeSpan = start;
+            day.EndTimeSpan = end;
         }
 
         RebuildSlots();
@@ -394,7 +443,6 @@
     private void RebuildSlots()
     {
         EnsureAvailabilityDays();
-        var weekStart = GetMonday(DateTime.Today);
         WeekDays.Clear();
 
         var labels = new Dictionary<DayOfWeek, string>
@@ -408,12 +456,9 @@
 
         foreach (var day in EditModel.Availability.Where(x => labels.ContainsKey(x.DayOfWeek)).OrderBy(x => x.DayOfWeek))
         {
-            var offset = (int)day.DayOfWeek - (int)DayOfWeek.Monday;
-            var date = weekStart.AddDays(offset);
             var daySchedule = new DayScheduleModel
             {
                 DayName = labels[day.DayOfWeek],
-                DayNumber = date.Day,
                 DayOfWeek = day.DayOfWeek,
                 IsBlocked = !day.IsEnabled
             };
@@ -430,7 +475,7 @@
         Hours.Clear();
         var firstEnabledDay = EditModel.Availability.FirstOrDefault(x => x.IsEnabled);
 
-        if (firstEnabledDay is null || firstEnabledDay.EndTime <= firstEnabledDay.StartTime)
+        if (firstEnabledDay is null || firstEnabledDay.EndTimeSpan <= firstEnabledDay.StartTimeSpan)
         {
             Hours.Add("08:00");
             Hours.Add("09:00");
@@ -438,7 +483,9 @@
             return;
         }
 
-        for (var time = firstEnabledDay.StartTime; time < firstEnabledDay.EndTime; time = time.Add(TimeSpan.FromHours(1)))
+        var startTime = firstEnabledDay.StartTimeSpan;
+        var endTime = firstEnabledDay.EndTimeSpan;
+        for (var time = startTime; time < endTime; time = time.Add(TimeSpan.FromHours(1)))
         {
             Hours.Add($"{time.Hours:00}:00");
         }
@@ -449,15 +496,35 @@
         day.Slots.Clear();
         var dayConfig = EditModel.Availability.First(x => x.DayOfWeek == day.DayOfWeek);
 
-        if (dayConfig.EndTime <= dayConfig.StartTime)
+        var startTime = dayConfig.StartTimeSpan;
+        var endTime = dayConfig.EndTimeSpan;
+
+        if (startTime == TimeSpan.Zero && endTime == TimeSpan.Zero)
+        {
+            startTime = new(8, 0, 0);
+            endTime = new(17, 0, 0);
+        }
+
+        if (endTime <= startTime)
         {
             return;
         }
 
         var interval = Math.Clamp(EditModel.IntervalMinutes, 5, 60);
-        for (var time = dayConfig.StartTime; time < dayConfig.EndTime; time = time.Add(TimeSpan.FromMinutes(interval)))
+        for (var time = startTime; time < endTime; time = time.Add(TimeSpan.FromMinutes(interval)))
         {
-            day.Slots.Add(new TimeSlotModel { StartTime = $"{time.Hours:00}:{time.Minutes:00}", IsActive = true });
+            var end = time.Add(TimeSpan.FromMinutes(interval));
+            var startTimeStr = $"{time.Hours:00}:{time.Minutes:00}:00";
+            var endTimeStr = $"{end.Hours:00}:{end.Minutes:00}:00";
+            var dbSlot = EditModel.Slots.FirstOrDefault(
+                s => s.DayOfWeek == day.DayOfWeek && s.StartTime == startTimeStr && s.EndTime == endTimeStr);
+
+            day.Slots.Add(new TimeSlotModel
+            {
+                StartTime = $"{time.Hours:00}:{time.Minutes:00}",
+                IsActive = dbSlot is not null && !dbSlot.IsDeleted,
+                IsDeletedInDb = dbSlot?.IsDeleted ?? false
+            });
         }
     }
 
@@ -496,10 +563,10 @@
         dayConfig.IsEnabled = true;
 
         if (TimeSpan.TryParse(activeSlots.First().StartTime, out var start))
-            dayConfig.StartTime = start;
+            dayConfig.StartTimeSpan = start;
 
         if (TimeSpan.TryParse(activeSlots.Last().StartTime, out var lastStart))
-            dayConfig.EndTime = lastStart.Add(TimeSpan.FromMinutes(Math.Clamp(EditModel.IntervalMinutes, 5, 60)));
+            dayConfig.EndTimeSpan = lastStart.Add(TimeSpan.FromMinutes(Math.Clamp(EditModel.IntervalMinutes, 5, 60)));
     }
 
     private void SyncAvailabilityFromGrid()
@@ -518,39 +585,57 @@
             dayConfig.IsEnabled = true;
 
             if (TimeSpan.TryParse(activeSlots.First().StartTime, out var start))
-                dayConfig.StartTime = start;
+                dayConfig.StartTimeSpan = start;
 
             if (TimeSpan.TryParse(activeSlots.Last().StartTime, out var lastStart))
-                dayConfig.EndTime = lastStart.Add(TimeSpan.FromMinutes(Math.Clamp(EditModel.IntervalMinutes, 5, 60)));
+                dayConfig.EndTimeSpan = lastStart.Add(TimeSpan.FromMinutes(Math.Clamp(EditModel.IntervalMinutes, 5, 60)));
         }
     }
     private async Task HandleValidSubmit()
     {
-        if (string.IsNullOrWhiteSpace(EditModel.DoctorId))
+        try
         {
-            FeedbackMessage = "Selecciona un especialista para guardar.";
+            if (string.IsNullOrWhiteSpace(EditModel.DoctorId))
+            {
+                FeedbackMessage = "Selecciona un especialista para guardar.";
+                IsErrorFeedback = true;
+                return;
+            }
+
+            IsSaving = true;
+            FeedbackMessage = null;
+
+            CollectActiveSlotsFromGrid();
+
+            if (EditModel.ActiveSlots == null || EditModel.ActiveSlots.Count == 0)
+            {
+                FeedbackMessage = "Debes seleccionar al menos una franja horaria disponible.";
+                IsErrorFeedback = true;
+                IsSaving = false;
+                return;
+            }
+
+            var saveResult = await ScheduleConfigService.SaveAsync(ToScheduleConfigModel(EditModel));
+            if (saveResult.IsSuccess && saveResult.Value)
+            {
+                FeedbackMessage = "Configuración guardada correctamente.";
+                IsErrorFeedback = false;
+                await LoadSelectedSpecialistConfigAsync();
+            }
+            else
+            {
+                FeedbackMessage = saveResult.Error?.Message ?? "No se pudo guardar la configuración. Intenta nuevamente.";
+                IsErrorFeedback = true;
+            }
+
+            IsSaving = false;
+        }
+        catch (Exception ex)
+        {
+            FeedbackMessage = $"Error al guardar: {ex.Message}";
             IsErrorFeedback = true;
-            return;
+            IsSaving = false;
         }
-
-        IsSaving = true;
-        FeedbackMessage = null;
-
-        SyncAvailabilityFromGrid();
-
-        var saveResult = await ScheduleConfigService.SaveAsync(ToScheduleConfigModel(EditModel));
-        if (saveResult.IsSuccess && saveResult.Value)
-        {
-            FeedbackMessage = "Configuración guardada correctamente.";
-            IsErrorFeedback = false;
-        }
-        else
-        {
-            FeedbackMessage = saveResult.Error?.Message ?? "No se pudo guardar la configuración. Intenta nuevamente.";
-            IsErrorFeedback = true;
-        }
-
-        IsSaving = false;
     }
 
     private async Task CancelChanges()
@@ -559,24 +644,48 @@
         await LoadSelectedSpecialistConfigAsync();
     }
 
-    private static DateTime GetMonday(DateTime date)
+    private void CollectActiveSlotsFromGrid()
     {
-        var diff = (7 + (date.DayOfWeek - DayOfWeek.Monday)) % 7;
-        return date.Date.AddDays(-diff);
+        var interval = TimeSpan.FromMinutes(Math.Clamp(EditModel.IntervalMinutes, 5, 60));
+        EditModel.ActiveSlots = WeekDays
+            .Where(d => !d.IsBlocked)
+            .SelectMany(d => d.Slots
+                .Where(s => s.IsActive)
+                .Select(s =>
+                {
+                    TimeSpan.TryParse(s.StartTime, out var start);
+                    var end = start.Add(interval);
+                    return new SlotItem
+                    {
+                        DayOfWeek = d.DayOfWeek,
+                        StartTime = $"{start.Hours:00}:{start.Minutes:00}:00",
+                        EndTime = $"{end.Hours:00}:{end.Minutes:00}:00"
+                    };
+                }))
+            .ToList();
     }
 
     private static ScheduleConfigEditModel ToEditModel(ScheduleConfigModel model) => new()
     {
-        SpecialistId = model.DoctorId,
-        WeekWindowInWeeks = model.WeekWindowInWeeks,
+        DoctorId = model.DoctorId,
+        BookingWindowWeeks = model.BookingWindowWeeks,
         IntervalMinutes = model.IntervalMinutes,
-        Availability = model.Availability
+        Availability = (model.Availability ?? [])
             .Select(day => new AvailabilityDayModel
             {
                 DayOfWeek = day.DayOfWeek,
                 IsEnabled = day.IsEnabled,
                 StartTime = day.StartTime,
                 EndTime = day.EndTime
+            })
+            .ToList(),
+        Slots = (model.Slots ?? [])
+            .Select(s => new RawSlotInfo
+            {
+                DayOfWeek = s.DayOfWeek,
+                StartTime = s.StartTime,
+                EndTime = s.EndTime,
+                IsDeleted = s.IsDeleted
             })
             .ToList()
     };
@@ -586,15 +695,7 @@
         DoctorId = model.DoctorId,
         WeekWindowInWeeks = model.WeekWindowInWeeks,
         IntervalMinutes = model.IntervalMinutes,
-        Availability = model.Availability
-            .Select(day => new AvailabilityDayModel
-            {
-                DayOfWeek = day.DayOfWeek,
-                IsEnabled = day.IsEnabled,
-                StartTime = day.StartTime,
-                EndTime = day.EndTime
-            })
-            .ToList()
+        ActiveSlots = model.ActiveSlots
     };
 
     public class DaySchedule
