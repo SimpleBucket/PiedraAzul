@@ -1,4 +1,4 @@
-﻿using PiedraAzul.Client.Models;
+using PiedraAzul.Client.Models;
 using PiedraAzul.Client.Models.Schedule;
 using PiedraAzul.Client.Services.GraphQLServices;
 
@@ -17,9 +17,7 @@ public class ScheduleConfigService(GraphQLHttpClient client) : IScheduleConfigSe
     public async Task<ScheduleConfigModel?> GetByDoctorIdAsync(string doctorId)
     {
         if (string.IsNullOrWhiteSpace(doctorId))
-        {
             return null;
-        }
 
         var fromBackend = await TryGetFromBackendAsync(doctorId);
         if (fromBackend is not null)
@@ -29,9 +27,7 @@ public class ScheduleConfigService(GraphQLHttpClient client) : IScheduleConfigSe
         }
 
         if (_fallbackStore.TryGetValue(doctorId, out var existing))
-        {
             return Clone(existing);
-        }
 
         var defaultConfig = BuildDefaultConfig(doctorId);
         _fallbackStore[doctorId] = Clone(defaultConfig);
@@ -41,14 +37,12 @@ public class ScheduleConfigService(GraphQLHttpClient client) : IScheduleConfigSe
     public async Task<Result<bool>> SaveAsync(ScheduleConfigModel config)
     {
         if (config is null || string.IsNullOrWhiteSpace(config.DoctorId))
-        {
             return Result<bool>.Failure(new ErrorResult("DoctorId es requerido.", "Validation"));
-        }
 
         var backendSave = await TrySaveToBackendAsync(config);
         if (backendSave.IsSuccess)
         {
-            _fallbackStore[config.DoctorId] = Clone(config);
+            _fallbackStore.Remove(config.DoctorId);
             return backendSave;
         }
 
@@ -70,6 +64,13 @@ public class ScheduleConfigService(GraphQLHttpClient client) : IScheduleConfigSe
                         startTime
                         endTime
                     }
+                    slots {
+                        id
+                        dayOfWeek
+                        startTime
+                        endTime
+                        isDeleted
+                    }
                 }
             }
             """;
@@ -81,8 +82,9 @@ public class ScheduleConfigService(GraphQLHttpClient client) : IScheduleConfigSe
                 new { doctorId },
                 "scheduleConfigByDoctorId");
         }
-        catch
+        catch(Exception ex) 
         {
+            Console.WriteLine(ex.Message);
             return null;
         }
     }
@@ -105,13 +107,11 @@ public class ScheduleConfigService(GraphQLHttpClient client) : IScheduleConfigSe
                     {
                         doctorId = config.DoctorId,
                         bookingWindowWeeks = config.BookingWindowWeeks,
-                        intervalMinutes = config.IntervalMinutes,
-                        availability = config.Availability.Select(day => new
+                        activeSlots = config.ActiveSlots.Select(s => new
                         {
-                            dayOfWeek = day.DayOfWeek,
-                            isEnabled = day.IsEnabled,
-                            startTime = day.StartTime,
-                            endTime = day.EndTime
+                            dayOfWeek = s.DayOfWeek.ToString().ToUpper(),
+                            startTime = s.StartTime,
+                            endTime = s.EndTime
                         }).ToList()
                     }
                 },
@@ -119,9 +119,9 @@ public class ScheduleConfigService(GraphQLHttpClient client) : IScheduleConfigSe
 
             return Result<bool>.Success(success);
         }
-        catch
+        catch (Exception ex)
         {
-            return Result<bool>.Failure(new ErrorResult("API de horario no disponible aún.", "ScheduleConfigApi"));
+            return Result<bool>.Failure(new ErrorResult($"Error al guardar: {ex.Message}", "ScheduleConfigApi"));
         }
     }
 
@@ -134,11 +134,11 @@ public class ScheduleConfigService(GraphQLHttpClient client) : IScheduleConfigSe
             IntervalMinutes = 15,
             Availability =
             [
-                new() { DayOfWeek = DayOfWeek.Monday, IsEnabled = true, StartTime = new(8,0,0), EndTime = new(17,0,0) },
-                new() { DayOfWeek = DayOfWeek.Tuesday, IsEnabled = true, StartTime = new(8,0,0), EndTime = new(17,0,0) },
-                new() { DayOfWeek = DayOfWeek.Wednesday, IsEnabled = true, StartTime = new(8,0,0), EndTime = new(17,0,0) },
-                new() { DayOfWeek = DayOfWeek.Thursday, IsEnabled = true, StartTime = new(8,0,0), EndTime = new(17,0,0) },
-                new() { DayOfWeek = DayOfWeek.Friday, IsEnabled = true, StartTime = new(8,0,0), EndTime = new(17,0,0) }
+                new() { DayOfWeek = DayOfWeek.Monday, IsEnabled = true, StartTime = "08:00:00", EndTime = "17:00:00" },
+                new() { DayOfWeek = DayOfWeek.Tuesday, IsEnabled = true, StartTime = "08:00:00", EndTime = "17:00:00" },
+                new() { DayOfWeek = DayOfWeek.Wednesday, IsEnabled = true, StartTime = "08:00:00", EndTime = "17:00:00" },
+                new() { DayOfWeek = DayOfWeek.Thursday, IsEnabled = true, StartTime = "08:00:00", EndTime = "17:00:00" },
+                new() { DayOfWeek = DayOfWeek.Friday, IsEnabled = true, StartTime = "08:00:00", EndTime = "17:00:00" }
             ]
         };
     }
@@ -155,6 +155,15 @@ public class ScheduleConfigService(GraphQLHttpClient client) : IScheduleConfigSe
                 IsEnabled = x.IsEnabled,
                 StartTime = x.StartTime,
                 EndTime = x.EndTime
+            })
+            .ToList(),
+        Slots = model.Slots
+            .Select(x => new RawSlotInfo
+            {
+                DayOfWeek = x.DayOfWeek,
+                StartTime = x.StartTime,
+                EndTime = x.EndTime,
+                IsDeleted = x.IsDeleted
             })
             .ToList()
     };

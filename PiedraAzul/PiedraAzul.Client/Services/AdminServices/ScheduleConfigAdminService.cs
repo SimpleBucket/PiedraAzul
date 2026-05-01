@@ -34,6 +34,8 @@ public class ScheduleConfigAdminService
         var startHour = 7 + (hash % 3);
         var endHour = 16 + (hash % 4);
         var interval = new[] { 10, 15, 20 }[hash % 3];
+        var startTimeStr = $"{startHour:00}:00:00";
+        var endTimeStr = $"{endHour:00}:00:00";
 
         return new ScheduleConfigEditModel
         {
@@ -42,11 +44,11 @@ public class ScheduleConfigAdminService
             IntervalMinutes = interval,
             Availability =
             [
-                new() { DayOfWeek = DayOfWeek.Monday, IsEnabled = true, StartTime = new(startHour, 0, 0), EndTime = new(endHour, 0, 0) },
-                new() { DayOfWeek = DayOfWeek.Tuesday, IsEnabled = true, StartTime = new(startHour, 0, 0), EndTime = new(endHour, 0, 0) },
-                new() { DayOfWeek = DayOfWeek.Wednesday, IsEnabled = hash % 2 == 0, StartTime = new(startHour, 0, 0), EndTime = new(endHour, 0, 0) },
-                new() { DayOfWeek = DayOfWeek.Thursday, IsEnabled = true, StartTime = new(startHour, 0, 0), EndTime = new(endHour, 0, 0) },
-                new() { DayOfWeek = DayOfWeek.Friday, IsEnabled = hash % 3 != 0, StartTime = new(startHour, 0, 0), EndTime = new(endHour, 0, 0) }
+                new() { DayOfWeek = DayOfWeek.Monday, IsEnabled = true, StartTime = startTimeStr, EndTime = endTimeStr },
+                new() { DayOfWeek = DayOfWeek.Tuesday, IsEnabled = true, StartTime = startTimeStr, EndTime = endTimeStr },
+                new() { DayOfWeek = DayOfWeek.Wednesday, IsEnabled = hash % 2 == 0, StartTime = startTimeStr, EndTime = endTimeStr },
+                new() { DayOfWeek = DayOfWeek.Thursday, IsEnabled = true, StartTime = startTimeStr, EndTime = endTimeStr },
+                new() { DayOfWeek = DayOfWeek.Friday, IsEnabled = hash % 3 != 0, StartTime = startTimeStr, EndTime = endTimeStr }
             ]
         };
     }

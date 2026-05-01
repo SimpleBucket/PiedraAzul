@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using PiedraAzul.Domain.Entities.Profiles.Doctor;
 using PiedraAzul.Domain.Repositories;
 using PiedraAzul.Infrastructure.Persistence;
@@ -13,6 +13,7 @@ public class DoctorAvailabilitySlotRepository : IDoctorAvailabilitySlotRepositor
     {
         _context = context;
     }
+
     public async Task<DoctorAvailabilitySlot?> GetByIdAsync(Guid id, CancellationToken ct = default)
     {
         return await _context.DoctorAvailabilitySlots
@@ -20,12 +21,19 @@ public class DoctorAvailabilitySlotRepository : IDoctorAvailabilitySlotRepositor
             .FirstOrDefaultAsync(x => x.Id == id, ct);
     }
 
-    public async Task<IReadOnlyList<DoctorAvailabilitySlot>> ListByDoctorAsync(string doctorId, CancellationToken ct = default)
+    public async Task<IReadOnlyList<DoctorAvailabilitySlot>> ListByDoctorAsync(string doctorId, bool includeDeleted = false, CancellationToken ct = default)
     {
         return await _context.DoctorAvailabilitySlots
-            .Where(x => x.DoctorId == doctorId)
+            .Where(x => x.DoctorId == doctorId && (includeDeleted || !x.IsDeleted))
             .AsNoTracking()
             .ToListAsync(ct);
+    }
+
+    public async Task<DoctorAvailabilitySlot?> GetExactAsync(string doctorId, DayOfWeek day, TimeSpan start, TimeSpan end, CancellationToken ct = default)
+    {
+        return await _context.DoctorAvailabilitySlots
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.DoctorId == doctorId && x.DayOfWeek == day && x.StartTime == start && x.EndTime == end, ct);
     }
 
     public async Task AddAsync(DoctorAvailabilitySlot slot, CancellationToken ct = default)
@@ -47,7 +55,7 @@ public class DoctorAvailabilitySlotRepository : IDoctorAvailabilitySlotRepositor
         if (entity is null)
             return;
 
-        _context.DoctorAvailabilitySlots.Remove(entity);
+        entity.SoftDelete();
     }
 
     public async Task<List<DoctorAvailabilitySlot>> GetByIdsAsync(List<Guid> ids, CancellationToken ct)
@@ -56,7 +64,7 @@ public class DoctorAvailabilitySlotRepository : IDoctorAvailabilitySlotRepositor
             return [];
 
         return await _context.DoctorAvailabilitySlots
-            .Where(x => ids.Contains(x.Id))
+            .Where(x => ids.Contains(x.Id) && !x.IsDeleted)
             .AsNoTracking()
             .ToListAsync(ct);
     }
@@ -67,7 +75,7 @@ public class DoctorAvailabilitySlotRepository : IDoctorAvailabilitySlotRepositor
         CancellationToken ct)
     {
         return await _context.DoctorAvailabilitySlots
-            .Where(x => x.DoctorId == doctorId && x.DayOfWeek == date.DayOfWeek)
+            .Where(x => x.DoctorId == doctorId && x.DayOfWeek == date.DayOfWeek && !x.IsDeleted)
             .AsNoTracking()
             .ToListAsync(ct);
     }
