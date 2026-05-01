@@ -1,11 +1,12 @@
 ﻿@page "/account/auth"
 @using PiedraAzul.Client.UI.Features.Account.Components
+@inject NavigationManager NavigationManager
 <PageTitle>@(isLoginForm ? "Ingresar" : "Registrarse") | Piedra Azul</PageTitle>
 
 <div class="my-auto flex flex-col items-center">
     @if (isLoginForm)
     {
-        <LoginForm OnRegisterClick="() => { isLoginForm = false; }" ReturnUrl="/" />
+        <LoginForm OnRegisterClick="() => { isLoginForm = false; }" ReturnUrl="@_returnUrl" />
     }
     else
     {
@@ -13,8 +14,21 @@
     }
 </div>
 
-
-
 @code {
     private bool isLoginForm { get; set; } = true;
+    private string _returnUrl = "/";
+
+    protected override void OnInitialized()
+    {
+        var query = new Uri(NavigationManager.Uri).Query.TrimStart('?');
+        foreach (var pair in query.Split('&', StringSplitOptions.RemoveEmptyEntries))
+        {
+            var kv = pair.Split('=', 2);
+            if (kv.Length == 2 && kv[0] == "returnUrl" && !string.IsNullOrEmpty(kv[1]))
+            {
+                _returnUrl = Uri.UnescapeDataString(kv[1]);
+                break;
+            }
+        }
+    }
 }
