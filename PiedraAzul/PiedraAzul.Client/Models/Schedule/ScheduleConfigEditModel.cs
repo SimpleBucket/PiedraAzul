@@ -40,7 +40,7 @@ public class ScheduleConfigEditModel : ScheduleConfigModel, IValidatableObject
 
         foreach (var day in Availability.Where(day => day.IsEnabled))
         {
-            if (day.StartTime >= day.EndTime)
+            if (day.StartTimeSpan >= day.EndTimeSpan)
             {
                 yield return new ValidationResult("La hora de inicio debe ser menor a la hora de fin.", [nameof(Availability)]);
                 yield break;

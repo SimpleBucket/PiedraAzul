@@ -34,6 +34,21 @@ namespace PiedraAzul.Domain.Entities.Profiles.Doctor
             EndTime = end;
         }
 
+        public bool IsDeleted { get; private set; }
+        public DateTime? DeletedAt { get; private set; }
+
+        public void SoftDelete()
+        {
+            IsDeleted = true;
+            DeletedAt = DateTime.UtcNow;
+        }
+
+        public void Restore()
+        {
+            IsDeleted = false;
+            DeletedAt = null;
+        }
+
         public bool Matches(DateOnly date)
         {
             return date.DayOfWeek == DayOfWeek;

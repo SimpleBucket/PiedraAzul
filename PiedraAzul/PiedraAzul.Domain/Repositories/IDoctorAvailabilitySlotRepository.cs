@@ -5,7 +5,8 @@ namespace PiedraAzul.Domain.Repositories;
 public interface IDoctorAvailabilitySlotRepository
 {
     Task<DoctorAvailabilitySlot?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
-    Task<IReadOnlyList<DoctorAvailabilitySlot>> ListByDoctorAsync(string doctorId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<DoctorAvailabilitySlot>> ListByDoctorAsync(string doctorId, bool includeDeleted = false, CancellationToken cancellationToken = default);
+    Task<DoctorAvailabilitySlot?> GetExactAsync(string doctorId, DayOfWeek day, TimeSpan start, TimeSpan end, CancellationToken cancellationToken = default);
     Task AddAsync(DoctorAvailabilitySlot slot, CancellationToken cancellationToken = default);
     Task UpdateAsync(DoctorAvailabilitySlot slot, CancellationToken cancellationToken = default);
     Task DeleteAsync(Guid id, CancellationToken cancellationToken = default);

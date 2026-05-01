@@ -26,13 +26,17 @@ public class ScheduleConfigModel
     public int IntervalMinutes { get; set; } = 15;
 
     public List<AvailabilityDayModel> Availability { get; set; } = [];
+    public List<RawSlotInfo> Slots { get; set; } = [];
+    public List<SlotItem> ActiveSlots { get; set; } = [];
 
     public string StartTime
     {
         get
         {
             var day = Availability.FirstOrDefault(x => x.IsEnabled) ?? Availability.FirstOrDefault();
-            return day is null ? "08:00" : $"{day.StartTime.Hours:00}:{day.StartTime.Minutes:00}";
+            if (day is null) return "08:00";
+            var ts = day.StartTimeSpan;
+            return $"{ts.Hours:00}:{ts.Minutes:00}";
         }
         set => ApplyTimeToAllDays(value, isStart: true);
     }
@@ -42,7 +46,9 @@ public class ScheduleConfigModel
         get
         {
             var day = Availability.FirstOrDefault(x => x.IsEnabled) ?? Availability.FirstOrDefault();
-            return day is null ? "17:00" : $"{day.EndTime.Hours:00}:{day.EndTime.Minutes:00}";
+            if (day is null) return "17:00";
+            var ts = day.EndTimeSpan;
+            return $"{ts.Hours:00}:{ts.Minutes:00}";
         }
         set => ApplyTimeToAllDays(value, isStart: false);
     }
@@ -77,7 +83,8 @@ public class ScheduleConfigModel
         set => SetEnabled(DayOfWeek.Friday, value);
     }
 
-    private bool IsEnabled(DayOfWeek day) => Availability.FirstOrDefault(x => x.DayOfWeek == day)?.IsEnabled ?? false;
+    private bool IsEnabled(DayOfWeek day) =>
+    Availability.FirstOrDefault(x => x.DayOfWeek == day)?.IsEnabled ?? false;
 
     private void SetEnabled(DayOfWeek day, bool isEnabled)
     {
@@ -87,6 +94,8 @@ public class ScheduleConfigModel
             item.IsEnabled = isEnabled;
         }
     }
+
+    
 
     private void ApplyTimeToAllDays(string value, bool isStart)
     {
@@ -99,11 +108,11 @@ public class ScheduleConfigModel
         {
             if (isStart)
             {
-                day.StartTime = parsed;
+                day.StartTimeSpan = parsed;
             }
             else
             {
-                day.EndTime = parsed;
+                day.EndTimeSpan = parsed;
             }
         }
     }
