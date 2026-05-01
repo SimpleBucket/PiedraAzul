@@ -155,7 +155,7 @@ public class DoctorServiceTests
         var slot2 = new DoctorAvailabilitySlot("doc-1", DayOfWeek.Tuesday, TimeSpan.FromHours(9), TimeSpan.FromHours(10));
 
         doctorRepo.Setup(x => x.ExistsAsync("doc-1", It.IsAny<CancellationToken>())).ReturnsAsync(true);
-        slotRepo.Setup(x => x.ListByDoctorAsync("doc-1", It.IsAny<CancellationToken>())).ReturnsAsync([slot1, slot2]);
+        slotRepo.Setup(x => x.ListByDoctorAsync("doc-1", It.IsAny<bool>(), It.IsAny<CancellationToken>())).ReturnsAsync([slot1, slot2]);
 
         var busy = Appointment.Create(slot1, date, "doc-1", "user-1", null);
         appointmentRepo.Setup(x => x.ListByDoctorAsync("doc-1", date, It.IsAny<CancellationToken>())).ReturnsAsync([busy]);
