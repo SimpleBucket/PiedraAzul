@@ -3,6 +3,7 @@ using Moq;
 using PiedraAzul.Application.Common.Models.Patients;
 using PiedraAzul.Application.Features.Appointments.CreateAppointment;
 using PiedraAzul.Application.Features.Patients.Commands.CreateGuestPatient;
+using PiedraAzul.Domain.Common.Exceptions;
 using PiedraAzul.Domain.Entities.Profiles.Doctor;
 using PiedraAzul.Domain.Entities.Profiles.Patients;
 using PiedraAzul.Domain.Entities.Shared.Enums;
@@ -268,6 +269,54 @@ public class AppointmentServiceTests
         await _sut.Handle(request, CancellationToken.None);
 
         _mediator.Verify(x => x.Send(It.IsAny<CreateGuestPatientCommand>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+
+
+
+
+    [Fact]
+    public async Task CreateAppointment_WhenDateMatchesSlotDay_Succeeds()
+    {
+        var doctor = BuildDoctor();
+        var slot = BuildSlot(doctor.Id, DayOfWeek.Thursday);
+        var matchingDate = NextDateFor(DayOfWeek.Thursday);
+
+        _doctorRepository.Setup(x => x.GetByIdAsync(doctor.Id, It.IsAny<CancellationToken>())).ReturnsAsync(doctor);
+        _slotRepository.Setup(x => x.GetByIdAsync(slot.Id, It.IsAny<CancellationToken>())).ReturnsAsync(slot);
+        _patientRepository.Setup(x => x.GetByUserIdAsync("patient-7", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new RegisteredPatient("patient-7", "Iris"));
+        _appointmentRepository.Setup(x => x.ExistsBySlotAndDateAsync(slot.Id, matchingDate, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+
+        var request = new CreateAppointmentCommand(doctor.Id, slot.Id, matchingDate, "patient-7", null);
+
+        var result = await _sut.Handle(request, CancellationToken.None);
+
+        Assert.Equal(matchingDate, result.Date);
+        Assert.Equal(slot.Id, result.DoctorAvailabilitySlotId);
+    }
+
+    [Fact]
+    public async Task CreateAppointment_WhenDateDoesNotMatchSlotDay_ThrowsExpectedMessage()
+    {
+        var doctor = BuildDoctor();
+        var slot = BuildSlot(doctor.Id, DayOfWeek.Monday);
+        var nonMatchingDate = NextDateFor(DayOfWeek.Tuesday);
+
+        _doctorRepository.Setup(x => x.GetByIdAsync(doctor.Id, It.IsAny<CancellationToken>())).ReturnsAsync(doctor);
+        _slotRepository.Setup(x => x.GetByIdAsync(slot.Id, It.IsAny<CancellationToken>())).ReturnsAsync(slot);
+        _patientRepository.Setup(x => x.GetByUserIdAsync("patient-6", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new RegisteredPatient("patient-6", "Mia"));
+        _appointmentRepository.Setup(x => x.ExistsBySlotAndDateAsync(slot.Id, nonMatchingDate, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+
+        var request = new CreateAppointmentCommand(doctor.Id, slot.Id, nonMatchingDate, "patient-6", null);
+
+        var ex = await Assert.ThrowsAsync<DomainException>(
+            () => _sut.Handle(request, CancellationToken.None).AsTask());
+
+        Assert.Equal("Slot does not match selected date", ex.Message);
     }
 
     private static Doctor BuildDoctor() => new("doctor-1", DoctorType.NaturalMedicine, "LIC-1", "");

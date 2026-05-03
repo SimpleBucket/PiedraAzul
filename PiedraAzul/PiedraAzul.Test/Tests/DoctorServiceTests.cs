@@ -169,6 +169,69 @@ public class DoctorServiceTests
         Assert.True(result.Single(x => x.Id == slot2.Id).IsAvailable);
     }
 
+
+
+    [Fact]
+    public async Task GetDoctorDaySlots_FiltersByMatchingDayOfWeekAndPreservesRanges()
+    {
+        var doctorRepo = new Mock<IDoctorRepository>();
+        var slotRepo = new Mock<IDoctorAvailabilitySlotRepository>();
+        var appointmentRepo = new Mock<IAppointmentRepository>();
+
+        var targetDate = NextDateFor(DayOfWeek.Wednesday);
+        var validMorning = new DoctorAvailabilitySlot("doc-2", DayOfWeek.Wednesday, TimeSpan.FromHours(7), TimeSpan.FromHours(8));
+        var validNoon = new DoctorAvailabilitySlot("doc-2", DayOfWeek.Wednesday, TimeSpan.FromHours(12), TimeSpan.FromHours(13));
+        var invalidDay = new DoctorAvailabilitySlot("doc-2", DayOfWeek.Thursday, TimeSpan.FromHours(9), TimeSpan.FromHours(10));
+
+        doctorRepo.Setup(x => x.ExistsAsync("doc-2", It.IsAny<CancellationToken>())).ReturnsAsync(true);
+        slotRepo.Setup(x => x.ListByDoctorAsync("doc-2", It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([validMorning, validNoon, invalidDay]);
+        appointmentRepo.Setup(x => x.ListByDoctorAsync("doc-2", targetDate, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+
+        var sut = new GetDoctorDaySlotsHandler(doctorRepo.Object, slotRepo.Object, appointmentRepo.Object);
+
+        var result = await sut.Handle(new GetDoctorDaySlotsQuery("doc-2", targetDate), CancellationToken.None);
+
+        Assert.Equal(2, result.Count);
+        Assert.DoesNotContain(result, x => x.Id == invalidDay.Id);
+
+        var morning = result.Single(x => x.Id == validMorning.Id);
+        var noon = result.Single(x => x.Id == validNoon.Id);
+
+        Assert.Equal(TimeSpan.FromHours(7), morning.StartTime);
+        Assert.Equal(TimeSpan.FromHours(8), morning.EndTime);
+        Assert.Equal(TimeSpan.FromHours(12), noon.StartTime);
+        Assert.Equal(TimeSpan.FromHours(13), noon.EndTime);
+        Assert.All(result, x => Assert.True(x.IsAvailable));
+    }
+
+
+
+    [Fact]
+    public async Task GetDoctorDaySlots_WhenDateDoesNotMatchAnySlot_ReturnsEmpty()
+    {
+        var doctorRepo = new Mock<IDoctorRepository>();
+        var slotRepo = new Mock<IDoctorAvailabilitySlotRepository>();
+        var appointmentRepo = new Mock<IAppointmentRepository>();
+
+        var targetDate = NextDateFor(DayOfWeek.Sunday);
+        var mondaySlot = new DoctorAvailabilitySlot("doc-3", DayOfWeek.Monday, TimeSpan.FromHours(9), TimeSpan.FromHours(10));
+        var tuesdaySlot = new DoctorAvailabilitySlot("doc-3", DayOfWeek.Tuesday, TimeSpan.FromHours(10), TimeSpan.FromHours(11));
+
+        doctorRepo.Setup(x => x.ExistsAsync("doc-3", It.IsAny<CancellationToken>())).ReturnsAsync(true);
+        slotRepo.Setup(x => x.ListByDoctorAsync("doc-3", It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([mondaySlot, tuesdaySlot]);
+        appointmentRepo.Setup(x => x.ListByDoctorAsync("doc-3", targetDate, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+
+        var sut = new GetDoctorDaySlotsHandler(doctorRepo.Object, slotRepo.Object, appointmentRepo.Object);
+
+        var result = await sut.Handle(new GetDoctorDaySlotsQuery("doc-3", targetDate), CancellationToken.None);
+
+        Assert.Empty(result);
+    }
+
     private static DateOnly NextDateFor(DayOfWeek day)
     {
         var date = DateOnly.FromDateTime(DateTime.UtcNow.Date.AddDays(1));
