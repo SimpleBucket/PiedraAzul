@@ -104,6 +104,10 @@ public static class DependencyInjection
         // Guest OTP Service
         services.AddScoped<IGuestOtpService, GuestOtpService>();
 
+        // Notification microservice client (async fire-and-forget HTTP)
+        services.AddHttpClient("Notifications");
+        services.AddScoped<INotificationClient, NotificationClient>();
+
         return services;
     }
 }
