@@ -123,7 +123,7 @@ public static class HubExtensions
             [Microsoft.AspNetCore.Mvc.FromQuery] int page = 1,
             [Microsoft.AspNetCore.Mvc.FromQuery] int pageSize = 50) =>
         {
-            var baseUrl = config["Audit:BaseUrl"] ?? "https://localhost:7300";
+            var baseUrl = config["Audit:BaseUrl"] ?? "https://localhost:49412";
             var qs = $"?page={page}&pageSize={pageSize}";
             if (userId is not null) qs += $"&userId={Uri.EscapeDataString(userId)}";
             if (entityType is not null) qs += $"&entityType={Uri.EscapeDataString(entityType)}";
