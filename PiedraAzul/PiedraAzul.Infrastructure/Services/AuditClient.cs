@@ -16,7 +16,7 @@ public class AuditClient : IAuditClient
     {
         _httpFactory = httpFactory;
         _logger      = logger;
-        _baseUrl     = config["Audit:BaseUrl"] ?? "https://localhost:7300";
+        _baseUrl     = config["Audit:BaseUrl"] ?? "https://localhost:49412";
     }
 
     public async Task LogAsync(string action, string entityType, string? entityId, string? userId, string? detail = null)

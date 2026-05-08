@@ -104,8 +104,8 @@ public static class DependencyInjection
         // Guest OTP Service
         services.AddScoped<IGuestOtpService, GuestOtpService>();
 
-        // Audit microservice client
-        services.AddHttpClient("Audit");
+        // Audit microservice client — short timeout so a missing service fails fast
+        services.AddHttpClient("Audit", c => c.Timeout = TimeSpan.FromSeconds(2));
         services.AddScoped<IAuditClient, AuditClient>();
 
         return services;
