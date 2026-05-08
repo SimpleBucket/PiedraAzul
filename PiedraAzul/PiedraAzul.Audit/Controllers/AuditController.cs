@@ -23,7 +23,7 @@ public class AuditController : ControllerBase
             EntityId   = req.EntityId,
             UserId     = req.UserId,
             Detail     = req.Detail,
-            Timestamp  = req.Timestamp
+            Timestamp  = req.Timestamp.UtcDateTime
         });
         await _db.SaveChangesAsync();
         return Ok();
@@ -44,7 +44,7 @@ public class AuditController : ControllerBase
             query = query.Where(e => e.EntityType == entityType);
 
         var entries = await query
-            .OrderByDescending(e => e.Timestamp)
+            .OrderByDescending(e => e.Id)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync();

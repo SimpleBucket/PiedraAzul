@@ -8,7 +8,7 @@ public class AuditEntry
     public string? EntityId { get; set; }
     public string? UserId { get; set; }
     public string? Detail { get; set; }
-    public DateTimeOffset Timestamp { get; set; }
+    public DateTime Timestamp { get; set; }
 }
 
 public record AuditRequest(
