@@ -1,0 +1,12 @@
+@using PiedraAzul.Client.Services.GraphQLServices
+@using PiedraAzul.Client.States
+@using PiedraAzul.Client.UI.Features.Account.Components
+@inject GraphQLHttpClient GraphQL
+@inject UserState UserState
+
+<div class="mb-5">
+    <h2 class="text-[22px] font-extrabold tracking-tight text-[#0F172A]">Autenticación de dos factores</h2>
+    <p class="mt-0.5 text-[13px] text-[#64748B]">Protege tu cuenta con una segunda capa de seguridad.</p>
+</div>
+
+<MFASettings GraphQL="@GraphQL" CurrentEmail="@(UserState.User?.Email ?? "")" />

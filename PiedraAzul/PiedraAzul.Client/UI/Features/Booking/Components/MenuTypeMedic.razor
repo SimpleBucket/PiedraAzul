@@ -209,6 +209,10 @@
         SelectedType = doctorType;
         if (!MedicsByType.TryGetValue(doctorType, out var medics))
         {
+            _isLoading = true;
+            _currentDoctors = [];
+            StateHasChanged();
+
             var response = await DoctorService.GetDoctorsByTypeAsync(doctorType.ToGraphQL());
 
             medics = response.Select(ds => new DoctorModel()
@@ -218,10 +222,9 @@
                 Name = ds.Name,
                 AvatarUrl = ds.AvatarUrl
             }).ToList();
-            _isLoading = true;
             MedicsByType[doctorType] = medics;
         }
-        _isLoading = false;
         _currentDoctors = medics;
+        _isLoading = false;
     }
 }

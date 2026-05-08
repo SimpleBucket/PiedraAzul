@@ -11,51 +11,30 @@
 @inject GraphQLDoctorService DoctorService
 @inject IScheduleConfigService ScheduleConfigService
 
-<div class="min-h-screen bg-slate-50 pb-12">
+<div class="bg-slate-50 pb-12">
 
-    <!-- HEADER / NAV -->
-    <header class="bg-white border-b sticky top-0 z-30">
-        <div class="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <div class="bg-primary p-2 rounded-lg text-white">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
-                </div>
-                <span class="text-xl font-bold text-slate-800">Agendador <span class="text-xs text-primary font-medium opacity-60">Admin</span></span>
-            </div>
-
-            <div class="flex items-center gap-6">
-                <button class="text-slate-400 hover:text-slate-600 transition-colors">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
-                </button>
-                <div class="flex items-center gap-3 pl-6 border-l">
-                    <img src="https://ui-avatars.com/api/?name=Admin&background=257D8D&color=fff" alt="Admin" class="w-8 h-8 rounded-full border shadow-sm" />
-                </div>
-            </div>
-        </div>
-    </header>
-
-    <main class="max-w-7xl mx-auto px-4 mt-8">
+    <main class="max-w-7xl mx-auto px-4 pt-2">
         <EditForm Model="EditModel" OnValidSubmit="HandleValidSubmit">
             <DataAnnotationsValidator />
 
-            <div class="flex flex-col md:flex-row items-end justify-between gap-6 mb-12">
-                <div class="flex items-center gap-6">
-                    <button @onclick="GoBack" type="button" class="p-4 bg-white border border-slate-200 rounded-2xl text-slate-400 hover:text-primary transition-all shadow-sm">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+            <div class="flex flex-col gap-6 mb-8">
+                <div class="flex items-center gap-4">
+                    <button @onclick="GoBack" type="button" class="p-3 bg-white border border-slate-200 rounded-2xl text-slate-400 hover:text-primary transition-all shadow-sm flex-shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
                     </button>
                     <div>
-                        <h1 class="text-5xl font-black text-slate-900 mb-2">Configurar Horario</h1>
-                        <p class="text-slate-500 text-lg font-medium">Gestiona tu disponibilidad semanal para citas con pacientes.</p>
+                        <h1 class="text-2xl md:text-4xl font-black text-slate-900 mb-1">Configurar Horario</h1>
+                        <p class="text-slate-500 text-sm md:text-base font-medium">Gestiona la disponibilidad semanal para citas con pacientes.</p>
                     </div>
                 </div>
 
                 <div class="flex flex-col gap-2">
                     <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Especialista</label>
-                    <div class="bg-white p-2 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-4 min-w-[400px]">
-                        <div class="pl-4 text-slate-400">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                    <div class="bg-white p-2 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-2 w-full">
+                        <div class="pl-2 text-slate-400 flex-shrink-0">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
                         </div>
-                        <select class="flex-1 bg-transparent border-none focus:outline-none text-slate-700 font-bold"
+                        <select class="flex-1 min-w-0 bg-transparent border-none focus:outline-none text-slate-700 font-bold text-sm"
                                 value="@EditModel.DoctorId"
                                 @onchange="OnDoctorChangedAsync">
                             <option value="">Selecciona un especialista</option>
@@ -64,7 +43,7 @@
                                 <option value="@doctor.UserId">@doctor.Name (@doctor.Specialty)</option>
                             }
                         </select>
-                        <button type="button" @onclick="LoadSelectedSpecialistConfigAsync" class="bg-primary text-white px-8 py-3 rounded-xl font-bold hover:opacity-90 transition-all shadow-lg shadow-primary/20">
+                        <button type="button" @onclick="LoadSelectedSpecialistConfigAsync" class="bg-primary text-white px-4 py-2.5 rounded-xl text-sm font-bold hover:opacity-90 transition-all shadow-lg shadow-primary/20 flex-shrink-0">
                             CARGAR
                         </button>
                     </div>
@@ -135,8 +114,8 @@
                                 <div class="text-slate-400 mb-4">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mx-auto"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                                 </div>
-                                <h3 class="text-3xl font-black text-slate-900 mb-3">Selecciona un especialista</h3>
-                                <p class="text-slate-500 font-medium text-lg mb-8 max-w-md">Para mostrar y modificar la franja horaria de disponibilidad, primero debes seleccionar un especialista en el selector de arriba.</p>
+                                        <h3 class="text-xl md:text-3xl font-black text-slate-900 mb-3">Selecciona un especialista</h3>
+                                <p class="text-slate-500 font-medium text-sm md:text-lg mb-8 max-w-md">Para mostrar y modificar la franja horaria de disponibilidad, primero debes seleccionar un especialista en el selector de arriba.</p>
                                 <button type="button" @onclick="ScrollToTop" class="bg-primary text-white px-12 py-4 rounded-2xl font-bold hover:opacity-90 transition-all">
                                     Ir a selector
                                 </button>
@@ -145,10 +124,10 @@
                     }
                     else
                     {
-                        <div class="bg-white rounded-[2.5rem] p-10 shadow-sm border border-slate-100 flex flex-col md:flex-row items-center justify-between gap-8">
+                        <div class="bg-white rounded-2xl md:rounded-[2.5rem] p-5 md:p-10 shadow-sm border border-slate-100 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 md:gap-8">
                         <div>
-                            <h2 class="text-4xl font-black text-slate-900 mb-3">Configuración de intervalo de atención</h2>
-                            <p class="text-slate-500 font-medium">Ajusta la configuración detallada del cronograma para la semana seleccionada.</p>
+                            <h2 class="text-xl md:text-3xl font-black text-slate-900 mb-1 md:mb-3">Intervalo de atención</h2>
+                            <p class="text-slate-500 text-sm font-medium">Ajusta la configuración del cronograma semanal.</p>
                         </div>
 
                         <div class="relative">
@@ -199,12 +178,14 @@
                         </div>
                     </div>
 
-                    <div class="bg-white rounded-[2.5rem] shadow-xl shadow-slate-200/40 border border-slate-100 overflow-hidden">
-                        <div class="grid grid-cols-[120px_1fr_1fr_1fr_1fr_1fr] border-b border-slate-100 bg-slate-50/20">
-                            <div class="p-8 flex items-center justify-center text-[10px] font-black text-slate-400 uppercase tracking-widest border-r border-slate-100">Horario</div>
+                    <div class="bg-white rounded-2xl md:rounded-[2.5rem] shadow-xl shadow-slate-200/40 border border-slate-100 overflow-hidden">
+                      <div class="overflow-x-auto">
+                       <div class="min-w-[560px]">
+                        <div class="grid grid-cols-[100px_1fr_1fr_1fr_1fr_1fr] border-b border-slate-100 bg-slate-50/20">
+                            <div class="p-5 flex items-center justify-center text-[10px] font-black text-slate-400 uppercase tracking-widest border-r border-slate-100">Horario</div>
                             @foreach (var day in WeekDays)
                             {
-                                <div class="p-8 border-r border-slate-100 last:border-0 text-center relative group @(day.IsBlocked ? "bg-slate-50/50" : "")">
+                                <div class="p-5 border-r border-slate-100 last:border-0 text-center relative group @(day.IsBlocked ? "bg-slate-50/50" : "")">
                                     <button type="button" @onclick="() => ToggleDay(day.DayName)" class="block w-full text-center hover:opacity-70 transition-all">
                                         <div class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">@day.DayName</div>
                                     </button>
@@ -225,11 +206,11 @@
                         <div class="divide-y divide-slate-100">
                             @foreach (var hour in Hours)
                             {
-                                <div class="grid grid-cols-[120px_1fr_1fr_1fr_1fr_1fr]">
-                                    <div class="p-8 flex items-start justify-center font-black text-slate-900 text-xl border-r border-slate-100">@hour</div>
+                                <div class="grid grid-cols-[100px_1fr_1fr_1fr_1fr_1fr]">
+                                    <div class="p-5 flex items-start justify-center font-black text-slate-900 text-base border-r border-slate-100">@hour</div>
                                     @foreach (var day in WeekDays)
                                     {
-                                        <div class="p-6 border-r border-slate-100 last:border-0 @(day.IsBlocked ? "bg-slate-50/50 flex items-center justify-center italic text-slate-400 font-bold text-sm" : "")">
+                                        <div class="p-4 border-r border-slate-100 last:border-0 @(day.IsBlocked ? "bg-slate-50/50 flex items-center justify-center italic text-slate-400 font-bold text-sm" : "")">
                                             @if (day.IsBlocked)
                                             {
                                                 <span>Bloqueado</span>
@@ -260,6 +241,8 @@
                                 </div>
                             }
                         </div>
+                       </div>
+                      </div>
                     </div>
 
              @if (!string.IsNullOrWhiteSpace(FeedbackMessage))
@@ -269,12 +252,12 @@
                 </div>
             }
 
-                    <div class="flex items-center justify-end gap-6 pt-10">
-                        <button type="button" @onclick="CancelChanges" class="bg-white border-2 border-slate-100 px-12 py-5 rounded-[2rem] font-black text-slate-600 hover:bg-slate-50 transition-all uppercase tracking-widest text-xs">
+                    <div class="flex flex-wrap items-center justify-end gap-3 pt-6">
+                        <button type="button" @onclick="CancelChanges" class="bg-white border-2 border-slate-100 px-6 py-3 rounded-2xl font-black text-slate-600 hover:bg-slate-50 transition-all uppercase tracking-widest text-xs">
                             Cancelar
                         </button>
-                        <button type="submit" disabled="@IsSaving" class="flex items-center gap-4 bg-primary text-white px-16 py-5 rounded-[2rem] font-black text-sm hover:opacity-90 transition-all shadow-2xl shadow-primary/40 disabled:opacity-50 disabled:cursor-not-allowed">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                        <button type="submit" disabled="@IsSaving" class="flex items-center gap-3 bg-primary text-white px-8 py-3 rounded-2xl font-black text-sm hover:opacity-90 transition-all shadow-2xl shadow-primary/40 disabled:opacity-50 disabled:cursor-not-allowed">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
                             @(IsSaving ? "GUARDANDO..." : "GUARDAR")
                         </button>
                     </div>

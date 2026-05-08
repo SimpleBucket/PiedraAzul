@@ -6,76 +6,32 @@
 @inject UserState UserState
 @inject IJSRuntime JS
 
-<div class="min-h-screen bg-slate-50 pb-12">
-    
-    <!-- HEADER / NAV -->
-    <header class="bg-white border-b sticky top-0 z-30">
-        <div class="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between">
-            <div class="flex items-center gap-8">
-                <!-- Logo -->
-                <div class="flex items-center gap-3">
-                    <div class="bg-primary p-2 rounded-lg text-white">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
-                    </div>
-                    <span class="text-xl font-bold text-slate-800">Piedra Azul</span>
-                </div>
+<div class="bg-slate-50 pb-12">
 
-                <!-- Nav Links -->
-                <nav class="hidden md:flex items-center gap-8">
-                    <a href="/doctor" class="text-slate-500 font-medium hover:text-slate-900 transition-colors">Dashboard</a>
-                    <a href="/doctor/pacientes" class="text-slate-500 font-medium hover:text-slate-900 transition-colors">Pacientes</a>
-                    <a href="/doctor/agenda" class="text-slate-900 font-semibold border-b-2 border-primary py-7">Mi Agenda</a>
-                </nav>
-            </div>
-
-            <div class="flex items-center gap-6">
-                <!-- User Profile -->
-                <div class="flex items-center gap-3 pl-6 border-l">
-                    <div class="text-right hidden sm:block">
-                        <div class="text-sm font-bold text-slate-900">Dr. Roberto Gómez</div>
-                        <div class="text-xs text-slate-400">Doctor</div>
-                    </div>
-                    <img src="https://ui-avatars.com/api/?name=Roberto+Gomez&background=257D8D&color=fff" alt="Doctor" class="w-10 h-10 rounded-full border-2 border-slate-100 shadow-sm" />
-                </div>
-            </div>
-        </div>
-    </header>
-
-    <main class="max-w-7xl mx-auto px-4 mt-8">
-        <!-- Breadcrumbs -->
-        <nav class="flex text-sm text-slate-400 mb-6 font-medium" aria-label="Breadcrumb">
-            <ol class="flex items-center space-x-2">
-                <li><a href="/doctor/agenda" class="hover:text-primary transition-colors">Mi agenda</a></li>
-                <li class="flex items-center space-x-2">
-                    <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" /></svg>
-                    <span class="text-slate-600">Horario</span>
-                </li>
-            </ol>
-        </nav>
-
+    <main class="max-w-7xl mx-auto px-4 pt-2">
         <!-- Header Title & Controls -->
-        <div class="flex flex-col md:flex-row items-center justify-between gap-6 mb-10">
-            <div class="flex items-center gap-6">
-                <button @onclick="GoBack" class="p-4 bg-white border border-slate-200 rounded-2xl text-slate-400 hover:text-primary transition-all shadow-sm">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
+            <div class="flex items-center gap-3">
+                <button @onclick="GoBack" class="p-3 bg-white border border-slate-200 rounded-2xl text-slate-400 hover:text-primary transition-all shadow-sm flex-shrink-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
                 </button>
                 <div>
-                    <h1 class="text-5xl font-black text-slate-900 mb-2">Configurar Horario</h1>
-                    <p class="text-slate-500 text-lg font-medium">Gestiona tu disponibilidad semanal para citas con pacientes.</p>
+                    <h1 class="text-2xl md:text-4xl font-black text-slate-900 mb-1">Configurar Horario</h1>
+                    <p class="text-slate-500 text-sm font-medium">Gestiona tu disponibilidad semanal para citas con pacientes.</p>
                 </div>
             </div>
-            
-            <div class="flex items-center gap-4 bg-white p-1.5 rounded-2xl shadow-sm border border-slate-100">
-                <a href="/doctor/agenda" class="text-slate-500 px-6 py-3 rounded-xl font-bold hover:bg-slate-50 transition-all">
+
+            <div class="flex items-center gap-2 bg-white p-1.5 rounded-2xl shadow-sm border border-slate-100">
+                <a href="/doctor/agenda" class="text-slate-500 px-4 py-2 rounded-xl text-sm font-bold hover:bg-slate-50 transition-all">
                     Calendario
                 </a>
-                <a href="/doctor/configurar-horario" class="bg-primary text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-primary/20 transition-all">
-                    Configurar Horario
+                <a href="/doctor/configurar-horario" class="bg-primary text-white px-4 py-2 rounded-xl text-sm font-bold shadow-lg shadow-primary/20 transition-all">
+                    Mi Horario
                 </a>
             </div>
         </div>
 
-        <div class="mt-12 grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-10">
+        <div class="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6 md:gap-10">
             
             <!-- Sidebar -->
             <aside class="space-y-8">
@@ -146,15 +102,17 @@
                 </div>
 
                 <!-- Schedule Grid -->
-                <div class="bg-white rounded-[2.5rem] shadow-xl shadow-slate-200/40 border border-slate-100 overflow-hidden">
-                    <div class="grid grid-cols-[120px_1fr_1fr_1fr_1fr_1fr] border-b border-slate-100 bg-slate-50/20">
-                        <div class="p-8 flex items-center justify-center text-[10px] font-black text-slate-400 uppercase tracking-widest border-r border-slate-100">Horario</div>
+                <div class="bg-white rounded-2xl md:rounded-[2.5rem] shadow-xl shadow-slate-200/40 border border-slate-100 overflow-hidden">
+                  <div class="overflow-x-auto">
+                   <div class="min-w-[520px]">
+                    <div class="grid grid-cols-[100px_1fr_1fr_1fr_1fr_1fr] border-b border-slate-100 bg-slate-50/20">
+                        <div class="p-5 flex items-center justify-center text-[10px] font-black text-slate-400 uppercase tracking-widest border-r border-slate-100">Horario</div>
                         @foreach (var day in WeekDays)
                         {
-                            <div class="p-8 border-r border-slate-100 last:border-0 text-center relative group @(day.IsBlocked ? "bg-slate-50/50" : "")">
+                            <div class="p-5 border-r border-slate-100 last:border-0 text-center relative group @(day.IsBlocked ? "bg-slate-50/50" : "")">
                                 <button @onclick="() => ToggleDay(day)" class="block w-full text-center hover:opacity-70 transition-all">
-                                    <div class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">@day.DayName</div>
-                                    <div class="text-3xl font-black text-slate-900 mb-4">@day.DayNumber</div>
+                                    <div class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">@day.DayName</div>
+                                    <div class="text-xl font-black text-slate-900 mb-3">@day.DayNumber</div>
                                 </button>
                                 <div class="flex justify-center">
                                     <label class="relative inline-flex items-center cursor-pointer group">
@@ -174,11 +132,11 @@
                     <div class="divide-y divide-slate-100">
                         @foreach (var hour in Hours)
                         {
-                            <div class="grid grid-cols-[120px_1fr_1fr_1fr_1fr_1fr]">
-                                <div class="p-8 flex items-start justify-center font-black text-slate-900 text-xl border-r border-slate-100">@hour:00 AM</div>
+                            <div class="grid grid-cols-[100px_1fr_1fr_1fr_1fr_1fr]">
+                                <div class="p-5 flex items-start justify-center font-black text-slate-900 text-base border-r border-slate-100">@hour:00</div>
                                 @foreach (var day in WeekDays)
                                 {
-                                    <div class="p-6 border-r border-slate-100 last:border-0 @(day.IsBlocked ? "bg-slate-50/50 flex items-center justify-center italic text-slate-400 font-bold text-sm" : "")">
+                                    <div class="p-4 border-r border-slate-100 last:border-0 @(day.IsBlocked ? "bg-slate-50/50 flex items-center justify-center italic text-slate-400 font-bold text-sm" : "")">
                                         @if (day.IsBlocked)
                                         {
                                             <span>Bloqueado</span>
@@ -206,25 +164,27 @@
                         }
                         
                         <!-- Lunch Break / Bottom padding -->
-                        <div class="grid grid-cols-[120px_1fr_1fr_1fr_1fr_1fr] bg-emerald-50/10">
-                             <div class="p-8 flex items-start justify-center font-black text-slate-900 text-xl border-r border-slate-100">12:00 PM</div>
+                        <div class="grid grid-cols-[100px_1fr_1fr_1fr_1fr_1fr] bg-emerald-50/10">
+                             <div class="p-5 flex items-start justify-center font-black text-slate-900 text-base border-r border-slate-100">12:00</div>
                              @foreach (var day in WeekDays)
                              {
-                                 <div class="p-6 border-r border-slate-100 last:border-0 flex items-center justify-center">
-                                     <div class="w-full h-14 bg-primary/10 rounded-[1.5rem] border border-primary/5"></div>
+                                 <div class="p-4 border-r border-slate-100 last:border-0 flex items-center justify-center">
+                                     <div class="w-full h-10 bg-primary/10 rounded-2xl border border-primary/5"></div>
                                  </div>
                              }
                         </div>
                     </div>
+                   </div>
+                  </div>
                 </div>
 
                 <!-- Footer Actions -->
-                <div class="flex items-center justify-end gap-6 pt-10">
-                    <a href="/servicios/exportar-citas" class="bg-white border-2 border-slate-100 px-12 py-5 rounded-[2rem] font-black text-slate-600 hover:bg-slate-50 transition-all uppercase tracking-widest text-xs">
+                <div class="flex flex-wrap items-center justify-end gap-3 pt-6">
+                    <a href="/servicios/exportar-citas" class="bg-white border-2 border-slate-100 px-6 py-3 rounded-2xl font-black text-slate-600 hover:bg-slate-50 transition-all uppercase tracking-widest text-xs">
                         Exportar datos
                     </a>
-                    <button class="flex items-center gap-4 bg-primary text-white px-16 py-5 rounded-[2rem] font-black text-sm hover:opacity-90 transition-all shadow-2xl shadow-primary/40">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                    <button class="flex items-center gap-3 bg-primary text-white px-8 py-3 rounded-2xl font-black text-sm hover:opacity-90 transition-all shadow-2xl shadow-primary/40">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
                         GUARDAR
                     </button>
                 </div>

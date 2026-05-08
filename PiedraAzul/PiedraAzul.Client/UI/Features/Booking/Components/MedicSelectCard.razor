@@ -3,7 +3,7 @@
 <div class="flex items-center gap-4">
     
     <!-- Avatar -->
-    <img src=@("Avatars/" + MedicDTO.AvatarUrl)
+    <img src=@(MedicDTO.AvatarUrl is "default.png" ? "Avatars/default.png" : MedicDTO.AvatarUrl)
          alt=""
          class="h-16 w-16 flex-shrink-0 rounded-md object-cover sm:h-20 sm:w-20 md:h-24 md:w-24" />
 
