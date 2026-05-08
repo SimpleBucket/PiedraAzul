@@ -11,14 +11,30 @@
 </h2>
 
 <div class="mb-6 grid grid-cols-2 gap-3 pb-2 md:grid-cols-5">
-    @foreach (var day in Days)
+    @if (_scanningDays)
     {
-        <button type="button" @onclick="() => SelectDay(day)"
-                class="@GetDayClass(day)">
-            <span class="text-xs uppercase">@day.DayName</span>
-            <span class="text-xl font-bold">@day.DayNumber</span>
-            <span class="text-xs">@day.Month</span>
-        </button>
+        <div class="col-span-2 md:col-span-5 flex items-center gap-2 py-4 text-gray-500">
+            <div class="h-5 w-5 animate-spin rounded-full border-b-2 border-teal-600"></div>
+            <span class="text-sm">Buscando días disponibles...</span>
+        </div>
+    }
+    else if (Days.Count == 0)
+    {
+        <div class="col-span-2 md:col-span-5 py-4 text-sm italic text-gray-500">
+            No hay días disponibles en los próximos 28 días.
+        </div>
+    }
+    else
+    {
+        @foreach (var day in Days)
+        {
+            <button type="button" @onclick="() => SelectDay(day)"
+                    class="@GetDayClass(day)">
+                <span class="text-xs uppercase">@day.DayName</span>
+                <span class="text-xl font-bold">@day.DayNumber</span>
+                <span class="text-xs">@day.Month</span>
+            </button>
+        }
     }
 </div>
 
@@ -116,6 +132,13 @@ else
             }
         </div>
     }
+
+    @if (!MorningSlots.Any() && !AfternoonSlots.Any())
+    {
+        <div class="py-6 text-center text-sm italic text-gray-500">
+            No hay cupos disponibles para este día.
+        </div>
+    }
 }
 
 @code {
@@ -126,6 +149,7 @@ else
 
     private string? _errorMessage;
     private bool _isLoading;
+    private bool _scanningDays = true;
     private Dictionary<DateTime, List<TimeSlot>> _cache = new();
     private DayItem? _selectedDay;
     private TimeSlot? _selectedSlot;
@@ -139,40 +163,61 @@ else
     {
         Logger.LogInformation("=== AppointmentScheduler OnInitializedAsync INICIO ===");
         Logger.LogInformation("DoctorId recibido: {DoctorId}", DoctorId);
-        
-        var startDate = DateTime.Today.AddDays(1);
-        Days = Enumerable.Range(0, 14)
-            .Select(i =>
-            {
-                var date = startDate.AddDays(i);
-                return new DayItem
-                {
-                    Date = date,
-                    DayName = date.ToString("ddd").ToUpper(),
-                    DayNumber = date.ToString("dd"),
-                    Month = date.ToString("MMMM").ToUpper()
-                };
-            }).ToList();
-
-        _selectedDay = Days.First();
-        Logger.LogInformation("Día seleccionado inicial: {Date}", _selectedDay.Date);
 
         try
         {
-            Logger.LogInformation("Iniciando conexión SignalR...");
             await HubService.StartAsync();
-            Logger.LogInformation("Conexión SignalR establecida. ConnectionId: {ConnectionId}", HubService.GetConnectionId());
-            
             HubService.SlotLocked += OnSlotLocked;
             HubService.SlotReleased += OnSlotReleased;
-            Logger.LogInformation("Eventos de SignalR suscritos");
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error al iniciar SignalR");
         }
 
-        await LoadSlots(_selectedDay.Date);
+        // Scan next 28 days in parallel, keep only those with at least one slot
+        var startDate = DateTime.Today.AddDays(1);
+        var scanTasks = Enumerable.Range(0, 28).Select(async i =>
+        {
+            var date = startDate.AddDays(i);
+            try
+            {
+                var result = await AvailabilityClient.GetDoctorSlotsByDate(DoctorId, date, CancellationToken.None);
+                return (date, hasSlots: result.IsSuccess && result.Value?.Any() == true);
+            }
+            catch
+            {
+                return (date, hasSlots: false);
+            }
+        });
+
+        var scanResults = await Task.WhenAll(scanTasks);
+
+        Days = scanResults
+            .Where(r => r.hasSlots)
+            .Take(10)
+            .Select(r =>
+            {
+                var d = r.date;
+                return new DayItem
+                {
+                    Date = d,
+                    DayName = d.ToString("ddd").ToUpper(),
+                    DayNumber = d.ToString("dd"),
+                    Month = d.ToString("MMMM").ToUpper()
+                };
+            }).ToList();
+
+        _scanningDays = false;
+        await InvokeAsync(StateHasChanged);
+
+        if (Days.Count > 0)
+        {
+            _selectedDay = Days.First();
+            Logger.LogInformation("Día seleccionado inicial: {Date}", _selectedDay.Date);
+            await LoadSlots(_selectedDay.Date);
+        }
+
         Logger.LogInformation("=== AppointmentScheduler OnInitializedAsync FIN ===");
     }
 
