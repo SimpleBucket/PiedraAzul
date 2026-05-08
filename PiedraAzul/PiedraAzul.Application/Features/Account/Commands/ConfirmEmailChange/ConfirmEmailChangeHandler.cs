@@ -6,14 +6,21 @@ namespace PiedraAzul.Application.Features.Account.Commands.ConfirmEmailChange;
 public class ConfirmEmailChangeHandler : IRequestHandler<ConfirmEmailChangeCommand, bool>
 {
     private readonly IIdentityService _identityService;
+    private readonly IAuditClient _audit;
 
-    public ConfirmEmailChangeHandler(IIdentityService identityService)
+    public ConfirmEmailChangeHandler(IIdentityService identityService, IAuditClient audit)
     {
         _identityService = identityService;
+        _audit           = audit;
     }
 
     public async ValueTask<bool> Handle(ConfirmEmailChangeCommand request, CancellationToken ct)
     {
-        return await _identityService.ConfirmEmailChangeAsync(request.UserId, request.NewEmail, request.Code);
+        var ok = await _identityService.ConfirmEmailChangeAsync(request.UserId, request.NewEmail, request.Code);
+
+        if (ok)
+            await _audit.LogAsync("EmailChange", "User", request.UserId, request.UserId, request.NewEmail);
+
+        return ok;
     }
 }

@@ -7,13 +7,16 @@ public class RequestPasswordResetHandler : IRequestHandler<RequestPasswordResetC
 {
     private readonly IIdentityService _identityService;
     private readonly IEmailService _emailService;
+    private readonly IAuditClient _audit;
 
     public RequestPasswordResetHandler(
         IIdentityService identityService,
-        IEmailService emailService)
+        IEmailService emailService,
+        IAuditClient audit)
     {
         _identityService = identityService;
-        _emailService = emailService;
+        _emailService    = emailService;
+        _audit           = audit;
     }
 
     public async ValueTask<bool> Handle(RequestPasswordResetCommand request, CancellationToken ct)
@@ -24,6 +27,11 @@ public class RequestPasswordResetHandler : IRequestHandler<RequestPasswordResetC
 
         var resetLink = $"https://piedraazul.runasp.net/account/reset-password?email={Uri.EscapeDataString(request.Email)}&token={Uri.EscapeDataString(resetToken)}";
 
-        return await _emailService.SendPasswordResetEmailAsync(request.Email, request.Email, resetLink);
+        var ok = await _emailService.SendPasswordResetEmailAsync(request.Email, request.Email, resetLink);
+
+        if (ok)
+            await _audit.LogAsync("RequestPasswordReset", "User", null, null, request.Email);
+
+        return ok;
     }
 }

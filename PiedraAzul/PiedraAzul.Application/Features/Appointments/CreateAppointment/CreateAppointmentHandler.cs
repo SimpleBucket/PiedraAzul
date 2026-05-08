@@ -1,4 +1,5 @@
 ﻿using Mediator;
+using PiedraAzul.Application.Common.Interfaces;
 using PiedraAzul.Application.Features.Patients.Commands.CreateGuestPatient;
 using PiedraAzul.Domain.Entities.Operations;
 using PiedraAzul.Domain.Repositories;
@@ -15,6 +16,7 @@ public class CreateAppointmentHandler
     private readonly IPatientGuestRepository _patientGuestRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMediator _mediator;
+    private readonly IAuditClient _audit;
 
     public CreateAppointmentHandler(
         IAppointmentRepository appointmentRepository,
@@ -23,22 +25,24 @@ public class CreateAppointmentHandler
         IPatientRepository patientRepository,
         IPatientGuestRepository patientGuestRepository,
         IUnitOfWork unitOfWork,
-        IMediator mediator)
+        IMediator mediator,
+        IAuditClient audit)
     {
-        _appointmentRepository = appointmentRepository;
-        _doctorRepository = doctorRepository;
-        _slotRepository = slotRepository;
-        _patientRepository = patientRepository;
+        _appointmentRepository  = appointmentRepository;
+        _doctorRepository       = doctorRepository;
+        _slotRepository         = slotRepository;
+        _patientRepository      = patientRepository;
         _patientGuestRepository = patientGuestRepository;
-        _unitOfWork = unitOfWork;
-        _mediator = mediator;
+        _unitOfWork             = unitOfWork;
+        _mediator               = mediator;
+        _audit                  = audit;
     }
 
     public async ValueTask<Appointment> Handle(
         CreateAppointmentCommand request,
         CancellationToken cancellationToken)
     {
-        return await _unitOfWork.ExecuteAsync(async ct =>
+        var appointment = await _unitOfWork.ExecuteAsync(async ct =>
         {
             // ================= VALIDACIONES =================
 
@@ -129,5 +133,12 @@ public class CreateAppointmentHandler
             return appointment;
 
         }, cancellationToken);
+
+        await _audit.LogAsync("Create", "Appointment", appointment.Id.ToString(),
+            appointment.UserId ?? appointment.GuestId,
+            $"Doctor: {request.DoctorId}, Date: {request.Date:yyyy-MM-dd}");
+
+        return appointment;
     }
+
 }

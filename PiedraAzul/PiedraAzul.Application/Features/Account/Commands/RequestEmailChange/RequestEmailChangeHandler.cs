@@ -7,13 +7,16 @@ public class RequestEmailChangeHandler : IRequestHandler<RequestEmailChangeComma
 {
     private readonly IIdentityService _identityService;
     private readonly IEmailService _emailService;
+    private readonly IAuditClient _audit;
 
     public RequestEmailChangeHandler(
         IIdentityService identityService,
-        IEmailService emailService)
+        IEmailService emailService,
+        IAuditClient audit)
     {
         _identityService = identityService;
-        _emailService = emailService;
+        _emailService    = emailService;
+        _audit           = audit;
     }
 
     public async ValueTask<bool> Handle(RequestEmailChangeCommand request, CancellationToken ct)
@@ -41,9 +44,14 @@ public class RequestEmailChangeHandler : IRequestHandler<RequestEmailChangeComma
             <p>Si no realizaste esta solicitud, ignora este mensaje.</p>
             """;
 
-        return await _emailService.SendGenericEmailAsync(
+        var ok = await _emailService.SendGenericEmailAsync(
             request.NewEmail,
             "Verificación de cambio de correo - Piedra Azul",
             emailTemplate);
+
+        if (ok)
+            await _audit.LogAsync("RequestEmailChange", "User", request.UserId, request.UserId, request.NewEmail);
+
+        return ok;
     }
 }

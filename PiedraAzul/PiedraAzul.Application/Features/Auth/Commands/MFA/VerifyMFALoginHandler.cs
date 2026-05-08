@@ -9,43 +9,52 @@ public class VerifyMFALoginHandler : IRequestHandler<VerifyMFALoginCommand, Logi
     private readonly IMFATokenService _mfaTokenService;
     private readonly IMFAService _mfaService;
     private readonly IIdentityService _identityService;
+    private readonly IAuditClient _audit;
 
     public VerifyMFALoginHandler(
         IMFATokenService mfaTokenService,
         IMFAService mfaService,
-        IIdentityService identityService)
+        IIdentityService identityService,
+        IAuditClient audit)
     {
         _mfaTokenService = mfaTokenService;
-        _mfaService = mfaService;
+        _mfaService      = mfaService;
         _identityService = identityService;
+        _audit           = audit;
     }
 
     public async ValueTask<LoginResult> Handle(VerifyMFALoginCommand request, CancellationToken ct)
     {
         var userId = _mfaTokenService.ValidateMFAToken(request.MFAToken);
         if (string.IsNullOrEmpty(userId))
+        {
+            await _audit.LogAsync("MFALoginFailed", "User", null, null, "Invalid MFA token");
             return new LoginResult(null, []);
+        }
 
         var method = await _mfaService.GetMFAMethodAsync(userId);
 
         bool isValid = method switch
         {
-            "TOTP" => await _mfaService.VerifyTOTPAsync(userId, request.OTP),
+            "TOTP"  => await _mfaService.VerifyTOTPAsync(userId, request.OTP),
             "Email" => await _mfaService.VerifyOTPAsync(userId, request.OTP),
-            _ => await _mfaService.VerifyBackupCodeAsync(userId, request.OTP)
+            _       => await _mfaService.VerifyBackupCodeAsync(userId, request.OTP)
         };
 
         if (!isValid)
+        {
+            await _audit.LogAsync("MFALoginFailed", "User", userId, userId, $"Method: {method}");
             return new LoginResult(null, []);
+        }
 
         var user = await _identityService.GetById(userId);
         if (user is null)
             return new LoginResult(null, []);
 
         var roles = await _identityService.GetRolesByUser(userId);
-
-        // Consume MFA token only after successful verification
         _mfaTokenService.ConsumeMFAToken(request.MFAToken);
+
+        await _audit.LogAsync("MFALogin", "User", userId, userId, $"Method: {method}");
 
         return new LoginResult(user, roles);
     }

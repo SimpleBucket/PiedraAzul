@@ -6,14 +6,21 @@ namespace PiedraAzul.Application.Features.Auth.Commands.MFA;
 public class ConfirmTOTPSetupHandler : IRequestHandler<ConfirmTOTPSetupCommand, bool>
 {
     private readonly IMFAService _mfaService;
+    private readonly IAuditClient _audit;
 
-    public ConfirmTOTPSetupHandler(IMFAService mfaService)
+    public ConfirmTOTPSetupHandler(IMFAService mfaService, IAuditClient audit)
     {
         _mfaService = mfaService;
+        _audit      = audit;
     }
 
     public async ValueTask<bool> Handle(ConfirmTOTPSetupCommand request, CancellationToken ct)
     {
-        return await _mfaService.ConfirmTOTPSetupAsync(request.UserId, request.TOTP);
+        var ok = await _mfaService.ConfirmTOTPSetupAsync(request.UserId, request.TOTP);
+
+        if (ok)
+            await _audit.LogAsync("MFASetup", "User", request.UserId, request.UserId, "TOTP");
+
+        return ok;
     }
 }
