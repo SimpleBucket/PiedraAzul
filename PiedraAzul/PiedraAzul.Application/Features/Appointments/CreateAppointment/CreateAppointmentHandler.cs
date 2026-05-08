@@ -135,7 +135,7 @@ public class CreateAppointmentHandler
         }, cancellationToken);
 
         await _audit.LogAsync("Create", "Appointment", appointment.Id.ToString(),
-            appointment.UserId ?? appointment.GuestId,
+            appointment.PatientUserId ?? appointment.PatientGuestId,
             $"Doctor: {request.DoctorId}, Date: {request.Date:yyyy-MM-dd}");
 
         return appointment;

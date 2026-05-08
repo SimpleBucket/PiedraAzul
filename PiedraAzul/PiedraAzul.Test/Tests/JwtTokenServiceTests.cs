@@ -1,4 +1,5 @@
 using Moq;
+using PiedraAzul.Application.Common.Interfaces;
 using PiedraAzul.Application.Features.Patients.Commands.CreateGuestPatient;
 using PiedraAzul.Application.Features.Patients.Queries.SearchPatients;
 using PiedraAzul.Domain.Entities.Profiles.Patients;
@@ -12,7 +13,8 @@ public class JwtTokenServiceTests
     public async Task CreateGuestPatient_ReturnsGeneratedId()
     {
         var repo = new Mock<IPatientGuestRepository>();
-        var sut = new CreateGuestPatientHandler(repo.Object, new ImmediateUnitOfWork());
+        var audit = new Mock<IAuditClient>();
+        var sut = new CreateGuestPatientHandler(repo.Object, new ImmediateUnitOfWork(), audit.Object);
 
         var result = await sut.Handle(new CreateGuestPatientCommand("id", "Nuevo", "300", ""), CancellationToken.None);
 
@@ -23,7 +25,8 @@ public class JwtTokenServiceTests
     public async Task CreateGuestPatient_AddsGuestToRepository()
     {
         var repo = new Mock<IPatientGuestRepository>();
-        var sut = new CreateGuestPatientHandler(repo.Object, new ImmediateUnitOfWork());
+        var audit = new Mock<IAuditClient>();
+        var sut = new CreateGuestPatientHandler(repo.Object, new ImmediateUnitOfWork(), audit.Object);
 
         await sut.Handle(new CreateGuestPatientCommand("id", "Nuevo", "300", ""), CancellationToken.None);
 

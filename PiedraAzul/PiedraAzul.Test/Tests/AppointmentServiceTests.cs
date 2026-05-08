@@ -1,5 +1,6 @@
 ﻿using Mediator;
 using Moq;
+using PiedraAzul.Application.Common.Interfaces;
 using PiedraAzul.Application.Common.Models.Patients;
 using PiedraAzul.Application.Features.Appointments.CreateAppointment;
 using PiedraAzul.Application.Features.Patients.Commands.CreateGuestPatient;
@@ -19,6 +20,7 @@ public class AppointmentServiceTests
     private readonly Mock<IPatientRepository> _patientRepository = new();
     private readonly Mock<IPatientGuestRepository> _guestRepository = new();
     private readonly Mock<IMediator> _mediator = new();
+    private readonly Mock<IAuditClient> _audit = new();
 
     private readonly CreateAppointmentHandler _sut;
 
@@ -31,7 +33,8 @@ public class AppointmentServiceTests
             _patientRepository.Object,
             _guestRepository.Object,
             new ImmediateUnitOfWork(),
-            _mediator.Object);
+            _mediator.Object,
+            _audit.Object);
     }
 
     [Fact]
