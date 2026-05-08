@@ -95,6 +95,7 @@ else
                             @NavItem("admin-usuarios", "Gestión de usuarios", "Administración")
                             @NavItem("admin-agenda", "Agenda médica", "Administración")
                             @NavItem("admin-horario", "Configurar horarios", "Administración")
+                            @NavItem("admin-auditoria", "Auditoría", "Administración")
                         }
                         <div class="h-2"></div>
                     }
@@ -163,6 +164,9 @@ else
                         break;
                     case "admin-horario":
                         <AdminScheduleConfig />
+                        break;
+                    case "admin-auditoria":
+                        <AdminAuditLog />
                         break;
                     case "exportar-citas":
                         <AppointmentExport />

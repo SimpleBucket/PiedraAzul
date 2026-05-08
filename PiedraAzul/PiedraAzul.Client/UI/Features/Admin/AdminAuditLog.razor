@@ -1,0 +1,134 @@
+@using PiedraAzul.Client.Services.AuditServices
+@inject AuditLogService AuditSvc
+
+<div class="min-h-screen bg-slate-50 p-8">
+    <div class="max-w-6xl mx-auto">
+
+        <!-- Header -->
+        <div class="mb-6">
+            <h1 class="text-2xl md:text-4xl font-bold text-slate-900 tracking-tight">Auditoría del sistema</h1>
+            <p class="text-slate-500 mt-1 text-sm">Registro de acciones realizadas en la plataforma.</p>
+        </div>
+
+        <!-- Filtros -->
+        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 mb-6 flex flex-wrap gap-4 items-end">
+            <div class="flex-grow min-w-[200px]">
+                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Usuario (ID)</label>
+                <input type="text" @bind="_filterUserId" @bind:event="oninput"
+                       class="w-full bg-slate-50 border border-slate-200 text-slate-700 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50"
+                       placeholder="Filtrar por user ID..." />
+            </div>
+            <div class="w-48">
+                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Tipo de entidad</label>
+                <input type="text" @bind="_filterEntityType" @bind:event="oninput"
+                       class="w-full bg-slate-50 border border-slate-200 text-slate-700 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50"
+                       placeholder="Appointment, User..." />
+            </div>
+            <button @onclick="LoadAsync"
+                    class="bg-teal-700 hover:bg-teal-800 text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors shadow-sm">
+                Buscar
+            </button>
+        </div>
+
+        <!-- Tabla -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+            @if (_loading)
+            {
+                <div class="flex justify-center items-center py-20">
+                    <div class="spinner"></div>
+                </div>
+            }
+            else if (_entries.Count == 0)
+            {
+                <div class="text-center py-16 text-slate-400 text-sm">Sin registros de auditoría.</div>
+            }
+            else
+            {
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="bg-slate-50 border-b border-slate-100 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                <th class="px-5 py-3.5">Timestamp</th>
+                                <th class="px-5 py-3.5">Acción</th>
+                                <th class="px-5 py-3.5">Entidad</th>
+                                <th class="px-5 py-3.5">ID Entidad</th>
+                                <th class="px-5 py-3.5">Usuario</th>
+                                <th class="px-5 py-3.5">Detalle</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-50">
+                            @foreach (var e in _entries)
+                            {
+                                <tr class="hover:bg-slate-50/60 transition-colors">
+                                    <td class="px-5 py-3.5 text-slate-500 whitespace-nowrap font-mono text-xs">
+                                        @e.Timestamp.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")
+                                    </td>
+                                    <td class="px-5 py-3.5">
+                                        <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-bold @ActionBadge(e.Action)">
+                                            @e.Action
+                                        </span>
+                                    </td>
+                                    <td class="px-5 py-3.5 text-slate-700 font-medium">@e.EntityType</td>
+                                    <td class="px-5 py-3.5 text-slate-500 font-mono text-xs">@(e.EntityId ?? "—")</td>
+                                    <td class="px-5 py-3.5 text-slate-500 font-mono text-xs truncate max-w-[120px]">@(e.UserId ?? "—")</td>
+                                    <td class="px-5 py-3.5 text-slate-400 text-xs max-w-[200px] truncate" title="@e.Detail">@(e.Detail ?? "—")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Paginación -->
+                <div class="flex items-center justify-between px-5 py-3.5 border-t border-slate-100 text-sm text-slate-500">
+                    <span>Página @_page</span>
+                    <div class="flex gap-2">
+                        <button @onclick="PrevPage" disabled="@(_page <= 1)"
+                                class="px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-medium disabled:opacity-40 hover:bg-slate-50 transition">
+                            ← Anterior
+                        </button>
+                        <button @onclick="NextPage" disabled="@(_entries.Count < _pageSize)"
+                                class="px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-medium disabled:opacity-40 hover:bg-slate-50 transition">
+                            Siguiente →
+                        </button>
+                    </div>
+                </div>
+            }
+        </div>
+
+    </div>
+</div>
+
+@code {
+    private List<AuditLogEntry> _entries = [];
+    private bool _loading = true;
+    private int _page = 1;
+    private const int _pageSize = 50;
+    private string? _filterUserId;
+    private string? _filterEntityType;
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        StateHasChanged();
+        _entries = await AuditSvc.GetLogsAsync(
+            string.IsNullOrWhiteSpace(_filterUserId) ? null : _filterUserId,
+            string.IsNullOrWhiteSpace(_filterEntityType) ? null : _filterEntityType,
+            _page, _pageSize);
+        _loading = false;
+    }
+
+    private async Task PrevPage() { if (_page > 1) { _page--; await LoadAsync(); } }
+    private async Task NextPage() { _page++; await LoadAsync(); }
+
+    private static string ActionBadge(string action) => action.ToLowerInvariant() switch
+    {
+        "login"   => "bg-green-50 text-green-700",
+        "logout"  => "bg-slate-100 text-slate-600",
+        "delete"  => "bg-red-50 text-red-600",
+        "create"  => "bg-blue-50 text-blue-600",
+        "update"  => "bg-amber-50 text-amber-600",
+        _         => "bg-slate-100 text-slate-600"
+    };
+}

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Components.Authorization;
 using PiedraAzul.Client.Services.AdminServices;
+using PiedraAzul.Client.Services.AuditServices;
 using PiedraAzul.Client.Services.AuthServices;
 using PiedraAzul.Client.Services.GraphQLServices;
 using PiedraAzul.Client.Services.RealTimeServices;
@@ -33,6 +34,10 @@ public static class SharedClientServicesExtensions
         #region Auth
         services.AddScoped<AuthenticationStateProvider, PersistentAuthenticationStateProvider>();
         services.AddAuthorizationCore();
+        #endregion
+
+        #region Audit
+        services.AddScoped<AuditLogService>();
         #endregion
 
         return services;

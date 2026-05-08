@@ -113,6 +113,34 @@ public static class HubExtensions
             }
         }).DisableAntiforgery();
 
+        // Audit log proxy — forwards queries to the audit microservice
+        app.MapGet("/api/audit", [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin")] async (
+            HttpContext ctx,
+            IHttpClientFactory httpFactory,
+            IConfiguration config,
+            [Microsoft.AspNetCore.Mvc.FromQuery] string? userId,
+            [Microsoft.AspNetCore.Mvc.FromQuery] string? entityType,
+            [Microsoft.AspNetCore.Mvc.FromQuery] int page = 1,
+            [Microsoft.AspNetCore.Mvc.FromQuery] int pageSize = 50) =>
+        {
+            var baseUrl = config["Audit:BaseUrl"] ?? "https://localhost:7300";
+            var qs = $"?page={page}&pageSize={pageSize}";
+            if (userId is not null) qs += $"&userId={Uri.EscapeDataString(userId)}";
+            if (entityType is not null) qs += $"&entityType={Uri.EscapeDataString(entityType)}";
+
+            try
+            {
+                var client = httpFactory.CreateClient("Audit");
+                var response = await client.GetAsync($"{baseUrl}/audit{qs}");
+                var body = await response.Content.ReadAsStringAsync();
+                return Results.Content(body, "application/json", statusCode: (int)response.StatusCode);
+            }
+            catch
+            {
+                return Results.Json(new List<object>());
+            }
+        });
+
         return app;
     }
 
