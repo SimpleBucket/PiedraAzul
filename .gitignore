@@ -364,3 +364,6 @@ FodyWeavers.xsd
 /PiedraAzul/PiedraAzul/lucene_index
 .claude/
 /PiedraAzul/PiedraAzul/appsettings.json
+*.db
+*.db-shm
+*.db-wal
