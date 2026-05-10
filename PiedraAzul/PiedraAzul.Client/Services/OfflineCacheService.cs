@@ -21,12 +21,13 @@ public class OfflineCacheService(GraphQLAppointmentService appointmentService, I
 
             var payload = result.Value.Select(a => new
             {
-                id        = a.Id,
-                doctorName = a.DoctorName,
-                specialty  = a.Specialty,
-                date       = a.Start.ToString("o"),   // ISO 8601 — JS new Date() lo entiende
+                id          = a.Id,
+                doctorName  = a.DoctorName,
+                specialty   = a.Specialty,
+                date        = a.Start.ToString("yyyy-MM-dd"),        // solo la fecha
+                time        = a.Start.ToString("HH:mm"),             // solo la hora del slot
                 patientName = a.PatientName,
-                status     = "Scheduled"
+                status      = "Scheduled"
             }).ToArray();
 
             await js.InvokeAsync<bool>("saveAppointmentsToIndexedDB", (object)payload);
