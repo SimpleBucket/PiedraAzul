@@ -2,6 +2,7 @@
 @using PiedraAzul.Client.Models.GraphQL
 @using PiedraAzul.Client.Services.AuthServices
 @using PiedraAzul.Client.Services.GraphQLServices
+@using PiedraAzul.Client.Services
 @using PiedraAzul.Client.States
 @using PiedraAzul.Client.UI.Features.Account.Sections
 @using PiedraAzul.Client.UI.Features.Doctor
@@ -13,6 +14,7 @@
 @inject UserState UserState
 @inject AuthenticationService AuthService
 @inject GraphQLHttpClient GraphQL
+@inject OfflineCacheService OfflineCache
 
 <PageTitle>Mi cuenta | Piedra Azul</PageTitle>
 
@@ -223,7 +225,11 @@ else
 
     private void OnUserUpdated() { _user = UserState.User; StateHasChanged(); }
 
-    private async Task LogoutAsync() => await AuthService.Logout();
+    private async Task LogoutAsync()
+    {
+        await OfflineCache.ClearAsync();
+        await AuthService.Logout();
+    }
 
     private RenderFragment NavGroupHeader(string name, string key, string pathsInner) => __builder =>
     {

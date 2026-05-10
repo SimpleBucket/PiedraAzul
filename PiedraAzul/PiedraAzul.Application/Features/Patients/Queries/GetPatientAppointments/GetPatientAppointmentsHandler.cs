@@ -13,17 +13,20 @@ namespace PiedraAzul.Application.Features.Patients.Queries.GetPatientAppointment
         private readonly IPatientGuestRepository _patientGuestRepository;
         private readonly IAppointmentRepository _appointmentRepository;
         private readonly IIdentityService _identityService;
+        private readonly IDoctorRepository _doctorRepository;
 
         public GetPatientAppointmentsHandler(
             IPatientRepository patientRepository,
             IPatientGuestRepository patientGuestRepository,
             IAppointmentRepository appointmentRepository,
-            IIdentityService identityService)
+            IIdentityService identityService,
+            IDoctorRepository doctorRepository)
         {
             _patientRepository = patientRepository;
             _patientGuestRepository = patientGuestRepository;
             _appointmentRepository = appointmentRepository;
             _identityService = identityService;
+            _doctorRepository = doctorRepository;
         }
 
         public async ValueTask<IReadOnlyList<AppointmentDto>> Handle(
@@ -57,7 +60,7 @@ namespace PiedraAzul.Application.Features.Patients.Queries.GetPatientAppointment
             if (appointments.Count == 0)
                 return [];
 
-            // 🔥 Obtener usuarios registrados
+            // 🔥 Obtener usuarios registrados (pacientes)
             var userIds = appointments
                 .Where(a => a.PatientUserId != null)
                 .Select(a => a.PatientUserId!)
@@ -76,6 +79,21 @@ namespace PiedraAzul.Application.Features.Patients.Queries.GetPatientAppointment
 
             var guests = await _patientGuestRepository.GetByIdsAsync(guestIds, cancellationToken);
             var guestDict = guests.ToDictionary(g => g.Id);
+
+            // 🔥 Obtener nombres de doctores (de identity) y especialidad (del repositorio)
+            var doctorIds = appointments
+                .Select(a => a.DoctorId)
+                .Distinct()
+                .ToList();
+
+            var doctorUsers = await _identityService.GetByIds(doctorIds);
+            var doctorUserDict = doctorUsers.ToDictionary(u => u.Id);
+
+            var doctorEntities = await Task.WhenAll(
+                doctorIds.Select(id => _doctorRepository.GetByIdAsync(id, cancellationToken)));
+            var doctorEntityDict = doctorEntities
+                .Where(d => d is not null)
+                .ToDictionary(d => d!.Id);
 
             // 🔥 Mapping a DTO
             return appointments.Select(a =>
@@ -96,6 +114,9 @@ namespace PiedraAzul.Application.Features.Patients.Queries.GetPatientAppointment
                     type = "Guest";
                 }
 
+                doctorUserDict.TryGetValue(a.DoctorId, out var doctorUser);
+                doctorEntityDict.TryGetValue(a.DoctorId, out var doctorEntity);
+
                 var start = a.Date.ToDateTime(TimeOnly.MinValue);
 
                 return new AppointmentDto
@@ -106,6 +127,9 @@ namespace PiedraAzul.Application.Features.Patients.Queries.GetPatientAppointment
                     PatientName = name,
                     PatientType = type,
                     SlotId = a.DoctorAvailabilitySlotId,
+                    DoctorId = a.DoctorId,
+                    DoctorName = doctorUser?.Name ?? "",
+                    Specialty = doctorEntity?.Specialty.ToString() ?? "",
                     Start = start,
                     CreatedAt = a.CreatedAt
                 };

@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Piedra Azul — Sin conexión</title>
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="stylesheet" href="/app.css" />
+    <link rel="stylesheet" href="/output.css" />
+</head>
+<body class="flex min-h-screen flex-col bg-gray-50">
+
+    <!-- TOP BAR -->
+    <div class="bg-primary text-sm text-white">
+        <div class="mx-auto flex max-w-7xl justify-between px-6 py-2">
+            <span>Llámanos: (301) 123-4567</span>
+            <span class="text-white opacity-90">WhatsApp: Escríbenos ahora</span>
+        </div>
+    </div>
+
+    <!-- HEADER -->
+    <header class="sticky top-0 z-50 border-b bg-white shadow-sm">
+        <div class="mx-auto flex h-[60px] max-w-7xl items-center justify-between gap-4 px-6 py-0">
+            <a href="/" class="flex items-center gap-2 text-lg font-bold tracking-tight" style="color:#257D8D">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 2C8.5 2 5 5 5 9c0 5 7 13 7 13s7-8 7-13c0-4-3.5-7-7-7z" fill="#2A9D8F" opacity="0.85" />
+                    <circle cx="12" cy="9" r="3" fill="white" opacity="0.9" />
+                </svg>
+                Piedra Azul
+            </a>
+            <div class="hidden md:flex items-center gap-1 text-sm text-gray-600">
+                <a href="/" class="flex items-center gap-1.5 px-3 py-2 rounded-lg font-medium hover:bg-gray-100">Inicio</a>
+                <span class="flex items-center gap-1.5 px-3 py-2 rounded-lg font-medium text-gray-400 cursor-not-allowed">Ayuda</span>
+            </div>
+            <!-- Offline badge -->
+            <span class="flex items-center gap-1.5 rounded-full bg-yellow-100 px-3 py-1 text-xs font-semibold text-yellow-700">
+                <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                          d="M18.364 5.636a9 9 0 010 12.728M15.536 8.464a5 5 0 010 7.072M3 3l18 18
+                             M9.879 9.879A3 3 0 0012 9m0 0a3 3 0 012.121.879" />
+                </svg>
+                Sin conexión
+            </span>
+        </div>
+    </header>
+
+    <!-- MAIN -->
+    <main class="flex flex-1 flex-col">
+
+        <!-- HERO OFFLINE -->
+        <section class="mx-auto grid max-w-7xl items-center gap-10 px-6 py-14 md:grid-cols-2">
+            <div>
+                <div class="mb-4 inline-flex items-center gap-2 rounded-full border border-yellow-200 bg-yellow-50 px-4 py-1.5 text-sm font-semibold text-yellow-700">
+                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                              d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71
+                                 c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898
+                                 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                    </svg>
+                    Estás sin conexión a internet
+                </div>
+                <h1 class="mb-4 text-4xl font-bold leading-tight text-gray-900">
+                    Sin acceso por ahora,<br />
+                    <span style="color:#257D8D">pero aquí estamos</span>
+                </h1>
+                <p class="mb-8 max-w-md text-lg text-gray-600">
+                    No te preocupes. Puedes ver tus citas guardadas y consultar nuestra información.
+                    La app volverá a funcionar tan pronto tengas conexión.
+                </p>
+                <div class="flex flex-wrap items-center gap-4">
+                    <button id="retry-btn"
+                            class="rounded-md px-6 py-3 text-sm font-semibold text-white shadow transition hover:opacity-90"
+                            style="background:#257D8D">
+                        Reintentar conexión
+                    </button>
+                    <a href="#mis-citas" class="text-sm font-medium text-gray-500 underline-offset-4 hover:underline">
+                        Ver mis citas guardadas ↓
+                    </a>
+                </div>
+            </div>
+            <div class="flex items-center justify-center">
+                <div class="relative flex h-64 w-64 items-center justify-center rounded-full bg-teal-50">
+                    <!-- WiFi off illustration -->
+                    <svg class="h-32 w-32 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                              d="M8.288 15.038a5.25 5.25 0 017.424 0M5.106 11.856c3.807-3.808 9.98-3.808
+                                 13.788 0M1.924 8.674c5.565-5.565 14.587-5.565 20.152 0M12.53
+                                 18.22l-.53.53-.53-.53a.75.75 0 011.06 0z" />
+                    </svg>
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <div class="h-[3px] w-44 rotate-45 rounded-full bg-red-400 opacity-60"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- MIS CITAS -->
+        <section id="mis-citas" class="bg-white py-14">
+            <div class="mx-auto max-w-7xl px-6">
+                <h2 class="mb-2 text-2xl font-bold text-gray-900">Mis citas próximas</h2>
+                <p class="mb-8 text-sm text-gray-500">
+                    Guardadas la última vez que estuviste conectado.
+                </p>
+
+                <!-- Se llena desde offline.js -->
+                <div id="appointments-list" class="grid gap-4 md:grid-cols-2 lg:grid-cols-3"></div>
+
+                <!-- Estado vacío (oculto si hay citas) -->
+                <div id="no-appointments"
+                     class="hidden rounded-xl border-2 border-dashed border-gray-200 py-12 text-center">
+                    <svg class="mx-auto mb-3 h-10 w-10 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                              d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25
+                                 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0
+                                 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121
+                                 11.25v7.5" />
+                    </svg>
+                    <p class="text-sm font-medium text-gray-500">No hay citas guardadas</p>
+                    <p class="mt-1 text-xs text-gray-400">Conéctate para ver tus próximas citas.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ESPECIALIDADES -->
+        <section class="py-14">
+            <div class="mx-auto mb-10 max-w-7xl px-6 text-center">
+                <h2 class="mb-2 text-3xl font-bold text-gray-900">Nuestras especialidades</h2>
+                <p class="text-gray-500">Atención profesional para tu bienestar.</p>
+            </div>
+            <div class="mx-auto grid max-w-6xl gap-8 px-6 text-center md:grid-cols-4">
+
+                <article class="rounded-xl bg-white p-6 shadow-sm">
+                    <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-teal-100" style="color:#257D8D">
+                        <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24" fill="currentColor">
+                            <path d="M540-80q-108 0-184-76t-76-184v-23q-86-14-143-80.5T80-600v-240h120v-40h80v160h-80v-40h-40v160q0 66 47 113t113 47q66 0 113-47t47-113v-160h-40v40h-80v-160h80v40h120v240q0 90-57 156.5T360-363v23q0 75 52.5 127.5T540-160q75 0 127.5-52.5T720-340v-67q-35-12-57.5-43T640-520q0-50 35-85t85-35q50 0 85 35t35 85q0 39-22.5 70T800-407v67q0 108-76 184T540-80Z"/>
+                        </svg>
+                    </div>
+                    <h3 class="mb-1 font-semibold text-gray-800">Terapia Natural</h3>
+                    <p class="text-xs text-gray-500">Tratamientos naturales y holísticos para fortalecer el sistema inmunológico.</p>
+                </article>
+
+                <article class="rounded-xl bg-white p-6 shadow-sm">
+                    <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-teal-100" style="color:#257D8D">
+                        <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24" fill="currentColor">
+                            <path d="M423.5-743.5Q400-767 400-800t23.5-56.5Q447-880 480-880t56.5 23.5Q560-833 560-800t-23.5 56.5Q513-720 480-720t-56.5-23.5ZM360-80v-520q-60-5-122-15t-118-25l20-80q78 21 166 30.5t174 9.5q86 0 174-9.5T820-720l20 80q-56 15-118 25t-122 15v520h-80v-240h-80v240h-80Z"/>
+                        </svg>
+                    </div>
+                    <h3 class="mb-1 font-semibold text-gray-800">Quiropráctica</h3>
+                    <p class="text-xs text-gray-500">Ajustes precisos de la columna para mejorar la movilidad.</p>
+                </article>
+
+                <article class="rounded-xl bg-white p-6 shadow-sm">
+                    <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-teal-100" style="color:#257D8D">
+                        <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24" fill="currentColor">
+                            <path d="M607.5-372.5Q660-425 660-500t-52.5-127.5Q555-680 480-680t-127.5 52.5Q300-575 300-500t52.5 127.5Q405-320 480-320t127.5-52.5Zm-204-51Q372-455 372-500t31.5-76.5Q435-608 480-608t76.5 31.5Q588-545 588-500t-31.5 76.5Q525-392 480-392t-76.5-31.5ZM214-281.5Q94-363 40-500q54-137 174-218.5T480-800q146 0 266 81.5T920-500q-54 137-174 218.5T480-200q-146 0-266-81.5ZM480-500Zm207.5 160.5Q782-399 832-500q-50-101-144.5-160.5T480-720q-113 0-207.5 59.5T128-500q50 101 144.5 160.5T480-280q113 0 207.5-59.5Z"/>
+                        </svg>
+                    </div>
+                    <h3 class="mb-1 font-semibold text-gray-800">Óptica</h3>
+                    <p class="text-xs text-gray-500">Examen de la vista y lentes especializados.</p>
+                </article>
+
+                <article class="rounded-xl bg-white p-6 shadow-sm">
+                    <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-teal-100" style="color:#257D8D">
+                        <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24" fill="currentColor">
+                            <path d="m320-40-64-48 104-139v-213q0-31 5-67.5t15-67.5l-60 33v142h-80v-188l176-100q25-14 43.5-21.5T494-717q25 0 45.5 21.5T587-628q32 54 58 81t56 41q11-8 19-11t19-3q25 0 43 18t18 42v420h-40v-420q0-8-6-14t-14-6q-8 0-14 6t-6 14v50h-40v-19q-54-23-84-51.5T543-557q-11 28-17.5 68.5T521-412l79 112v260h-80v-200l-71-102-9 142L320-40Zm220-700q-33 0-56.5-23.5T460-820q0-33 23.5-56.5T540-900q33 0 56.5 23.5T620-820q0 33-23.5 56.5T540-740Z"/>
+                        </svg>
+                    </div>
+                    <h3 class="mb-1 font-semibold text-gray-800">Fisioterapia</h3>
+                    <p class="text-xs text-gray-500">Rehabilitación física personalizada para recuperar fuerza.</p>
+                </article>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-strong text-gray-300">
+        <div class="mx-auto grid max-w-7xl gap-10 px-6 py-12 md:grid-cols-3">
+            <div>
+                <h3 class="mb-4 text-lg font-semibold text-white">Piedra Azul</h3>
+                <p class="text-sm leading-relaxed text-gray-400">
+                    Dedicados a mejorar la calidad de vida de nuestra comunidad
+                    con atención profesional y humana.
+                </p>
+            </div>
+            <div>
+                <h4 class="mb-4 font-semibold text-white">Servicios</h4>
+                <ul class="space-y-2 text-sm">
+                    <li><span class="text-gray-400">Terapia Natural</span></li>
+                    <li><span class="text-gray-400">Quiropráctica</span></li>
+                    <li><span class="text-gray-400">Óptica</span></li>
+                    <li><span class="text-gray-400">Fisioterapia</span></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="mb-4 font-semibold text-white">Contacto Directo</h4>
+                <div class="space-y-3">
+                    <div class="w-full rounded-lg py-2.5 text-center text-sm font-semibold text-white" style="background:#257D8D">
+                        (+57) 301-1234567
+                    </div>
+                    <div class="flex w-full items-center justify-center gap-2 rounded-lg bg-green-600 py-2.5 text-sm font-semibold text-white">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                        </svg>
+                        WhatsApp
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="border-t border-slate-700 py-4 text-center text-sm text-gray-500">
+            © 2026 Clínica Piedra Azul. Todos los derechos reservados.
+        </div>
+    </footer>
+
+    <script src="/js/offline.js"></script>
+</body>
+</html>

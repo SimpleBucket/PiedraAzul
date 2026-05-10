@@ -2,12 +2,14 @@
 @using PiedraAzul.Client.Models.GraphQL
 @using PiedraAzul.Client.Models.UserProfiles
 @using PiedraAzul.Client.Services.AuthServices
+@using PiedraAzul.Client.Services
 @using PiedraAzul.Client.States
 @inject NavigationManager NavigationManager
 @inject AuthenticationService AuthService
 @inject PasskeyService PasskeyService
 @inject UserState UserState
 @inject IJSRuntime JS
+@inject OfflineCacheService OfflineCache
 
 @if (_mfaRequired is not null)
 {
@@ -156,6 +158,7 @@ else
             }
 
             // MFA not required, proceed with normal login
+            await OfflineCache.SyncAsync();
             var destination = string.IsNullOrEmpty(ReturnUrl) ? "/" : ReturnUrl;
             NavigationManager.NavigateTo(destination, forceLoad: true);
         }
@@ -194,6 +197,7 @@ else
                 return;
             }
 
+            await OfflineCache.SyncAsync();
             var destination = string.IsNullOrEmpty(ReturnUrl) ? "/" : ReturnUrl;
             NavigationManager.NavigateTo(destination, forceLoad: true);
         }

@@ -6,6 +6,7 @@
 @using PiedraAzul.Client.Models.UserProfiles
 @using PiedraAzul.Client.Services.AuthServices
 @using PiedraAzul.Client.Services.GraphQLServices
+@using PiedraAzul.Client.Services
 @using PiedraAzul.Client.States
 @using PiedraAzul.Client.UI.Features.Booking.Components
 @using PiedraAzul.Client.UI.Shared.Components.StepTag
@@ -13,6 +14,7 @@
 @inject GraphQLAppointmentService AppointmentService
 @inject AuthenticationService AuthService
 @inject UserState UserState
+@inject OfflineCacheService OfflineCache
 
 @if (isSuccess)
 {

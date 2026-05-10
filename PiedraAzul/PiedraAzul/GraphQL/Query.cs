@@ -161,6 +161,24 @@ public class Query
     }
 
     [Authorize]
+    public async Task<List<AppointmentType>> GetMyUpcomingAppointmentsAsync(
+        [Service] IMediator mediator,
+        [Service] IHttpContextAccessor httpContextAccessor)
+    {
+        var userId = httpContextAccessor.HttpContext!.User.FindFirstValue(ClaimTypes.NameIdentifier)
+            ?? throw new GraphQLException("No autenticado");
+
+        var result = await mediator.Send(new GetPatientAppointmentsQuery(userId, null));
+
+        var now = DateTime.UtcNow.Date;
+        return result
+            .Where(a => a.Start >= now)
+            .OrderBy(a => a.Start)
+            .Select(AppointmentType.FromDto)
+            .ToList();
+    }
+
+    [Authorize]
     public async Task<List<AppointmentType>> GetPatientAppointmentsAsync(
         string? patientUserId,
         string? patientGuestId,

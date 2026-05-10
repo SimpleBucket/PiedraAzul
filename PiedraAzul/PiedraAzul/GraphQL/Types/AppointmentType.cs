@@ -10,6 +10,9 @@ public class AppointmentType
     public string PatientType { get; set; } = "";
     public string PatientName { get; set; } = "";
     public string AppointmentSlotId { get; set; } = "";
+    public string DoctorId { get; set; } = "";
+    public string DoctorName { get; set; } = "";
+    public string Specialty { get; set; } = "";
     public DateTime Start { get; set; }
     public DateTime CreatedAt { get; set; }
 
@@ -21,6 +24,9 @@ public class AppointmentType
         PatientType = a.PatientType,
         PatientName = a.PatientName,
         AppointmentSlotId = a.SlotId.ToString(),
+        DoctorId = a.DoctorId,
+        DoctorName = a.DoctorName,
+        Specialty = a.Specialty,
         Start = a.Start,
         CreatedAt = a.CreatedAt
     };

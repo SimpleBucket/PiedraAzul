@@ -1,0 +1,17 @@
+{
+  "name": "Clínica Piedra Azul",
+  "short_name": "Piedra Azul",
+  "description": "Agenda tus citas médicas en Clínica Piedra Azul",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F8FAFC",
+  "theme_color": "#257D8D",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

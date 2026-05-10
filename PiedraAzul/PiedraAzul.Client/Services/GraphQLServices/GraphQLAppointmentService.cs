@@ -27,7 +27,7 @@ public class GraphQLAppointmentService(GraphQLHttpClient client)
             mutation CreateAppointment($input: CreateAppointmentInput!) {
                 createAppointment(input: $input) {
                     id patientUserId patientGuestId patientType patientName
-                    appointmentSlotId start createdAt
+                    appointmentSlotId doctorId doctorName specialty start createdAt
                 }
             }
             """;
@@ -78,6 +78,27 @@ public class GraphQLAppointmentService(GraphQLHttpClient client)
         });
     }
 
+    public async Task<Result<List<AppointmentGQL>>> GetMyUpcomingAppointmentsAsync()
+    {
+        const string query = """
+            query GetMyUpcomingAppointments {
+                myUpcomingAppointments {
+                    id patientUserId patientGuestId patientType patientName
+                    appointmentSlotId doctorId doctorName specialty start createdAt
+                }
+            }
+            """;
+
+        return await GraphQLExecutor.Execute(async () =>
+        {
+            var result = await client.ExecuteAsync<List<AppointmentGQL>>(
+                query,
+                null,
+                "myUpcomingAppointments");
+            return result ?? new();
+        });
+    }
+
     public async Task<Result<List<AppointmentGQL>>> GetDoctorAppointments(
         string doctorId,
         DateTime? date = null)
@@ -86,7 +107,7 @@ public class GraphQLAppointmentService(GraphQLHttpClient client)
             query GetDoctorAppointments($doctorId: String!, $date: DateTime) {
                 doctorAppointments(doctorId: $doctorId, date: $date) {
                     id patientUserId patientGuestId patientType patientName
-                    appointmentSlotId start createdAt
+                    appointmentSlotId doctorId doctorName specialty start createdAt
                 }
             }
             """;

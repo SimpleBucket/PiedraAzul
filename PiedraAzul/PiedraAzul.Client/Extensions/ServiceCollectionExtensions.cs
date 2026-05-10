@@ -5,6 +5,7 @@ using PiedraAzul.Client.Services.GraphQLServices;
 using PiedraAzul.Client.Services.RealTimeServices;
 using PiedraAzul.Client.Services.Schedule;
 using PiedraAzul.Client.States;
+using PiedraAzul.Client.Services;
 
 namespace PiedraAzul.Client.Extensions;
 
@@ -28,6 +29,10 @@ public static class SharedClientServicesExtensions
         services.AddScoped<GraphQLPatientService>();
         services.AddScoped<ScheduleConfigAdminService>();
         services.AddScoped<IScheduleConfigService, ScheduleConfigService>();
+        #endregion
+
+        #region Offline / PWA
+        services.AddScoped<OfflineCacheService>();
         #endregion
 
         #region Auth

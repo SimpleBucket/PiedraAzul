@@ -1,5 +1,6 @@
 using PiedraAzul.Client.Models.Booking;
 using PiedraAzul.Client.Models.UserProfiles;
+using PiedraAzul.Client.Services;
 using PiedraAzul.Client.Services.GraphQLServices;
 using PiedraAzul.Client.States;
 using PiedraAzul.Client.UI.Shared.Components.StepTag;
@@ -63,7 +64,8 @@ namespace PiedraAzul.Client.UI.Features.Booking.Pages
             isSuccess = true;
             Stepper.GoToStep(0);
 
-            Console.WriteLine("meow");
+            // Actualiza IndexedDB con las citas más recientes (incluye la recién creada)
+            _ = OfflineCache.SyncAsync();
         }
 
         private void SelectSlot(AppointmentSchedulerModel args)

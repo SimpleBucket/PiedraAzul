@@ -16,6 +16,10 @@ namespace PiedraAzul.Application.Common.Models.Appointments
 
         public Guid SlotId { get; set; }
 
+        public string DoctorId { get; set; } = default!;
+        public string DoctorName { get; set; } = default!;
+        public string Specialty { get; set; } = default!;
+
         public DateTime Start { get; set; }
 
         public DateTime CreatedAt { get; set; }

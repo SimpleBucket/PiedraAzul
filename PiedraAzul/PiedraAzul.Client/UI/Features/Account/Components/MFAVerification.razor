@@ -2,11 +2,13 @@
 @using PiedraAzul.Client.Models.GraphQL
 @using PiedraAzul.Client.Models.UserProfiles
 @using PiedraAzul.Client.Services.AuthServices
+@using PiedraAzul.Client.Services
 @using PiedraAzul.Client.States
 @inject NavigationManager NavigationManager
 @inject AuthenticationService AuthService
 @inject UserState UserState
 @inject IJSRuntime JSRuntime
+@inject OfflineCacheService OfflineCache
 
 <EditForm Model="@mfaModel" OnValidSubmit="HandleVerifyMFA" class="mx-auto w-full max-w-lg">
     <DataAnnotationsValidator />
@@ -195,6 +197,7 @@
                 _errorMessage = "✅ ¡Login exitoso!";
                 await Task.Delay(500);
                 await OnVerified.InvokeAsync(user);
+                await OfflineCache.SyncAsync();
                 NavigationManager.NavigateTo("/", forceLoad: true);
             }
         }

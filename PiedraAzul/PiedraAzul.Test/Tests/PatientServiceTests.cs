@@ -50,8 +50,9 @@ public class PatientServiceTests
         var guestRepo = new Mock<IPatientGuestRepository>();
         var appointmentRepo = new Mock<IAppointmentRepository>();
         var identity = new Mock<IIdentityService>();
+        var doctorRepo = new Mock<IDoctorRepository>();
 
-        var sut = new GetPatientAppointmentsHandler(patientRepo.Object, guestRepo.Object, appointmentRepo.Object, identity.Object);
+        var sut = new GetPatientAppointmentsHandler(patientRepo.Object, guestRepo.Object, appointmentRepo.Object, identity.Object, doctorRepo.Object);
 
         await Assert.ThrowsAsync<ArgumentException>(() =>
             sut.Handle(new GetPatientAppointmentsQuery(null, null), CancellationToken.None).AsTask());
@@ -64,6 +65,7 @@ public class PatientServiceTests
         var guestRepo = new Mock<IPatientGuestRepository>();
         var appointmentRepo = new Mock<IAppointmentRepository>();
         var identity = new Mock<IIdentityService>();
+        var doctorRepo = new Mock<IDoctorRepository>();
 
         var date = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(1));
         var slot = new DoctorAvailabilitySlot("doc", date.DayOfWeek, TimeSpan.FromHours(8), TimeSpan.FromHours(9));
@@ -72,15 +74,18 @@ public class PatientServiceTests
         appointmentRepo.Setup(x => x.ListByPatientUserAsync("u-2", null, It.IsAny<CancellationToken>()))
             .ReturnsAsync([appointment]);
         identity.Setup(x => x.GetByIds(It.IsAny<List<string>>()))
-            .ReturnsAsync([new UserDto("u-2", "u2@test.com", "Paciente", "")]);
+            .ReturnsAsync([new UserDto("u-2", "u2@test.com", "Paciente", ""), new UserDto("doc", "doc@test.com", "Dr. Test", "")]);
         guestRepo.Setup(x => x.GetByIdsAsync(It.IsAny<List<string>>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
+        doctorRepo.Setup(x => x.GetByIdAsync("doc", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Doctor("doc", PiedraAzul.Domain.Entities.Shared.Enums.DoctorType.NaturalMedicine, "LIC-01", ""));
 
-        var sut = new GetPatientAppointmentsHandler(patientRepo.Object, guestRepo.Object, appointmentRepo.Object, identity.Object);
+        var sut = new GetPatientAppointmentsHandler(patientRepo.Object, guestRepo.Object, appointmentRepo.Object, identity.Object, doctorRepo.Object);
 
         var result = await sut.Handle(new GetPatientAppointmentsQuery("u-2", null), CancellationToken.None);
 
         Assert.Single(result);
         Assert.Equal("Paciente", result[0].PatientName);
         Assert.Equal("Registered", result[0].PatientType);
+        Assert.Equal("NaturalMedicine", result[0].Specialty);
     }
 }

@@ -8,6 +8,9 @@ public class AppointmentGQL
     public string PatientType { get; set; } = "";
     public string PatientName { get; set; } = "";
     public string AppointmentSlotId { get; set; } = "";
+    public string DoctorId { get; set; } = "";
+    public string DoctorName { get; set; } = "";
+    public string Specialty { get; set; } = "";
     public DateTime Start { get; set; }
     public DateTime CreatedAt { get; set; }
 }
