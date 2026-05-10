@@ -14,19 +14,22 @@ namespace PiedraAzul.Application.Features.Patients.Queries.GetPatientAppointment
         private readonly IAppointmentRepository _appointmentRepository;
         private readonly IIdentityService _identityService;
         private readonly IDoctorRepository _doctorRepository;
+        private readonly IDoctorAvailabilitySlotRepository _slotRepository;
 
         public GetPatientAppointmentsHandler(
             IPatientRepository patientRepository,
             IPatientGuestRepository patientGuestRepository,
             IAppointmentRepository appointmentRepository,
             IIdentityService identityService,
-            IDoctorRepository doctorRepository)
+            IDoctorRepository doctorRepository,
+            IDoctorAvailabilitySlotRepository slotRepository)
         {
             _patientRepository = patientRepository;
             _patientGuestRepository = patientGuestRepository;
             _appointmentRepository = appointmentRepository;
             _identityService = identityService;
             _doctorRepository = doctorRepository;
+            _slotRepository = slotRepository;
         }
 
         public async ValueTask<IReadOnlyList<AppointmentDto>> Handle(
@@ -95,6 +98,15 @@ namespace PiedraAzul.Application.Features.Patients.Queries.GetPatientAppointment
                 .Where(d => d is not null)
                 .ToDictionary(d => d!.Id);
 
+            // 🔥 Obtener hora real del slot (StartTime)
+            var slotIds = appointments
+                .Select(a => a.DoctorAvailabilitySlotId)
+                .Distinct()
+                .ToList();
+
+            var slots = await _slotRepository.GetByIdsAsync(slotIds, cancellationToken);
+            var slotDict = slots.ToDictionary(s => s.Id);
+
             // 🔥 Mapping a DTO
             return appointments.Select(a =>
             {
@@ -117,7 +129,12 @@ namespace PiedraAzul.Application.Features.Patients.Queries.GetPatientAppointment
                 doctorUserDict.TryGetValue(a.DoctorId, out var doctorUser);
                 doctorEntityDict.TryGetValue(a.DoctorId, out var doctorEntity);
 
-                var start = a.Date.ToDateTime(TimeOnly.MinValue);
+                // Combinar fecha del appointment + hora real del slot
+                slotDict.TryGetValue(a.DoctorAvailabilitySlotId, out var slot);
+                var startTime = slot is not null
+                    ? TimeOnly.FromTimeSpan(slot.StartTime)
+                    : TimeOnly.MinValue;
+                var start = a.Date.ToDateTime(startTime);
 
                 return new AppointmentDto
                 {
