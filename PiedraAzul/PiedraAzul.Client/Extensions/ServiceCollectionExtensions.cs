@@ -28,6 +28,8 @@ public static class SharedClientServicesExtensions
         services.AddScoped<GraphQLAppointmentService>();
         services.AddScoped<GraphQLPatientService>();
         services.AddScoped<ScheduleConfigAdminService>();
+        services.AddScoped<UserManagementService>();
+        services.AddScoped<PatientSearchService>();
         services.AddScoped<IScheduleConfigService, ScheduleConfigService>();
         #endregion
 

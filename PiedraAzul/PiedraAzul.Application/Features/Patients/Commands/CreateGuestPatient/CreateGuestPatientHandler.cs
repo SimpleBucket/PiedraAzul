@@ -24,8 +24,14 @@ public class CreateGuestPatientHandler
     {
         return await _unitOfWork.ExecuteAsync(async ct =>
         {
+            // Usar la cédula como ID para que GetByIdAsync(cédula) pueda encontrar
+            // pacientes existentes y no crear duplicados en visitas futuras.
+            var id = !string.IsNullOrWhiteSpace(request.IdentificationId)
+                ? request.IdentificationId
+                : Guid.NewGuid().ToString();
+
             var patient = new GuestPatient(
-                Guid.NewGuid().ToString(),
+                id,
                 request.Name,
                 request.Phone,
                 request.ExtraInfo

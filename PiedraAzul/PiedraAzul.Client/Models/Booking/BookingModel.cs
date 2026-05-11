@@ -1,5 +1,7 @@
-﻿using PiedraAzul.Client.Models.UserProfiles;
+﻿using PiedraAzul.Client.Models.GraphQL;
+using PiedraAzul.Client.Models.UserProfiles;
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace PiedraAzul.Client.Models.Booking
 {
@@ -49,6 +51,21 @@ namespace PiedraAzul.Client.Models.Booking
         public AppointmentSchedulerModel? AppointmentSchedulerModel { get; set; }
 
         public DateTime DayOfYear { get; set; }
+
+        // ── Patient Search State ──────────────────────────────────────
+        [JsonIgnore]
+        public PatientSearchResultGQL? SearchResult { get; set; }
+
+        /// <summary>"REGISTERED" | "GUEST" | "NOT_FOUND" | "ERROR" | null</summary>
+        [JsonIgnore]
+        public string? SearchResultType { get; set; }
+
+        [JsonIgnore]
+        public bool PatientDataFromSearch { get; set; }
+
+        /// <summary>true = show data form in Step 2; false = skip to doctor</summary>
+        [JsonIgnore]
+        public bool IsNewPatient { get; set; }
     }
 
 }

@@ -26,8 +26,8 @@ public class SearchPatientsHandler
         var guests = await _guest.SearchAsync(request.Text, ct);
 
         return registered
-            .Select(x => new PatientDto(x.Id, x.Name, "Registered"))
-            .Concat(guests.Select(x => new PatientDto(x.Id, x.Name, "Guest")))
+            .Select(x => new PatientDto(x.Id, x.Name, "Registered", ""))
+            .Concat(guests.Select(x => new PatientDto(x.Id, x.Name, "Guest", x.Phone)))
             .Take(10)
             .ToList();
     }

@@ -79,6 +79,37 @@ public static class EmailTemplates
 </body>
 </html>";
 
+    public static string WelcomeWithPasswordTemplate(string userName, string tempPassword, string role) => $@"
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8'>
+    <title>Bienvenido a Piedra Azul</title>
+</head>
+<body style='{BaseStyle}'>
+    <div style='{ContainerStyle}'>
+        <h2 style='{HeaderStyle}'>¡Bienvenido/a a Piedra Azul!</h2>
+        <p>Hola <strong>{userName}</strong>,</p>
+        <p>El administrador ha creado una cuenta para ti en el sistema de Piedra Azul con el rol de <strong>{role}</strong>.</p>
+        <p>Tus credenciales de acceso son:</p>
+        <table style='width:100%; margin: 16px 0;'>
+            <tr>
+                <td style='padding: 8px 0; color:#555; font-weight:bold;'>Correo:</td>
+                <td style='padding: 8px 0; font-family: monospace;'></td>
+            </tr>
+        </table>
+        <div style='{CodeStyle}'>
+            <p style='margin:0 0 6px; color:#555; font-size:13px;'>Contraseña temporal</p>
+            <p style='{CodeValueStyle}; font-size:28px; letter-spacing:4px;'>{tempPassword}</p>
+        </div>
+        <p style='color:#e65100; font-size:13px;'>⚠️ Por seguridad, cambia esta contraseña la primera vez que inicies sesión.</p>
+        <p style='color: #666;'>Puedes acceder en: <a href='https://piedraazul.com' style='color:#257D8D;'>piedraazul.com</a></p>
+        <hr style='border: none; border-top: 1px solid #ddd; margin: 20px 0;'>
+        <p style='{FooterStyle}'>© 2026 Piedra Azul. Todos los derechos reservados.</p>
+    </div>
+</body>
+</html>";
+
     public static string MFASetupConfirmationTemplate(string userName, string mfaMethod) => $@"
 <!DOCTYPE html>
 <html>

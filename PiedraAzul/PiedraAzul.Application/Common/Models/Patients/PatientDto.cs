@@ -7,6 +7,7 @@ namespace PiedraAzul.Application.Common.Models.Patients
     public record PatientDto(
     string Id,
     string Name,
-    string Type // "Registered" | "Guest"
+    string Type, // "Registered" | "Guest"
+    string Phone = ""
 );
 }

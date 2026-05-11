@@ -96,6 +96,28 @@ public class EmailService : IEmailService
         }
     }
 
+    public async Task<bool> SendWelcomeWithPasswordAsync(string email, string userName, string tempPassword, string role)
+    {
+        try
+        {
+            var roleLabel = role switch
+            {
+                "Doctor"  => "Doctor / Terapista",
+                "Admin"   => "Administrador",
+                "Patient" => "Paciente",
+                _         => role
+            };
+            var subject = "Bienvenido/a a Piedra Azul — Tu cuenta está lista";
+            var htmlBody = EmailTemplates.WelcomeWithPasswordTemplate(userName, tempPassword, roleLabel);
+            return await SendGenericEmailAsync(email, subject, htmlBody);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error sending welcome email to {Email}", email);
+            return false;
+        }
+    }
+
     public async Task<bool> SendGenericEmailAsync(string to, string subject, string htmlBody)
     {
         try

@@ -1,0 +1,384 @@
+@using PiedraAzul.Client.Models.Admin
+@using PiedraAzul.Client.Models.GraphQL
+@using PiedraAzul.Client.Models.UserProfiles
+@using PiedraAzul.Client.Services.AdminServices
+@using PiedraAzul.Client.Services.GraphQLServices
+
+@inject PatientSearchService PatientService
+@inject UserManagementService UserService
+@inject IJSRuntime JS
+
+@if (IsOpen)
+{
+    <div class="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm" @onclick="HandleCancel"></div>
+
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg border border-slate-100 overflow-hidden"
+             @onclick:stopPropagation>
+
+            <!-- Header -->
+            <div class="flex items-center justify-between px-6 py-4 bg-slate-50 border-b border-slate-100">
+                <h2 class="text-lg font-bold text-slate-900">
+                    @(_view == "create" ? "Registrar nuevo paciente" : "Buscar paciente")
+                </h2>
+                <button @onclick="HandleCancel"
+                        class="text-slate-400 hover:text-slate-700 transition-colors">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Body -->
+            <div class="px-6 py-5">
+
+                @if (_view == "search")
+                {
+                    <!-- Búsqueda -->
+                    <div class="space-y-4">
+
+                        @if (!string.IsNullOrEmpty(_searchError))
+                        {
+                            <div class="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-2.5">
+                                @_searchError
+                            </div>
+                        }
+
+                        <!-- Input búsqueda -->
+                        <div class="relative">
+                            <input type="text"
+                                   value="@_query"
+                                   @oninput="OnSearchInput"
+                                   class="w-full border border-slate-200 rounded-lg px-4 py-2.5 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/40 bg-slate-50"
+                                   placeholder="Buscar por nombre o teléfono..." />
+                            @if (_searching)
+                            {
+                                <span class="absolute right-3 top-1/2 -translate-y-1/2">
+                                    <svg class="w-4 h-4 animate-spin text-teal-600" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+                                    </svg>
+                                </span>
+                            }
+                        </div>
+
+                        <!-- Resultados -->
+                        <div class="max-h-60 overflow-y-auto space-y-2">
+                            @if (_results.Any())
+                            {
+                                @foreach (var p in _results)
+                                {
+                                    <div @onclick="() => SelectPatient(p)"
+                                         class="cursor-pointer rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 hover:border-teal-500 hover:bg-teal-50 transition-colors">
+                                        <div class="flex items-center justify-between">
+                                            <div>
+                                                <p class="text-sm font-semibold text-slate-900">@p.Name</p>
+                                                <p class="text-xs text-slate-500 mt-0.5">
+                                                    @if (!string.IsNullOrEmpty(p.Identification)) { <span>CC: @p.Identification &bull; </span> }
+                                                    @p.Phone
+                                                </p>
+                                            </div>
+                                            <span class="text-xs px-2 py-0.5 rounded-full font-medium
+                                                @(p.Type == "REGISTERED" ? "bg-teal-100 text-teal-700" : "bg-slate-200 text-slate-600")">
+                                                @(p.Type == "REGISTERED" ? "Registrado" : "Invitado")
+                                            </span>
+                                        </div>
+                                    </div>
+                                }
+                            }
+                            else if (!string.IsNullOrWhiteSpace(_query) && !_searching)
+                            {
+                                <p class="text-sm text-slate-400 text-center py-6">No se encontraron pacientes</p>
+                            }
+                            else if (string.IsNullOrWhiteSpace(_query))
+                            {
+                                <p class="text-sm text-slate-400 text-center py-6">Escribe para buscar pacientes</p>
+                            }
+                        </div>
+                    </div>
+                }
+
+                @if (_view == "create")
+                {
+                    <!-- Formulario nuevo paciente -->
+                    <div class="space-y-4">
+
+                        @if (!string.IsNullOrEmpty(_createError))
+                        {
+                            <div class="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-2.5">
+                                @_createError
+                            </div>
+                        }
+
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-1.5">Nombre completo *</label>
+                            <input type="text" @bind="_newName"
+                                   class="w-full border border-slate-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/40 bg-slate-50"
+                                   placeholder="Ej: María García" />
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-1.5">Correo electrónico *</label>
+                            <input type="email" @bind="_newEmail"
+                                   class="w-full border border-slate-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/40 bg-slate-50"
+                                   placeholder="correo@ejemplo.com" />
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-1.5">Teléfono</label>
+                            <input type="text" @bind="_newPhone"
+                                   class="w-full border border-slate-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/40 bg-slate-50"
+                                   placeholder="300 123 4567" />
+                        </div>
+
+                    </div>
+                }
+
+                @if (_view == "tempPassword")
+                {
+                    <!-- Contraseña temporal -->
+                    <div class="space-y-4">
+                        <p class="text-sm text-slate-600">
+                            Paciente creado correctamente. Comparte esta contraseña temporal con el paciente. Solo se mostrará una vez.
+                        </p>
+                        <div class="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-lg px-4 py-3">
+                            <code class="text-lg font-mono font-bold text-teal-700 flex-1">@_tempPassword</code>
+                            <button @onclick="CopyTempPassword" class="text-slate-400 hover:text-teal-600 transition-colors" title="Copiar">
+                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <p class="text-xs text-amber-600">⚠️ Se enviará un correo al paciente con estas credenciales.</p>
+                    </div>
+                }
+
+            </div>
+
+            <!-- Footer -->
+            <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-3">
+
+                @if (_view == "search")
+                {
+                    <button @onclick="GoToCreate"
+                            class="text-sm font-semibold text-teal-700 hover:text-teal-900 transition-colors flex items-center gap-1.5">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        Crear nuevo paciente
+                    </button>
+                    <button @onclick="HandleCancel"
+                            class="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-900 transition-colors">
+                        Cancelar
+                    </button>
+                }
+
+                @if (_view == "create")
+                {
+                    <button @onclick="GoToSearch"
+                            class="text-sm text-slate-500 hover:text-slate-700 transition-colors">
+                        ← Volver a buscar
+                    </button>
+                    <div class="flex gap-3">
+                        <button @onclick="HandleCancel"
+                                class="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-900 transition-colors">
+                            Cancelar
+                        </button>
+                        <button @onclick="HandleCreatePatient" disabled="@_saving"
+                                class="px-5 py-2 bg-teal-700 hover:bg-teal-800 text-white text-sm font-bold rounded-lg transition-colors disabled:opacity-60 flex items-center gap-2">
+                            @if (_saving)
+                            {
+                                <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+                                </svg>
+                            }
+                            Crear paciente
+                        </button>
+                    </div>
+                }
+
+                @if (_view == "tempPassword")
+                {
+                    <span></span>
+                    <button @onclick="ConfirmCreatedPatient"
+                            class="px-5 py-2 bg-teal-700 hover:bg-teal-800 text-white text-sm font-bold rounded-lg transition-colors">
+                        Entendido — Usar este paciente
+                    </button>
+                }
+
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public EventCallback<PatientModel> OnPatientSelected { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+
+    // ─── State ──────────────────────────────────────────────────
+    private string _view = "search"; // "search" | "create" | "tempPassword"
+    private string _query = "";
+    private List<PatientSearchResultGQL> _results = [];
+    private bool _searching;
+    private string? _searchError;
+
+    // Create form
+    private string _newName = "";
+    private string _newEmail = "";
+    private string _newPhone = "";
+    private bool _saving;
+    private string? _createError;
+
+    // Temp password
+    private string? _tempPassword;
+    private string? _createdUserId;
+    private string? _createdUserName;
+
+    private CancellationTokenSource? _cts;
+
+    protected override void OnParametersSet()
+    {
+        if (IsOpen)
+            Reset();
+    }
+
+    private void Reset()
+    {
+        _view = "search";
+        _query = "";
+        _results = [];
+        _searching = false;
+        _searchError = null;
+        _newName = _newEmail = _newPhone = "";
+        _saving = false;
+        _createError = null;
+        _tempPassword = null;
+    }
+
+    // ─── Search ──────────────────────────────────────────────────
+    private async Task OnSearchInput(ChangeEventArgs e)
+    {
+        _query = e.Value?.ToString() ?? "";
+        _searchError = null;
+
+        _cts?.Cancel();
+        _cts = new CancellationTokenSource();
+
+        try
+        {
+            await Task.Delay(300, _cts.Token);
+
+            if (_query.Length < 2)
+            {
+                _results = [];
+                return;
+            }
+
+            _searching = true;
+            StateHasChanged();
+
+            var result = await PatientService.SearchAutoCompleteAsync(_query);
+
+            if (result.IsSuccess)
+                _results = result.Value ?? [];
+            else
+                _searchError = result.Error?.Message ?? "Error al buscar";
+        }
+        catch (TaskCanceledException) { }
+        finally
+        {
+            _searching = false;
+            StateHasChanged();
+        }
+    }
+
+    private void SelectPatient(PatientSearchResultGQL p)
+    {
+        var patient = new PatientModel
+        {
+            Id = p.Id,
+            PatientName = p.Name,
+            PatientIdentification = p.Identification,
+            PatientPhone = p.Phone,
+            Type = p.Type == "REGISTERED" ? PatientTypeClient.Registered : PatientTypeClient.Guest
+        };
+        OnPatientSelected.InvokeAsync(patient);
+    }
+
+    // ─── Create ──────────────────────────────────────────────────
+    private void GoToCreate()
+    {
+        _newName = _newEmail = _newPhone = "";
+        _createError = null;
+        _view = "create";
+    }
+
+    private void GoToSearch()
+    {
+        _createError = null;
+        _view = "search";
+    }
+
+    private async Task HandleCreatePatient()
+    {
+        _createError = null;
+
+        if (string.IsNullOrWhiteSpace(_newName)) { _createError = "El nombre es requerido"; return; }
+        if (string.IsNullOrWhiteSpace(_newEmail)) { _createError = "El correo es requerido"; return; }
+        if (!_newEmail.Contains('@')) { _createError = "Correo inválido"; return; }
+
+        _saving = true;
+
+        try
+        {
+            var result = await UserService.CreateUserAsync(new UserCreateModel
+            {
+                FullName = _newName,
+                Email = _newEmail,
+                Phone = _newPhone,
+                Role = "Patient",
+                IsActive = true
+            });
+
+            if (!result.IsSuccess)
+            {
+                _createError = result.Error?.Message ?? "Error al crear el paciente";
+                return;
+            }
+
+            _tempPassword = result.Value?.TempPassword;
+            _createdUserId = result.Value?.Id;
+            _createdUserName = result.Value?.Name;
+            _view = "tempPassword";
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private void ConfirmCreatedPatient()
+    {
+        if (_createdUserId is null) return;
+
+        var patient = new PatientModel
+        {
+            Id = _createdUserId,
+            PatientName = _createdUserName ?? _newName,
+            PatientPhone = _newPhone,
+            PatientIdentification = "",
+            Type = PatientTypeClient.Registered
+        };
+        OnPatientSelected.InvokeAsync(patient);
+    }
+
+    private async Task CopyTempPassword()
+    {
+        if (!string.IsNullOrEmpty(_tempPassword))
+            await JS.InvokeVoidAsync("navigator.clipboard.writeText", _tempPassword);
+    }
+
+    private async Task HandleCancel() => await OnCancel.InvokeAsync();
+}

@@ -1,0 +1,224 @@
+@using PiedraAzul.Client.Models.Admin
+@using PiedraAzul.Client.Models.GraphQL
+
+@if (IsOpen)
+{
+    <!-- Backdrop -->
+    <div class="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm" @onclick="HandleCancel"></div>
+
+    <!-- Modal -->
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg border border-slate-100 overflow-hidden"
+             @onclick:stopPropagation>
+
+            <!-- Header -->
+            <div class="flex items-center justify-between px-6 py-4 bg-slate-50 border-b border-slate-100">
+                <h2 class="text-lg font-bold text-slate-900">
+                    @(IsEditMode ? "Editar usuario" : "Crear nuevo usuario")
+                </h2>
+                <button @onclick="HandleCancel"
+                        class="text-slate-400 hover:text-slate-700 transition-colors">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Body -->
+            <div class="px-6 py-5 space-y-4">
+
+                @if (!string.IsNullOrEmpty(_errorMsg))
+                {
+                    <div class="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-2.5">
+                        @_errorMsg
+                    </div>
+                }
+
+                <!-- Nombre -->
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1.5">Nombre completo *</label>
+                    <input type="text" @bind="_fullName"
+                           class="w-full border border-slate-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/40 bg-slate-50"
+                           placeholder="Ej: María García" />
+                </div>
+
+                <!-- Email -->
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1.5">Correo electrónico *</label>
+                    <input type="email" @bind="_email"
+                           class="w-full border border-slate-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/40 bg-slate-50"
+                           placeholder="correo@ejemplo.com" />
+                </div>
+
+                <!-- Teléfono -->
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1.5">Teléfono</label>
+                    <input type="text" @bind="_phone"
+                           class="w-full border border-slate-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/40 bg-slate-50"
+                           placeholder="300 123 4567" />
+                </div>
+
+                <!-- Rol -->
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1.5">Rol *</label>
+                    <select @bind="_role"
+                            class="w-full border border-slate-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/40 bg-slate-50 appearance-none">
+                        <option value="Patient">Paciente</option>
+                        <option value="Admin">Administrador</option>
+                        <option value="Doctor">Doctor / Terapista</option>
+                    </select>
+                </div>
+
+                <!-- Tipo doctor (condicional) -->
+                @if (_role == "Doctor")
+                {
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1.5">Tipo de especialidad</label>
+                        <select @bind="_doctorType"
+                                class="w-full border border-slate-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/40 bg-slate-50 appearance-none">
+                            <option value="NATURAL_MEDICINE">Medicina Natural</option>
+                            <option value="CHIROPRACTIC">Quiropráctica</option>
+                            <option value="OPTOMETRY">Optometría</option>
+                            <option value="PHYSIOTHERAPY">Fisioterapia</option>
+                        </select>
+                    </div>
+                }
+
+                <!-- Estado (solo en creación) -->
+                @if (!IsEditMode)
+                {
+                    <div class="flex items-center gap-3">
+                        <button type="button" @onclick="ToggleActive"
+                                class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none @(_isActive ? "bg-teal-600" : "bg-slate-300")">
+                            <span class="inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform @(_isActive ? "translate-x-6" : "translate-x-1")"></span>
+                        </button>
+                        <span class="text-sm font-medium text-slate-700">
+                            @(_isActive ? "Cuenta activa" : "Cuenta inactiva")
+                        </span>
+                    </div>
+                }
+
+            </div>
+
+            <!-- Footer -->
+            <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-3">
+                <button @onclick="HandleCancel"
+                        class="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-900 transition-colors">
+                    Cancelar
+                </button>
+                <button @onclick="HandleSave" disabled="@_saving"
+                        class="px-5 py-2 bg-teal-700 hover:bg-teal-800 text-white text-sm font-bold rounded-lg transition-colors disabled:opacity-60 flex items-center gap-2">
+                    @if (_saving)
+                    {
+                        <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+                        </svg>
+                    }
+                    @(IsEditMode ? "Guardar cambios" : "Crear usuario")
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public bool IsEditMode { get; set; }
+    [Parameter] public AdminUserGQL? SelectedUser { get; set; }
+    [Parameter] public EventCallback<object> OnSave { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+
+    private string _fullName = "";
+    private string _email = "";
+    private string _phone = "";
+    private string _role = "Patient";
+    private string _doctorType = "NaturalMedicine";
+    private bool _isActive = true;
+    private bool _saving;
+    private string? _errorMsg;
+
+    protected override void OnParametersSet()
+    {
+        if (IsOpen)
+        {
+            _errorMsg = null;
+
+            if (IsEditMode && SelectedUser is not null)
+            {
+                _fullName   = SelectedUser.Name;
+                _email      = SelectedUser.Email;
+                _phone      = SelectedUser.Phone;
+                _role       = SelectedUser.PrimaryRole;
+                _doctorType = SelectedUser.DoctorType ?? "NATURAL_MEDICINE";
+                _isActive   = SelectedUser.IsActive;
+            }
+            else
+            {
+                _fullName   = "";
+                _email      = "";
+                _phone      = "";
+                _role       = "Patient";
+                _doctorType = "NATURAL_MEDICINE";
+                _isActive   = true;
+                _saving     = false;
+            }
+        }
+    }
+
+    private void ToggleActive() => _isActive = !_isActive;
+
+    private async Task HandleSave()
+    {
+        _errorMsg = null;
+
+        if (string.IsNullOrWhiteSpace(_fullName))  { _errorMsg = "El nombre es requerido"; return; }
+        if (string.IsNullOrWhiteSpace(_email))     { _errorMsg = "El correo es requerido"; return; }
+        if (!_email.Contains('@'))                  { _errorMsg = "Correo inválido"; return; }
+
+        _saving = true;
+
+        try
+        {
+            if (IsEditMode)
+            {
+                var edit = new UserEditModel
+                {
+                    UserId     = SelectedUser!.Id,
+                    FullName   = _fullName,
+                    Email      = _email,
+                    Phone      = _phone,
+                    Role       = _role,
+                    DoctorType = _role == "Doctor" ? _doctorType : null
+                };
+                await OnSave.InvokeAsync(edit);
+            }
+            else
+            {
+                var create = new UserCreateModel
+                {
+                    FullName   = _fullName,
+                    Email      = _email,
+                    Phone      = _phone,
+                    Role       = _role,
+                    DoctorType = _role == "Doctor" ? _doctorType : null,
+                    IsActive   = _isActive
+                };
+                await OnSave.InvokeAsync(create);
+            }
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private async Task HandleCancel() => await OnCancel.InvokeAsync();
+
+    public void SetError(string msg)
+    {
+        _errorMsg = msg;
+        _saving = false;
+        StateHasChanged();
+    }
+}

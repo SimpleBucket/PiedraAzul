@@ -1,155 +1,183 @@
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Authorization;
 using PiedraAzul.Client.Models.Booking;
 using PiedraAzul.Client.Models.UserProfiles;
 using PiedraAzul.Client.Services.GraphQLServices;
 using PiedraAzul.Client.Services.Utils;
+using System.Security.Claims;
 
 namespace PiedraAzul.Client.UI.Features.Booking.Pages
 {
     public partial class ManualBooking
     {
+        [Inject] private AuthenticationStateProvider AuthStateProvider { get; set; } = default!;
+
         private BookingModel Model { get; set; } = new();
-        private List<PatientModel> SearchResult { get; set; } = new();
-        private string? Search { get; set; }
-        private bool _isNewPatient = false;
-
         private PatientModel? SelectedPatient;
-        private async Task HandlerSearch()
-        {
-            var response = await PatientService.SearchPatientsAsync(Search ?? "", 10);
-            SearchResult = response.Select(p => new PatientModel
-            {
-                Id = p.Id,
-                PatientName = p.Name,
-                PatientIdentification = p.Identification,
-                PatientPhone = p.Phone,
-                Type = p.Type == "GUEST" ? PatientTypeClient.Guest : PatientTypeClient.Registered
-            }).ToList();
 
-            await InvokeAsync(StateHasChanged);
-        }
-        private string GetPatientClass(bool isSelected)
-        {
-            var baseClass = "cursor-pointer rounded-xl border p-4 transition";
+        // ─── Role ────────────────────────────────────────────────
+        private bool _isDoctor;
+        private bool _isAdmin;
+        private string _currentUserId = "";
+        private string _currentUserName = "";
 
-            if (isSelected)
+        // ─── Patient search modal ────────────────────────────────
+        private bool _patientModalOpen;
+        private string? _errorMsg;
+        private bool _isSubmitting;
+
+        protected override async Task OnInitializedAsync()
+        {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+
+            _isDoctor = user.IsInRole("Doctor");
+            _isAdmin  = user.IsInRole("Admin");
+            _currentUserId   = user.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "";
+            _currentUserName = user.FindFirst(ClaimTypes.Name)?.Value ?? user.Identity?.Name ?? "";
+
+            // Si es doctor, pre-rellenar el doctorId con el usuario actual
+            if (_isDoctor)
             {
-                return $"{baseClass} border-teal-600 bg-teal-50 ring-2 ring-teal-500";
+                Model.DoctorId = _currentUserId;
             }
-
-            return $"{baseClass} border-gray-200 bg-gray-50 hover:border-teal-400";
         }
+
+        // ─── Doctor selection (solo Admin) ───────────────────────
         private void HandlerSelectDoctor(Models.UserProfiles.DoctorModel args)
         {
             if (args == null) return;
-
             Model.DoctorId = args.Id;
-            Model.Doctor = args;
-        }
-
-        private void HandlerSelectAppointmentDate(AppointmentSchedulerModel args)
-        {
-            if (args == null) return;
-
-            Model.AppointmentSchedulerModel = args;
-            Model.DayOfYear = args.Date;
-            Model.SlotId = args.SlotId;
+            Model.Doctor   = args;
         }
 
         private async Task HandlerChange()
         {
             Model.AppointmentSchedulerModel = null;
             Model.DayOfYear = default;
-            Model.SlotId = null;
-            Model.Doctor = null;
-            Model.DoctorId = null;
+            Model.SlotId    = null;
+            Model.Doctor    = null;
+            if (!_isDoctor)
+                Model.DoctorId = null;
 
             await InvokeAsync(StateHasChanged);
         }
 
+        // ─── Patient search modal ────────────────────────────────
+        private void OpenPatientModal() => _patientModalOpen = true;
+
+        private void OnPatientSelected(PatientModel patient)
+        {
+            SelectedPatient = patient;
+            Model.PatientName           = patient.PatientName;
+            Model.PatientIdentification = patient.PatientIdentification;
+            Model.PatientPhone          = patient.PatientPhone;
+            _patientModalOpen           = false;
+            StateHasChanged();
+        }
+
+        private void OnPatientModalCancel()
+        {
+            _patientModalOpen = false;
+            StateHasChanged();
+        }
+
+        private void ClearPatient()
+        {
+            SelectedPatient             = null;
+            Model.PatientName           = null;
+            Model.PatientIdentification = null;
+            Model.PatientPhone          = null;
+        }
+
+        // ─── Scheduler ──────────────────────────────────────────
+        private void HandlerSelectAppointmentDate(AppointmentSchedulerModel args)
+        {
+            if (args == null) return;
+            Model.AppointmentSchedulerModel = args;
+            Model.DayOfYear = args.Date;
+            Model.SlotId    = args.SlotId;
+        }
+
+        // ─── Submit ──────────────────────────────────────────────
         private async Task HandlerSubmit()
         {
-            string? patientUserId = null;
-            GuestPatientGqlInput? guestInput = null;
+            _errorMsg = null;
 
-            if (SelectedPatient != null)
+            if (string.IsNullOrWhiteSpace(Model.DoctorId))
             {
-                if (SelectedPatient.IsRegistered)
-                    patientUserId = SelectedPatient.Id;
-                else
+                _errorMsg = "Debes seleccionar un doctor";
+                return;
+            }
+
+            if (SelectedPatient == null && string.IsNullOrWhiteSpace(Model.PatientName))
+            {
+                _errorMsg = "Debes seleccionar o registrar un paciente";
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(Model.SlotId))
+            {
+                _errorMsg = "Debes seleccionar una fecha y hora disponible";
+                return;
+            }
+
+            _isSubmitting = true;
+
+            try
+            {
+                string? patientUserId = null;
+                GuestPatientGqlInput? guestInput = null;
+
+                if (SelectedPatient != null)
+                {
+                    if (SelectedPatient.IsRegistered)
+                        patientUserId = SelectedPatient.Id;
+                    else
+                        guestInput = CreateContracts.CreateGuestPatientInput(
+                            SelectedPatient.PatientName,
+                            SelectedPatient.PatientPhone,
+                            SelectedPatient.PatientIdentification,
+                            "");
+                }
+                else if (Model.PatientName != null)
+                {
                     guestInput = CreateContracts.CreateGuestPatientInput(
-                        SelectedPatient.PatientName, SelectedPatient.PatientPhone,
-                        SelectedPatient.PatientIdentification, "");
+                        Model.PatientName,
+                        Model.PatientPhone ?? "",
+                        Model.PatientIdentification ?? "",
+                        "");
+                }
+
+                var input = new CreateAppointmentGqlInput(
+                    DoctorId: Model.DoctorId!,
+                    DoctorAvailabilitySlotId: Model.SlotId!,
+                    Date: Model.DayOfYear,
+                    PatientUserId: patientUserId,
+                    Guest: guestInput
+                );
+
+                var result = await AppointmentService.CreateAppointment(input);
+
+                if (!result.IsSuccess)
+                    _errorMsg = result.Error?.Message ?? "Error al guardar la cita";
+                else
+                    HandlerCancel();
             }
-            else if (Model.PatientName != null)
+            finally
             {
-                guestInput = CreateContracts.CreateGuestPatientInput(
-                    Model.PatientName, Model.PatientPhone ?? "",
-                    Model.PatientIdentification ?? "", "");
+                _isSubmitting = false;
             }
-
-            var input = new CreateAppointmentGqlInput(
-                DoctorId: Model.DoctorId!,
-                DoctorAvailabilitySlotId: Model.SlotId!,
-                Date: Model.DayOfYear,
-                PatientUserId: patientUserId,
-                Guest: guestInput
-            );
-
-            var result = await AppointmentService.CreateAppointment(input);
-
-            if (!result.IsSuccess)
-                Console.WriteLine(result.Error?.Message);
         }
 
         private void HandlerCancel()
         {
-            Model = new();
-        }
-        private void SelectPatient(PatientModel patient)
-        {
-            SelectedPatient = patient;
+            Model           = new();
+            SelectedPatient = null;
+            _errorMsg       = null;
 
-            Model.PatientName = patient.PatientName;
-            Model.PatientIdentification = patient.PatientIdentification;
-            Model.PatientPhone = patient.PatientPhone;
-        }
-
-        private CancellationTokenSource? _cts;
-
-        private async Task HandlerInputSearch(ChangeEventArgs args)
-        {
-            if (args.Value == null) return;
-
-            var query = args.Value.ToString();
-
-            _cts?.Cancel();
-            _cts = new CancellationTokenSource();
-
-            try
-            {
-                await Task.Delay(300, _cts.Token);
-
-                if (string.IsNullOrWhiteSpace(query) || query.Length < 3)
-                {
-                    SearchResult = new List<PatientModel>();
-                    return;
-                }
-
-                var response = await PatientService.SearchAutoCompletePatientsAsync(query, 10);
-
-                SearchResult = response.Select(p => new PatientModel
-                {
-                    Id = p.Id,
-                    PatientName = p.Name,
-                    PatientIdentification = p.Identification,
-                    PatientPhone = p.Phone,
-                    Type = p.Type == "GUEST" ? PatientTypeClient.Guest : PatientTypeClient.Registered
-                }).ToList();
-            }
-            catch (TaskCanceledException)
-            {
-            }
+            if (_isDoctor)
+                Model.DoctorId = _currentUserId;
         }
     }
 }

@@ -42,6 +42,31 @@ public class GraphQLAppointmentService(GraphQLHttpClient client)
         });
     }
 
+    /// <summary>
+    /// Crea una cita como invitado sin autenticación (flujo InstantBooking).
+    /// Llama a la mutación pública bookGuestAppointment.
+    /// </summary>
+    public async Task<Result<AppointmentGQL>> BookGuestAppointmentAsync(CreateAppointmentGqlInput input)
+    {
+        const string mutation = """
+            mutation BookGuestAppointment($input: CreateAppointmentInput!) {
+                bookGuestAppointment(input: $input) {
+                    id patientUserId patientGuestId patientType patientName
+                    appointmentSlotId doctorId doctorName specialty start createdAt
+                }
+            }
+            """;
+
+        return await GraphQLExecutor.Execute(async () =>
+        {
+            var result = await client.ExecuteAsync<AppointmentGQL>(
+                mutation,
+                new { input },
+                "bookGuestAppointment");
+            return result!;
+        });
+    }
+
     public async Task<Result<string>> SendGuestOtpAsync(string phone, string? email, string channel)
     {
         const string mutation = """

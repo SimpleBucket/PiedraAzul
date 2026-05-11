@@ -1,0 +1,191 @@
+@using PiedraAzul.Client.Models.GraphQL
+
+@if (IsOpen)
+{
+    <div class="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"></div>
+
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md border border-slate-100 overflow-hidden">
+
+            <!-- Header -->
+            <div class="flex items-center justify-between px-6 py-4 bg-slate-50 border-b border-slate-100">
+                <h2 class="text-base font-bold text-slate-900">@GetTitle()</h2>
+                @if (!IsLoading)
+                {
+                    <button @onclick="() => OnClose.InvokeAsync()"
+                            class="text-slate-400 hover:text-slate-700 transition-colors">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                }
+            </div>
+
+            <!-- Body -->
+            <div class="px-6 py-5">
+
+                @if (IsLoading)
+                {
+                    <div class="flex flex-col items-center gap-4 py-6">
+                        <svg class="w-10 h-10 animate-spin text-teal-600" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                        </svg>
+                        <p class="text-sm text-slate-600">Verificando tu identificación...</p>
+                    </div>
+                }
+                else if (SearchResultType == "REGISTERED")
+                {
+                    <div class="space-y-4">
+                        <div class="flex items-start gap-3 rounded-xl bg-amber-50 border border-amber-200 px-4 py-3">
+                            <svg class="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <p class="text-sm text-amber-800">
+                                Ya tienes una cuenta registrada en nuestra clínica. Puedes iniciar sesión o continuar como invitado.
+                            </p>
+                        </div>
+
+                        @if (SearchResult != null)
+                        {
+                            <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+                                <p class="text-xs text-slate-500 font-medium mb-0.5">Cuenta registrada</p>
+                                <p class="text-sm font-semibold text-slate-900">@SearchResult.Name</p>
+                                @if (!string.IsNullOrEmpty(SearchResult.Phone))
+                                {
+                                    <p class="text-xs text-slate-500 mt-0.5">@SearchResult.Phone</p>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+                else if (SearchResultType == "GUEST")
+                {
+                    <div class="space-y-4">
+                        <div class="flex items-start gap-3 rounded-xl bg-teal-50 border border-teal-200 px-4 py-3">
+                            <svg class="w-5 h-5 text-teal-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                            </svg>
+                            <p class="text-sm text-teal-800">
+                                Encontramos tus datos de una visita anterior.
+                            </p>
+                        </div>
+
+                        @if (SearchResult != null)
+                        {
+                            <div class="space-y-2">
+                                <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+                                    <p class="text-xs text-slate-500 font-medium">Nombre</p>
+                                    <p class="text-sm font-semibold text-slate-900">@SearchResult.Name</p>
+                                </div>
+                                @if (!string.IsNullOrEmpty(SearchResult.Phone))
+                                {
+                                    <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+                                        <p class="text-xs text-slate-500 font-medium">Teléfono</p>
+                                        <p class="text-sm font-semibold text-slate-900">@SearchResult.Phone</p>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+                else if (SearchResultType == "NOT_FOUND")
+                {
+                    <div class="flex items-start gap-3 rounded-xl bg-slate-50 border border-slate-200 px-4 py-3">
+                        <svg class="w-5 h-5 text-slate-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                        </svg>
+                        <p class="text-sm text-slate-700">
+                            No encontramos tu identificación en nuestro sistema.
+                            En el siguiente paso ingresa tus datos para continuar.
+                        </p>
+                    </div>
+                }
+                else if (SearchResultType == "ERROR")
+                {
+                    <div class="flex items-start gap-3 rounded-xl bg-red-50 border border-red-200 px-4 py-3">
+                        <svg class="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <p class="text-sm text-red-700">@(ErrorMessage ?? "Error de conexión. Intenta de nuevo.")</p>
+                    </div>
+                }
+
+            </div>
+
+            <!-- Footer -->
+            @if (!IsLoading)
+            {
+                <div class="px-6 py-4 bg-slate-50 border-t border-slate-100">
+
+                    @if (SearchResultType == "REGISTERED")
+                    {
+                        <div class="flex flex-col gap-2">
+                            <button @onclick="() => OnRegisteredLogin.InvokeAsync()"
+                                    class="w-full py-2.5 bg-teal-700 hover:bg-teal-800 text-white text-sm font-bold rounded-lg transition">
+                                Iniciar sesión
+                            </button>
+                            <button @onclick="() => OnRegisteredGuestContinue.InvokeAsync()"
+                                    class="w-full py-2.5 border border-slate-300 hover:bg-slate-100 text-slate-700 text-sm font-semibold rounded-lg transition">
+                                Continuar como invitado
+                            </button>
+                        </div>
+                    }
+                    else if (SearchResultType == "GUEST")
+                    {
+                        <button @onclick="() => OnGuestConfirm.InvokeAsync()"
+                                class="w-full py-2.5 bg-teal-700 hover:bg-teal-800 text-white text-sm font-bold rounded-lg transition">
+                            Continuar
+                        </button>
+                    }
+                    else if (SearchResultType == "NOT_FOUND")
+                    {
+                        <button @onclick="() => OnNewPatientContinue.InvokeAsync()"
+                                class="w-full py-2.5 bg-teal-700 hover:bg-teal-800 text-white text-sm font-bold rounded-lg transition">
+                            Continuar y completar datos
+                        </button>
+                    }
+                    else if (SearchResultType == "ERROR")
+                    {
+                        <div class="flex gap-2">
+                            <button @onclick="() => OnRetry.InvokeAsync()"
+                                    class="flex-1 py-2.5 border border-slate-300 hover:bg-slate-100 text-slate-700 text-sm font-semibold rounded-lg transition">
+                                Reintentar
+                            </button>
+                            <button @onclick="() => OnNewPatientContinue.InvokeAsync()"
+                                    class="flex-1 py-2.5 bg-teal-700 hover:bg-teal-800 text-white text-sm font-bold rounded-lg transition">
+                                Continuar
+                            </button>
+                        </div>
+                    }
+
+                </div>
+            }
+
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public bool IsLoading { get; set; }
+    [Parameter] public PatientSearchResultGQL? SearchResult { get; set; }
+    [Parameter] public string? SearchResultType { get; set; }
+    [Parameter] public string? ErrorMessage { get; set; }
+
+    [Parameter] public EventCallback OnRegisteredLogin { get; set; }
+    [Parameter] public EventCallback OnRegisteredGuestContinue { get; set; }
+    [Parameter] public EventCallback OnGuestConfirm { get; set; }
+    [Parameter] public EventCallback OnNewPatientContinue { get; set; }
+    [Parameter] public EventCallback OnRetry { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    private string GetTitle() => SearchResultType switch
+    {
+        "REGISTERED" => "Cuenta existente",
+        "GUEST"      => "Datos encontrados",
+        "NOT_FOUND"  => "Nuevo paciente",
+        "ERROR"      => "Error de verificación",
+        _            => "Verificando..."
+    };
+}

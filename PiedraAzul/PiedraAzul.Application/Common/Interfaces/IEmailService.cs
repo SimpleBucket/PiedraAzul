@@ -7,4 +7,5 @@ public interface IEmailService
     Task<bool> SendAccountLockedEmailAsync(string email, string userName);
     Task<bool> SendMFASetupConfirmationAsync(string email, string userName, string mfaMethod);
     Task<bool> SendGenericEmailAsync(string to, string subject, string htmlBody);
+    Task<bool> SendWelcomeWithPasswordAsync(string email, string userName, string tempPassword, string role);
 }

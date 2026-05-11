@@ -38,5 +38,9 @@ namespace PiedraAzul.Infrastructure.Identity
             EmailChangeCode = null;
             EmailChangeCodeExpiresAt = null;
         }
+
+        // Soft-delete
+        public bool IsDeleted { get; set; } = false;
+        public DateTime? DeletedAt { get; set; }
     }
 }
