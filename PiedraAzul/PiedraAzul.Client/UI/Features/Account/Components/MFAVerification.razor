@@ -2,13 +2,11 @@
 @using PiedraAzul.Client.Models.GraphQL
 @using PiedraAzul.Client.Models.UserProfiles
 @using PiedraAzul.Client.Services.AuthServices
-@using PiedraAzul.Client.Services
 @using PiedraAzul.Client.States
 @inject NavigationManager NavigationManager
 @inject AuthenticationService AuthService
 @inject UserState UserState
 @inject IJSRuntime JSRuntime
-@inject OfflineCacheService OfflineCache
 
 <EditForm Model="@mfaModel" OnValidSubmit="HandleVerifyMFA" class="mx-auto w-full max-w-lg">
     <DataAnnotationsValidator />
@@ -146,7 +144,7 @@
     public EventCallback OnBack { get; set; }
 
     [Parameter]
-    public EventCallback<UserGQL> OnVerified { get; set; }
+    public EventCallback<UserGQL?> OnVerified { get; set; }
 
     private string GetMFAMethodText() => MFARequired?.MFAMethod switch
     {
@@ -188,18 +186,20 @@
                 return;
             }
 
-            var user = result.Value;
-            if (user is not null)
-            {
-                // Sonido de éxito
-                await PlaySuccessSound();
+            var loginResult = result.Value;
+            var token = loginResult?.LoginToken;
 
-                _errorMessage = "✅ ¡Login exitoso!";
-                await Task.Delay(500);
-                await OnVerified.InvokeAsync(user);
-                await OfflineCache.SyncAsync();
-                NavigationManager.NavigateTo("/", forceLoad: true);
+            if (string.IsNullOrEmpty(token))
+            {
+                _errorMessage = "❌ Error al iniciar sesión. Intenta de nuevo.";
+                return;
             }
+
+            await PlaySuccessSound();
+            _errorMessage = "✅ ¡Login exitoso!";
+            await Task.Delay(500);
+            await OnVerified.InvokeAsync(loginResult?.User);
+            NavigationManager.NavigateTo($"/auth/apply-session?token={token}&redirect=/", forceLoad: true);
         }
         finally
         {

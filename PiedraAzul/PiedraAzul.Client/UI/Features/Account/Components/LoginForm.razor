@@ -2,14 +2,12 @@
 @using PiedraAzul.Client.Models.GraphQL
 @using PiedraAzul.Client.Models.UserProfiles
 @using PiedraAzul.Client.Services.AuthServices
-@using PiedraAzul.Client.Services
 @using PiedraAzul.Client.States
 @inject NavigationManager NavigationManager
 @inject AuthenticationService AuthService
 @inject PasskeyService PasskeyService
 @inject UserState UserState
 @inject IJSRuntime JS
-@inject OfflineCacheService OfflineCache
 
 @if (_mfaRequired is not null)
 {
@@ -151,10 +149,17 @@ else
                 return;
             }
 
-            // MFA not required, proceed with normal login
-            await OfflineCache.SyncAsync();
+            // Aplicar cookie vía request HTTP directo (funciona en SSR y WASM)
+            var token = loginResult?.LoginToken;
+            if (string.IsNullOrEmpty(token))
+            {
+                _errorMessage = "Error al iniciar sesión. Intenta de nuevo.";
+                return;
+            }
+
             var destination = string.IsNullOrEmpty(ReturnUrl) ? "/" : ReturnUrl;
-            NavigationManager.NavigateTo(destination, forceLoad: true);
+            var encoded = Uri.EscapeDataString(destination);
+            NavigationManager.NavigateTo($"/auth/apply-session?token={token}&redirect={encoded}", forceLoad: true);
         }
         finally
         {
@@ -170,9 +175,10 @@ else
         StateHasChanged();
     }
 
-    private async Task HandleMFAVerified(UserGQL user)
+    private Task HandleMFAVerified(UserGQL? user)
     {
-        // Redirect happens in MFAVerification component
+        // La redirección ocurre dentro de MFAVerification vía apply-session
+        return Task.CompletedTask;
     }
 
     private async Task HandlePasskeyLogin()
@@ -191,9 +197,17 @@ else
                 return;
             }
 
-            await OfflineCache.SyncAsync();
+            var passkeyResult = result.Value;
+            var token = passkeyResult?.LoginToken;
+            if (string.IsNullOrEmpty(token))
+            {
+                _errorMessage = "No se pudo verificar la passkey. Intenta de nuevo.";
+                return;
+            }
+
             var destination = string.IsNullOrEmpty(ReturnUrl) ? "/" : ReturnUrl;
-            NavigationManager.NavigateTo(destination, forceLoad: true);
+            var encoded = Uri.EscapeDataString(destination);
+            NavigationManager.NavigateTo($"/auth/apply-session?token={token}&redirect={encoded}", forceLoad: true);
         }
         catch (Exception ex) when (ex.Message.Contains("cancel", StringComparison.OrdinalIgnoreCase)
                                    || ex.Message.Contains("abort", StringComparison.OrdinalIgnoreCase))

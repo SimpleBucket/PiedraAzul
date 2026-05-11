@@ -1,6 +1,7 @@
 using Microsoft.JSInterop;
 using PiedraAzul.Client.Models;
 using PiedraAzul.Client.Models.GraphQL;
+using PiedraAzul.Client.Models.UserProfiles;
 using PiedraAzul.Client.Services.GraphQLServices;
 using PiedraAzul.Client.Services.Wrappers;
 
@@ -50,7 +51,7 @@ public class PasskeyService(GraphQLHttpClient graphQL, IJSRuntime js)
         });
     }
 
-    public async Task<Result<UserGQL>> LoginAsync()
+    public async Task<Result<LoginResultModel>> LoginAsync()
     {
         return await GraphQLExecutor.Execute(async () =>
         {
@@ -67,17 +68,18 @@ public class PasskeyService(GraphQLHttpClient graphQL, IJSRuntime js)
             const string completeMutation = """
                 mutation CompletePasskeyAssertion($input: CompletePasskeyAssertionInput!) {
                     completePasskeyAssertion(input: $input) {
-                        id name email roles avatarUrl
+                        user { id name email roles avatarUrl }
+                        loginToken
                     }
                 }
                 """;
 
-            var user = await graphQL.ExecuteAsync<UserGQL>(
+            var result = await graphQL.ExecuteAsync<LoginResultModel>(
                 completeMutation,
                 new { input = new { assertionResponse } },
                 "completePasskeyAssertion");
 
-            return user!;
+            return result!;
         });
     }
 

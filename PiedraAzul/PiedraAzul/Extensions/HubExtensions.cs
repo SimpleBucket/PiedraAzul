@@ -1,5 +1,8 @@
 ﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using PiedraAzul.Infrastructure.Identity;
 using PiedraAzul.RealTime.Hubs;
+using PiedraAzul.Services;
 using System.Security.Claims;
 using System.Text.Json;
 using IOPath = System.IO.Path;
@@ -112,6 +115,50 @@ public static class HubExtensions
                     statusCode: 500);
             }
         }).DisableAntiforgery();
+
+        // ── /auth/apply-session?token=xxx&redirect=/destino ──────────────────
+        // El browser navega aquí (forceLoad) tras un login exitoso en GraphQL.
+        // Como es un request HTTP directo del browser, Set-Cookie llega correctamente
+        // sin importar si el componente corrió en Server circuit o en WASM.
+        app.MapGet("/auth/apply-session", async (
+            HttpContext ctx,
+            ILoginTokenService loginTokenService,
+            UserManager<ApplicationUser> userManager,
+            SignInManager<ApplicationUser> signInManager) =>
+        {
+            var token    = ctx.Request.Query["token"].ToString();
+            var redirect = ctx.Request.Query["redirect"].ToString();
+
+            // Sanitizar redirect: solo rutas relativas, sin open-redirect
+            if (string.IsNullOrEmpty(redirect)
+                || !redirect.StartsWith("/")
+                || redirect.StartsWith("//"))
+                redirect = "/";
+
+            if (string.IsNullOrEmpty(token))
+                return Results.Redirect("/account/auth");
+
+            var userId = loginTokenService.ConsumeToken(token);
+            if (userId is null)
+                return Results.Redirect("/account/auth?error=session_expired");
+
+            var user = await userManager.FindByIdAsync(userId);
+            if (user is null)
+                return Results.Redirect("/account/auth");
+
+            await signInManager.SignInAsync(user, isPersistent: true);
+            return Results.Redirect(redirect);
+        });
+
+        // ── /auth/sign-out ────────────────────────────────────────────────────
+        // El browser navega aquí para cerrar sesión. Set-Cookie (clear) llega
+        // correctamente porque es un request HTTP directo.
+        app.MapGet("/auth/sign-out", async (
+            SignInManager<ApplicationUser> signInManager) =>
+        {
+            await signInManager.SignOutAsync();
+            return Results.Redirect("/");
+        });
 
         return app;
     }

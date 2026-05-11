@@ -9,17 +9,20 @@ namespace PiedraAzul.Client.Services.AuthServices;
 
 public class AuthenticationService(GraphQLHttpClient graphQL, NavigationManager nav)
 {
-    public async Task<Result<UserGQL>> RegisterAsync(RegisterModel registerModel, string role)
+    public async Task<Result<LoginResultModel>> RegisterAsync(RegisterModel registerModel, string role)
     {
         const string mutation = """
             mutation Register($input: RegisterInput!) {
-                register(input: $input) { id name email roles avatarUrl emailConfirmed }
+                register(input: $input) {
+                    user { id name email roles avatarUrl emailConfirmed }
+                    loginToken
+                }
             }
             """;
 
         return await GraphQLExecutor.Execute(async () =>
         {
-            var user = await graphQL.ExecuteAsync<UserGQL>(
+            var result = await graphQL.ExecuteAsync<LoginResultModel>(
                 mutation,
                 new
                 {
@@ -35,7 +38,10 @@ public class AuthenticationService(GraphQLHttpClient graphQL, NavigationManager 
                 },
                 "register");
 
-            return user!;
+            if (result is null)
+                throw new GraphQLClientException("No se pudo completar el registro");
+
+            return result;
         });
     }
 
@@ -46,6 +52,7 @@ public class AuthenticationService(GraphQLHttpClient graphQL, NavigationManager 
                 login(input: $input) {
                     user { id name email roles avatarUrl emailConfirmed }
                     mfaRequired { mfaToken mfaMethod hasEmail }
+                    loginToken
                 }
             }
             """;
@@ -64,25 +71,28 @@ public class AuthenticationService(GraphQLHttpClient graphQL, NavigationManager 
         });
     }
 
-    public async Task<Result<UserGQL>> VerifyMFALoginAsync(string mfaToken, string otp)
+    public async Task<Result<LoginResultModel>> VerifyMFALoginAsync(string mfaToken, string otp)
     {
         const string mutation = """
             mutation VerifyMFALogin($input: VerifyMFALoginInput!) {
-                verifyMFALogin(input: $input) { id name email roles avatarUrl emailConfirmed }
+                verifyMFALogin(input: $input) {
+                    user { id name email roles avatarUrl emailConfirmed }
+                    loginToken
+                }
             }
             """;
 
         return await GraphQLExecutor.Execute(async () =>
         {
-            var user = await graphQL.ExecuteAsync<UserGQL>(
+            var result = await graphQL.ExecuteAsync<LoginResultModel>(
                 mutation,
                 new { input = new { mfaToken, otp } },
                 "verifyMFALogin");
 
-            if (user is null)
+            if (result is null)
                 throw new GraphQLClientException("Verificación MFA inválida");
 
-            return user;
+            return result;
         });
     }
 
@@ -119,39 +129,36 @@ public class AuthenticationService(GraphQLHttpClient graphQL, NavigationManager 
         });
     }
 
-    public async Task Logout()
+    public Task Logout()
     {
-        const string mutation = """
-            mutation Logout {
-                logout
-            }
-            """;
-
-        try { await graphQL.ExecuteAsync<bool>(mutation, null, "logout"); }
-        catch { }
-
-        nav.NavigateTo("/", forceLoad: true);
+        // Navegamos al endpoint HTTP directo para que Set-Cookie (clear) llegue
+        // al browser sin importar si estamos en Server circuit o WASM.
+        nav.NavigateTo("/auth/sign-out", forceLoad: true);
+        return Task.CompletedTask;
     }
 
-    public async Task<Result<UserGQL>> VerifyBackupCodeLoginAsync(string mfaToken, string backupCode)
+    public async Task<Result<LoginResultModel>> VerifyBackupCodeLoginAsync(string mfaToken, string backupCode)
     {
         const string mutation = """
             mutation VerifyBackupCodeLogin($input: VerifyBackupCodeLoginInput!) {
-                verifyBackupCodeLogin(input: $input) { id name email roles avatarUrl emailConfirmed }
+                verifyBackupCodeLogin(input: $input) {
+                    user { id name email roles avatarUrl emailConfirmed }
+                    loginToken
+                }
             }
             """;
 
         return await GraphQLExecutor.Execute(async () =>
         {
-            var user = await graphQL.ExecuteAsync<UserGQL>(
+            var result = await graphQL.ExecuteAsync<LoginResultModel>(
                 mutation,
                 new { input = new { mfaToken, backupCode } },
                 "verifyBackupCodeLogin");
 
-            if (user is null)
+            if (result is null)
                 throw new GraphQLClientException("Código de recuperación inválido o ya utilizado");
 
-            return user;
+            return result;
         });
     }
 

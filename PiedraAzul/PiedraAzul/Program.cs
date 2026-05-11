@@ -8,6 +8,7 @@ using PiedraAzul.Extensions;
 using PiedraAzul.Application;
 using PiedraAzul.Infrastructure;
 using PiedraAzul.Client.Extensions;
+using PiedraAzul.Services;
 #endregion
 
 var builder = WebApplication.CreateBuilder(args);
@@ -66,6 +67,9 @@ builder.Services.AddScoped<GraphQLHttpClient>(sp =>
     var handler = new CookieForwardingHandler(accessor);
     return new GraphQLHttpClient(new HttpClient(handler) { BaseAddress = new Uri(graphqlUrl) });
 });
+
+// 🔹 Login token (one-time session tokens para apply-session)
+builder.Services.AddSingleton<ILoginTokenService, LoginTokenService>();
 
 // 🔹 Auth
 builder.Services.AddAuth(builder.Configuration);

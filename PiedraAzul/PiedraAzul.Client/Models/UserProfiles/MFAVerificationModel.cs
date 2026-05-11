@@ -13,6 +13,7 @@ public class LoginResultModel
 {
     public UserGQL? User { get; set; }
     public MFARequired? MFARequired { get; set; }
+    public string? LoginToken { get; set; }
 }
 
 public class MFARequired

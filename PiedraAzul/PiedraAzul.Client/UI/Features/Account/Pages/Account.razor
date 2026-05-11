@@ -1,5 +1,5 @@
 @page "/account"
-@rendermode @(new InteractiveWebAssemblyRenderMode(prerender: true))
+@rendermode @(new InteractiveAutoRenderMode(prerender: false))
 @using PiedraAzul.Client.Models.GraphQL
 @using PiedraAzul.Client.Services.AuthServices
 @using PiedraAzul.Client.Services.GraphQLServices
@@ -210,6 +210,9 @@ else
             if (result.IsSuccess) { _user = result.Value; UserState.User = _user; }
             _loading = false;
         }
+
+        // Sincronizar citas en segundo plano (falla silenciosamente si JS no está listo)
+        _ = OfflineCache.SyncAsync();
     }
 
     private void Navigate(string tab, string group, string item)
@@ -229,7 +232,9 @@ else
     private async Task LogoutAsync()
     {
         await OfflineCache.ClearAsync();
-        await AuthService.Logout();
+        // NavigateTo a /auth/sign-out — request HTTP directo del browser,
+        // SignOutAsync funciona correctamente en SSR y WASM.
+        Nav.NavigateTo("/auth/sign-out", forceLoad: true);
     }
 
     private RenderFragment NavGroupHeader(string name, string key, string pathsInner) => __builder =>

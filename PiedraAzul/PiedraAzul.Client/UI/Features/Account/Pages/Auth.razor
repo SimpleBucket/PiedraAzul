@@ -1,5 +1,5 @@
 ﻿@page "/account/auth"
-@rendermode @(new InteractiveWebAssemblyRenderMode(prerender: false))
+@rendermode @(new InteractiveAutoRenderMode(prerender: false))
 @using PiedraAzul.Client.UI.Features.Account.Components
 @inject NavigationManager NavigationManager
 <PageTitle>@(isLoginForm ? "Ingresar" : "Registrarse") | Piedra Azul</PageTitle>

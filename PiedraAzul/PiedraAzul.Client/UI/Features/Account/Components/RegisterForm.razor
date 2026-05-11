@@ -220,9 +220,11 @@
         var result = await AuthService.RegisterAsync(registerModel, "Patient");
         if (result.IsSuccess)
         {
-            // Cookie set by server — force reload so PersistentAuthenticationStateProvider
-            // reads the new authenticated state from the fresh server prerender.
-            NavigationManager.NavigateTo("/", forceLoad: true);
+            var token = result.Value?.LoginToken;
+            if (!string.IsNullOrEmpty(token))
+                NavigationManager.NavigateTo($"/auth/apply-session?token={token}&redirect=/", forceLoad: true);
+            else
+                NavigationManager.NavigateTo("/", forceLoad: true);
         }
         else
         {
