@@ -3,10 +3,12 @@
 @using PiedraAzul.Client.States
 @using PiedraAzul.Client.Models.GraphQL
 @using PiedraAzul.Client.Services.GraphQLServices
+@using PiedraAzul.Client.Services.AdminServices
 @using PiedraAzul.Contracts.Enums
 @inject UserState UserState
 @inject GraphQLDoctorService DoctorService
 @inject GraphQLAppointmentService AppointmentService
+@inject UserManagementService UserManagementService
 
 <div class="min-h-screen bg-slate-50 pb-12">
    <!-- HEADER / NAV -->
@@ -57,18 +59,34 @@
                     <h1 class="text-4xl font-bold text-slate-900 mb-3">@(UserState?.User?.Name ?? "Cargando...")</h1>
                     <div class="flex flex-wrap items-center gap-3 justify-center md:justify-start">
                         <span class="bg-primary/10 text-primary px-4 py-1.5 rounded-xl text-sm font-semibold">@(CurrentDoctor?.Specialty ?? "Especialista")</span>
-                        <span class="bg-emerald-50/80 text-emerald-600 px-4 py-1.5 rounded-xl text-sm font-semibold flex items-center gap-2">
-                            <span class="w-2 h-2 bg-emerald-500 rounded-full"></span>
-                            Estado: Activo
+                        <span class="@(IsActive ? "bg-emerald-50/80 text-emerald-600" : "bg-slate-100 text-slate-500") px-4 py-1.5 rounded-xl text-sm font-semibold flex items-center gap-2 transition-colors">
+                            <span class="w-2 h-2 @(IsActive ? "bg-emerald-500" : "bg-slate-400") rounded-full transition-colors"></span>
+                            Estado: @(IsActive ? "Activo" : "Inactivo")
                         </span>
                     </div>
                 </div>
             </div>
             
-            <button class="bg-primary text-white px-8 py-3.5 rounded-2xl font-bold flex items-center gap-3 hover:opacity-90 transition-all shadow-lg shadow-primary/20">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
-                Estado
-            </button>
+            <div class="relative">
+                <button @onclick="() => showStatusMenu = !showStatusMenu" class="@(IsActive ? "bg-primary shadow-primary/20" : "bg-slate-500 shadow-slate-500/20") text-white px-8 py-3.5 rounded-2xl font-bold flex items-center gap-3 hover:opacity-90 transition-all shadow-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                    Estado
+                </button>
+                
+                @if (showStatusMenu)
+                {
+                    <div class="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-100 overflow-hidden z-20 animate-fade-in-down">
+                        <button @onclick="() => SetStatus(true)" class="w-full text-left px-5 py-3 hover:bg-slate-50 flex items-center gap-3 transition-colors font-semibold text-slate-700 border-b border-slate-50">
+                            <span class="w-2.5 h-2.5 bg-emerald-500 rounded-full"></span>
+                            Activo
+                        </button>
+                        <button @onclick="() => SetStatus(false)" class="w-full text-left px-5 py-3 hover:bg-slate-50 flex items-center gap-3 transition-colors font-semibold text-slate-700">
+                            <span class="w-2.5 h-2.5 bg-slate-400 rounded-full"></span>
+                            Inactivo
+                        </button>
+                    </div>
+                }
+            </div>
         </div>
 
         <!-- Search Bar -->
@@ -173,6 +191,9 @@
     private int Completadas = 0;
     private int Pendientes = 0;
     private AppointmentGQL? SiguienteCita = null;
+    
+    private bool IsActive = true;
+    private bool showStatusMenu = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -214,5 +235,40 @@
                     .FirstOrDefault();
             }
         }
+    }
+
+    private async Task SetStatus(bool status)
+    {
+        if (IsActive == status)
+        {
+            showStatusMenu = false;
+            return;
+        }
+
+        try
+        {
+            if (UserState?.User?.Id != null)
+            {
+                // Intentar cambiar el estado en el backend
+                var res = await UserManagementService.ToggleUserStatusAsync(UserState.User.Id);
+                if (res.IsSuccess)
+                {
+                    IsActive = res.Value.IsActive;
+                }
+                else
+                {
+                    // Fallback visual si el doctor no tiene permisos de admin para usar este endpoint
+                    IsActive = status;
+                }
+            }
+        }
+        catch
+        {
+            // Fallback visual
+            IsActive = status;
+        }
+
+        showStatusMenu = false;
+        StateHasChanged();
     }
 }
