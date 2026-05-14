@@ -22,7 +22,7 @@
                 <nav class="hidden md:flex items-center gap-8">
                     <a href="/doctor" class="text-slate-500 font-medium hover:text-slate-900 transition-colors py-7">Dashboard</a>
                     <a href="/doctor/pacientes" class="text-slate-900 font-semibold border-b-2 border-primary py-7">Pacientes</a>
-                    <a href="/doctor/agenda" class="text-slate-500 font-medium hover:text-slate-900 transition-colors">Mi Agenda</a>
+                    <a href="/doctor/agenda" class="text-slate-500 font-medium hover:text-slate-900 transition-colors py-7">Mi Agenda</a>
                 </nav>
             </div>
 
@@ -34,10 +34,10 @@
                 <!-- User Profile -->
                 <div class="flex items-center gap-3 pl-6 border-l">
                     <div class="text-right hidden sm:block">
-                        <div class="text-sm font-bold text-slate-900">Dr. Roberto Gómez</div>
+                        <div class="text-sm font-bold text-slate-900">@(UserState?.User?.Name ?? "Doctor")</div>
                         <div class="text-xs text-slate-400">Doctor</div>
                     </div>
-                    <img src="https://ui-avatars.com/api/?name=Roberto+Gomez&background=257D8D&color=fff" alt="Doctor" class="w-10 h-10 rounded-full border-2 border-slate-100 shadow-sm" />
+                    <img src="@(string.IsNullOrEmpty(UserState?.User?.AvatarUrl) || UserState?.User?.AvatarUrl == "default.png" ? $"https://ui-avatars.com/api/?name={Uri.EscapeDataString(UserState?.User?.Name ?? "Doctor")}&background=257D8D&color=fff" : UserState?.User?.AvatarUrl)" alt="Doctor" class="w-10 h-10 rounded-full border-2 border-slate-100 shadow-sm" onerror="this.src='https://ui-avatars.com/api/?name=Doctor&background=257D8D&color=fff'" />
                 </div>
             </div>
         </div>
